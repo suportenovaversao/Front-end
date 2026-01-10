@@ -1,0 +1,86 @@
+{
+  "packageId": "com.hildomatos.baber",
+  "host": "www.novaversao.site",
+  "name": "King Agenda",
+  "launcherName": "King Agenda",
+  "display": "standalone",
+  "themeColor": "#D4AF37",
+  "themeColorDark": "#000000",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#0C0C0C",
+  "enableNotifications": true,
+  "startUrl": "/?source=pwa",
+  "iconUrl": "https://novaversao.site/icone.png",
+  "maskableIconUrl": "https://novaversao.site/icone.png",
+  "monochromeIconUrl": "https://novaversao.site/icone.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "C:\\Users\\arlan\\Desktop\\NavalhadeOuro3.1.9\\android.keystore",
+    "alias": "android"
+  },
+  "appVersionName": "31",
+  "appVersionCode": 3.0.1,
+  "shortcuts": [
+    {
+      "name": "Minha Carteira",
+      "shortName": "Carteira",
+      "url": "https://novaversao.site/#carteira",
+      "chosenIconUrl": "https://novaversao.site/icone-carteira.png"
+    },
+    {
+      "name": "Meus Agendamentos",
+      "shortName": "Agenda",
+      "url": "https://novaversao.site/#historico",
+      "chosenIconUrl": "https://novaversao.site/icone-agenda.png"
+    },
+    {
+      "name": "Ver Loja",
+      "shortName": "Loja",
+      "url": "https://novaversao.site/#loja",
+      "chosenIconUrl": "https://novaversao.site/icone-loja.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://novaversao.site/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {
+    "playBilling": {
+      "enabled": true
+    },
+    "locationDelegation": {
+      "enabled": true
+    }
+  },
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://novaversao.site/",
+  "minSdkVersion": 21,
+  "shareTarget": {
+    "action": "https://novaversao.site/?shared=true",
+    "method": "POST",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "orientation": "portrait-primary",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "navigate-existing",
+  "displayOverride": [
+    "window-controls-overlay"
+  ],
+  "appVersion": "4"
+}

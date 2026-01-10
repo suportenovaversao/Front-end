@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Privacidade | King Agenda</title>
+    <meta name="theme-color" content="#000000">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #D4AF37;
+            --black: #000000;
+            --glass: rgba(20, 20, 20, 0.9);
+            --border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+        body {
+            background-color: var(--black);
+            color: #fff;
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* BACKGROUND ANIMADO */
+        .bg-grid {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(rgba(212, 175, 55, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(212, 175, 55, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: -1;
+            perspective: 1000px;
+            transform-style: preserve-3d;
+            animation: gridMove 20s linear infinite;
+        }
+        @keyframes gridMove { from { background-position: 0 0; } to { background-position: 0 40px; } }
+
+        /* HEADER FIXO */
+        .header {
+            position: fixed; top: 0; left: 0; width: 100%;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 20px;
+            z-index: 50;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: var(--border);
+            box-sizing: border-box;
+        }
+        .brand { font-family: 'Orbitron', sans-serif; color: var(--gold); letter-spacing: 2px; font-weight: bold; font-size: 1.2rem; }
+        .close-btn {
+            color: #fff; text-decoration: none; font-size: 1.5rem;
+            width: 40px; height: 40px; display: grid; place-items: center;
+            border-radius: 50%; border: 1px solid #333; transition: 0.3s;
+        }
+        .close-btn:hover { background: var(--gold); color: #000; border-color: var(--gold); }
+
+        /* CONTEÚDO */
+        .container {
+            padding: 100px 20px 40px;
+            max-width: 800px; margin: 0 auto;
+            opacity: 0; animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards 0.3s;
+        }
+
+        .doc-card {
+            background: var(--glass);
+            border: var(--border);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            position: relative;
+            overflow: hidden;
+        }
+        /* Linha de scan decorativa */
+        .doc-card::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+            background: var(--gold);
+            box-shadow: 0 0 10px var(--gold);
+            animation: scan 4s infinite linear;
+            opacity: 0.5;
+        }
+
+        h1 { font-family: 'Orbitron', sans-serif; color: var(--gold); margin-bottom: 20px; font-size: 1.8rem; text-transform: uppercase; }
+        h2 { font-family: 'Orbitron', sans-serif; font-size: 1.1rem; margin-top: 30px; color: #eee; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        
+        p { line-height: 1.8; color: #ccc; font-size: 0.95rem; margin-bottom: 15px; text-align: justify; }
+        
+        ul { color: #ccc; margin-bottom: 20px; padding-left: 20px; }
+        li { margin-bottom: 10px; line-height: 1.6; }
+        strong { color: #fff; }
+
+        .highlight { color: var(--gold); font-weight: 600; }
+
+        /* Animações */
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
+
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #111; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+    </style>
+</head>
+<body>
+
+    <div class="bg-grid"></div>
+
+    <header class="header">
+        <div class="brand">KING AGENDA</div>
+        <a href="/" class="close-btn" onclick="history.back(); return false;">×</a>
+    </header>
+
+    <div class="container">
+        <div class="doc-card">
+            <h1>Política de Privacidade</h1>
+            <p>O aplicativo <span class="highlight">King Agenda</span> respeita a sua privacidade. Esta política descreve como coletamos, usamos e protegemos suas informações no nosso ecossistema digital.</p>
+
+            <h2>1. Dados que Coletamos</h2>
+            <p>Para o funcionamento correto do aplicativo e garantia da sua segurança, coletamos os seguintes dados:</p>
+            <ul>
+                <li><strong>Informações de Cadastro:</strong> Nome, E-mail, Telefone e Senha (criptografada).</li>
+                <li><strong>Localização (GPS):</strong> Coletamos sua localização precisa em tempo real para exibir profissionais próximos e calcular rotas de atendimento.</li>
+                <li><strong>Mídia e Arquivos:</strong> Acesso à câmera e galeria para envio de fotos de perfil, logomarcas, portfólio e imagens no chat.</li>
+                <li><strong>Informações Financeiras:</strong> Histórico de transações, saldo na carteira digital e registros de pagamentos.</li>
+            </ul>
+
+            <h2>2. Como Usamos seus Dados</h2>
+            <p>Utilizamos seus dados estritamente para:</p>
+            <ul>
+                <li>Gerenciar sua conta e autenticação segura.</li>
+                <li>Processar agendamentos e conectar clientes a profissionais.</li>
+                <li>Facilitar a comunicação via Chat Global e Local.</li>
+                <li>Processar pagamentos e assinaturas (VIP/PRO) via Google Play Billing.</li>
+                <li>Melhorar a segurança, evitar fraudes e garantir a integridade da comunidade.</li>
+            </ul>
+
+            <h2>3. Compartilhamento com Terceiros</h2>
+            <p>Não vendemos seus dados. Compartilhamos informações apenas com serviços essenciais para a infraestrutura do app:</p>
+            <ul>
+                <li><strong>Google Firebase:</strong> Para autenticação, banco de dados em tempo real, armazenamento de arquivos e notificações push.</li>
+                <li><strong>Google Play Services:</strong> Para processamento seguro de pagamentos de bens digitais.</li>
+            </ul>
+
+            <h2>4. Segurança</h2>
+            <p>Valorizamos sua confiança. Utilizamos protocolos de criptografia e meios comercialmente aceitáveis para proteger suas informações pessoais. No entanto, lembramos que nenhum método de transmissão pela internet é 100% infalível.</p>
+
+            <h2>5. Exclusão de Dados</h2>
+            <p>Você tem o direito de solicitar a exclusão completa de sua conta e dados a qualquer momento:</p>
+            <ul>
+                <li><strong>No App:</strong> Configurações > Encerrar Conta > Excluir Minha Conta Permanentemente.</li>
+                <li><strong>Por Solicitação:</strong> Entre em contato via e-mail.</li>
+            </ul>
+            <p>Após a solicitação, seus dados pessoais sensíveis serão removidos permanentemente de nossos servidores ativos.</p>
+
+            <h2>6. Privacidade de Menores</h2>
+            <p>Nossos serviços não se destinam a menores de 13 anos. Não coletamos intencionalmente informações de identificação pessoal de crianças.</p>
+
+            <h2>7. Contato</h2>
+            <p>Se tiver dúvidas sobre esta Política de Privacidade ou sobre os protocolos de segurança do King Agenda, entre em contato:</p>
+            <p style="color: var(--gold); font-weight: bold;">E-mail: kingagendamentossuporte@gmail.com</p>
+        </div>
+
+        <p style="text-align: center; margin-top: 30px; color: #555; font-size: 0.8rem;">
+            Última atualização: Protocolo 2024.11.B
+        </p>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,102 @@
+{
+  "name": "King Agenda",
+  "short_name": "King Agenda",
+  "start_url": "/?source=pwa",
+  "display": "standalone",
+  "background_color": "#0c0c0c",
+  "theme_color": "#d4af37",
+  "description": "Agenda Profissional para Salões e Barbearias. Encontre VAGAS IMEDIATAS e Navegue com Nosso Mapa 3D!",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "scope": "/",
+  "id": "/?source=pwa",
+  "orientation": "portrait",
+  "categories": [
+    "beauty",
+    "lifestyle",
+    "health",
+    "shopping"
+  ],
+  "iarc_rating_id": "e84b072d-df9b-45b7-957a-9f86a7d5b7c7",
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "display_override": [
+    "window-controls-overlay"
+  ],
+  "icons": [
+    {
+      "src": "/icone.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/icone.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icone.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot1.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "label": "Tela principal com lista de profissionais."
+    },
+    {
+      "src": "/screenshot2.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "label": "Agende seu horário de forma fácil."
+    },
+    {
+      "src": "/screenshot3.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "label": "Converse no chat global e local."
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Minha Carteira",
+      "short_name": "Carteira",
+      "description": "Acessar saldo e fazer depósitos",
+      "url": "/#carteira",
+      "icons": [{ "src": "/icone-carteira.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Meus Agendamentos",
+      "short_name": "Agenda",
+      "description": "Ver seus agendamentos pendentes e histórico",
+      "url": "/#historico",
+      "icons": [{ "src": "/icone-agenda.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Ver Loja",
+      "short_name": "Loja",
+      "description": "Explorar produtos da comunidade",
+      "url": "/#loja",
+      "icons": [{ "src": "/icone-loja.png", "sizes": "96x96" }]
+    }
+  ],
+  "share_target": {
+    "action": "/?shared=true",
+    "method": "POST",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  }
+}
