@@ -15,6 +15,11 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  <script src="https://unpkg.com/@studio-freight/lenis@1.0.33/dist/lenis.min.js"></script>
+
+
   <style>
     /* CORREÇÃO: Regra fora do root */
     .onboard-screen[style*="background-image"] {
@@ -6867,6 +6872,416 @@ body.tema-feminino button:hover {
     font-size: 12px;
     font-weight: bold;
 }
+
+/* --- ADICIONE ISTO FORA DO @MEDIA (NO CSS GERAL) --- */
+.chart-card canvas {
+    min-height: 220px !important;
+    width: 100% !important;
+    display: block;
+}
+
+/* Classe para esconder elementos no PC */
+.mobile-view-only {
+    display: block;
+}
+
+/* ============================================================ */
+/* === VERSÃO DESKTOP: BORDERLESS & NOVA SIDEBAR === */
+/* ============================================================ */
+@media (min-width: 1024px) {
+
+    /* ESCONDE ELEMENTOS DO MOBILE NO PC */
+    .topbar, 
+    .bottom-buttons-container, 
+    #btnMinimizadoMapa, 
+    .app-footer, 
+    #btnChat,
+    .mobile-view-only { 
+        display: none !important; 
+    }
+
+    /* 1. MOLDURA DA TELA (MONITOR) */
+    body::after {
+        content: '';
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        z-index: 999999;
+        pointer-events: none;
+        border: 4px solid #C0C0C0;
+        box-shadow: inset 0 0 20px rgba(212, 175, 55, 0.4), 0 0 15px rgba(212, 175, 55, 0.2);
+    }
+
+    /* 2. CORPO DA PÁGINA */
+    body {
+        overflow: hidden !important;
+        background-color: #050505 !important;
+        padding: 0 !important;
+    }
+
+    /* 3. NOVA SIDEBAR ESQUERDA (ESTILO DASHBOARD) */
+    #desktopSidebar {
+        width: 280px !important;
+        position: fixed !important;
+        top: 4px !important; 
+        left: 4px !important; 
+        bottom: 4px !important;
+        background: linear-gradient(180deg, #111 0%, #0a0a0a 100%) !important;
+        border-right: 1px solid var(--cor-destaque);
+        z-index: 50;
+        border-radius: 0 15px 15px 0;
+        padding: 20px !important;
+        display: flex !important; 
+        flex-direction: column !important;
+        box-shadow: 5px 0 20px rgba(0,0,0,0.8) !important;
+        overflow-y: auto !important;
+    }
+
+    #desktopSidebar::-webkit-scrollbar { width: 5px; }
+    #desktopSidebar::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+    /* 4. ÁREA CENTRAL (PAINEL) */
+    .content-container {
+        position: fixed !important;
+        top: 10px !important;
+        bottom: 10px !important;
+        left: 300px !important; /* Sidebar + Espaço */
+        right: 360px !important; /* Chat + Espaço */
+        
+        width: auto !important;
+        max-width: none !important;
+        height: auto !important;
+        
+        margin: 0 !important;
+        padding: 40px !important;
+        
+        border: 1px solid #333 !important;
+        border-radius: 15px;
+        background: #0d0d0d !important;
+        box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+        overflow-y: auto !important;
+        display: block !important;
+    }
+
+    /* 5. CHAT FIXO NA DIREITA */
+    #janelaChat {
+        display: flex !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        position: fixed !important;
+        top: 4px !important;
+        bottom: 4px !important; 
+        right: 4px !important; 
+        left: auto !important;
+        
+        width: 340px !important;
+        background: #0a0a0a !important;
+        border-left: 1px solid #333 !important;
+        z-index: 40 !important;
+        padding: 0 !important;
+        border-radius: 15px 0 0 15px;
+    }
+    #janelaChat .modal-content {
+        width: 100% !important;
+        height: 100% !important;
+        border: none !important; 
+        background: transparent !important; 
+        box-shadow: none !important;
+    }
+    /* Esconde botão fechar do chat no PC */
+    #janelaChat button[data-modal-id="janelaChat"] { display: none !important; }
+
+    /* 6. MODAIS POPUP (Centralizados) */
+    .modal:not(#janelaChat) {
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 10000 !important;
+    }
+    .modal:not(#janelaChat) .modal-content {
+        width: 600px !important;
+        max-width: 90% !important;
+        max-height: 85vh !important;
+        border: 1px solid var(--cor-destaque) !important;
+        box-shadow: 0 0 40px rgba(0,0,0,1) !important;
+    }
+    
+    /* GRIDS PARA O PC */
+    #lojaContainer, .loja-grid, #listaBarbeirosPrincipalCliente, 
+    #listaBarbeirosPrincipalBarbeiro, .barbeiro-list-container {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important;
+        gap: 20px !important;
+        width: 100% !important;
+        padding-bottom: 50px;
+    }
+}
+
+/* ======================================================= */
+/* === ANIMAÇÕES MODERNAS (ESTILO FRAMER MOTION / GSAP) === */
+/* ======================================================= */
+
+/* 1. Efeito "Reveal on Scroll" (Elementos surgem ao rolar) */
+.reveal-on-scroll {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); /* Curva "Smooth" estilo Apple */
+    will-change: transform, opacity;
+}
+
+.reveal-on-scroll.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+/* 2. Micro-interações em Botões (Feedback Elástico) */
+button, .card, .selectable-item {
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                background-color 0.3s ease, 
+                box-shadow 0.3s ease !important;
+}
+
+button:active, .card:active {
+    transform: scale(0.96) !important; /* Efeito de clique físico */
+}
+
+/* 3. Layout Transitions (FLIP simulado para listas) */
+.card-agendamento-premium, .card-equipe-grid, .produto-card {
+    animation: slideInStagger 0.5s ease-out forwards;
+    opacity: 0;
+}
+
+@keyframes slideInStagger {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 4. Efeito de Foco "Glassmorphism" Avançado */
+.modal-content {
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    background-color: rgba(18, 18, 18, 0.85) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+}
+
+/* 5. Loader Estilo "Lottie" (CSS Puro de Alta Performance) */
+.spinner-moderno {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, transparent 0%, var(--cor-destaque) 100%);
+    animation: spin-modern 1s linear infinite;
+    position: relative;
+    margin: 20px auto;
+}
+.spinner-moderno::after {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    background: #000;
+    border-radius: 50%;
+}
+@keyframes spin-modern { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* 6. Efeito de Texto Gradiente Animado (Para Títulos Importantes) */
+.texto-framer {
+    background: linear-gradient(to right, #fff, #d4af37, #fff);
+    background-size: 200% auto;
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: shineText 5s linear infinite;
+    font-weight: 800;
+}
+
+/* --- EFEITO 3D PROFUNDO EM TODOS OS CARDS --- */
+.card, .produto-card, .em-alta-item, .card-equipe-grid, .agenda-slot-card {
+    background: linear-gradient(145deg, #1e1e1e, #121212) !important; /* Degradê sutil */
+    border: 1px solid rgba(255, 255, 255, 0.05) !important; /* Borda quase invisível */
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important; /* Luz vindo de cima */
+    border-bottom: 1px solid rgba(0, 0, 0, 0.5) !important; /* Sombra embaixo */
+    
+    /* Sombra 3D projetada */
+    box-shadow: 
+        0 10px 20px rgba(0, 0, 0, 0.5),      /* Sombra longe */
+        0 4px 6px rgba(0, 0, 0, 0.3),       /* Sombra perto */
+        inset 0 1px 0 rgba(255, 255, 255, 0.1) !important; /* Brilho interno no topo */
+    
+    border-radius: 16px !important;
+    transform-style: preserve-3d; /* Prepara para animações 3D */
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease !important;
+}
+
+/* Efeito ao passar o mouse ou tocar */
+.card:active, .produto-card:active, .card-equipe-grid:active {
+    transform: translateY(2px) scale(0.98) !important; /* Afunda o card */
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.4), 
+        inset 0 2px 10px rgba(0,0,0,0.5) !important; /* Sombra interna ao apertar */
+}
+
+/* --- ANIMAÇÃO DE ROLAGEM VIVA (SCROLL REVEAL) --- */
+
+/* Estado inicial (fora da tela ou invisível) */
+.scroll-hidden {
+    opacity: 0;
+    filter: blur(5px);
+    transform: translateY(50px) scale(0.9); /* Mais para baixo e menor */
+    transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Estado visível (quando entra na tela) */
+.scroll-visible {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0) scale(1);
+}
+
+.card, .produto-card, .em-alta-item, .card-equipe-grid, .agenda-slot-card, .card-agendamento-premium {
+        perspective: 1000px;
+        transform-style: preserve-3d;
+        will-change: transform, opacity, box-shadow;
+        transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
+        
+        /* Vidro Escuro Profundo */
+        background: linear-gradient(145deg, rgba(30, 30, 30, 0.9), rgba(10, 10, 10, 0.95)) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+        box-shadow: 
+            0 15px 35px rgba(0, 0, 0, 0.6), 
+            0 5px 15px rgba(0,0,0,0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .card:hover, .produto-card:hover, .card-agendamento-premium:hover {
+        transform: translateY(-5px) rotateX(2deg) !important;
+        box-shadow: 
+            0 20px 40px rgba(0, 0, 0, 0.8), 
+            0 0 20px rgba(212, 175, 55, 0.15) !important; /* Brilho dourado sutil */
+        border-color: var(--cor-destaque) !important;
+    }
+
+    /* ANIMAÇÃO DE SHIMMER (CARREGAMENTO) */
+    @keyframes shimmer {
+        0% { background-position: -1000px 0; }
+        100% { background-position: 1000px 0; }
+    }
+    .loading-skeleton {
+        background: linear-gradient(90deg, #222 25%, #333 50%, #222 75%);
+        background-size: 1000px 100%;
+        animation: shimmer 2s infinite linear;
+        border-radius: 8px;
+    }
+
+    /* SETUP INICIAL PARA ANIMAÇÕES DE ENTRADA */
+    .gsap-reveal {
+        opacity: 0; /* Começa invisível para o GSAP controlar */
+    }
+
+/* --- 1. ESTILO PRODUTO PREMIUM (OURO) --- */
+.card-premium {
+    background: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c) !important;
+    border: 1px solid #fff !important;
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.6) !important;
+    color: #000 !important;
+    transform: scale(1.02);
+    transition: transform 0.3s ease;
+}
+.card-premium * {
+    color: #000 !important; /* Força texto preto para contraste no ouro */
+    text-shadow: none !important;
+}
+
+/* --- 2. ANIMAÇÃO DE ENTRADA DE MODAL (LUXO) --- */
+@keyframes modalEntradaLuxo {
+    0% {
+        opacity: 0;
+        transform: scale(0.8) translateY(20px);
+        filter: blur(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+        filter: blur(0);
+    }
+}
+
+.modal {
+    /* Garante que o modal use a animação ao abrir */
+    animation: modalEntradaLuxo 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    background: rgba(0, 0, 0, 0.85); /* Fundo um pouco mais escuro para o luxo */
+    backdrop-filter: blur(8px); /* Efeito de vidro */
+}
+
+/* --- 3. CLASSE BASE PARA O SCROLL DOS EXTRATOS --- */
+.gsap-feed-item {
+    opacity: 0; /* Começa invisível para o GSAP animar */
+    transform: translateY(50px); /* Começa 50px para baixo */
+}
+
+/* --- BRILHO DOURADO ATRÁS DOS POPUPS --- */
+.modal.show .modal-content {
+    animation: modalEntradaLuxo 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.4), 0 0 60px rgba(212, 175, 55, 0.2) !important;
+    border: 1px solid rgba(212, 175, 55, 0.5) !important;
+}
+
+/* Garante que nada bloqueie as faíscas na frente */
+canvas.confetti-canvas {
+    z-index: 999999 !important;
+    position: fixed !important;
+}
+
+/* ANIMAÇÃO DE SLIDE UP DOS EXTRATOS */
+.gsap-feed-item {
+    opacity: 0;
+    transform: translateY(30px);
+}
+
+/* --- ANIMAÇÃO DE SAÍDA LUXUOSA --- */
+@keyframes modalSaidaLuxo {
+    0% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+        filter: blur(0);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+        filter: blur(10px);
+    }
+}
+
+/* Classe que aplicaremos via JS na hora de fechar */
+.modal.closing .modal-content {
+    animation: modalSaidaLuxo 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* O fundo (overlay) também faz um fadeout */
+.modal.closing {
+    transition: opacity 0.3s ease;
+    opacity: 0 !important;
+}
+
+/* Garante que o canvas das faíscas fique na frente de todos os popups */
+.confetti-canvas {
+    z-index: 999999 !important;
+    pointer-events: none; /* Não atrapalha os cliques no app */
+}
+
+/* Brilho dourado discreto atrás do conteúdo do modal */
+.modal.show .modal-content {
+    border: 1px solid rgba(255, 215, 0, 0.3) !important;
+    box-shadow: 0 0 40px rgba(212, 175, 55, 0.15) !important;
+    animation: modalEntradaLuxo 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Estado inicial bem escondido e mais abaixo para um efeito dramático */
+.gsap-feed-item {
+    opacity: 0;
+    transform: translateY(80px) scale(0.9); /* Começa menor e mais baixo */
+    transition: none; /* Garante que o GSAP controle tudo */
+}
+
  </style>
 </head>
 <body>
@@ -10506,102 +10921,145 @@ function mudarFiltroNicho(novoFiltro, containerId) {
     carregarBarbeirosPrincipal(containerId, false);
 } 
 
+// SUBSTITUA A FUNÇÃO verificarInterfaceDesktop INTEIRA POR ESTA:
 function verificarInterfaceDesktop() {
     if (window.innerWidth >= 1024) {
         
         // 1. Cria a Sidebar Esquerda (Se não existir)
-        if (!document.getElementById('desktopSidebar')) {
-            const sidebar = document.createElement('div');
+        let sidebar = document.getElementById('desktopSidebar');
+        if (!sidebar) {
+            sidebar = document.createElement('div');
             sidebar.id = 'desktopSidebar';
-            sidebar.style.cssText = `
-                position: fixed;
-                top: 0; left: 0;
-                width: 300px; height: 100vh;
-                background: #111;
-                border-right: 1px solid #333;
-                padding: 20px;
-                display: flex; flex-direction: column;
-                z-index: 100;
-            `;
-
-            // Dados do perfil
-            const foto = (perfil && perfil.fotoPerfil) ? perfil.fotoPerfil : '/icone.png';
-            const nome = (perfil && perfil.nome) ? perfil.nome : 'Visitante';
-            const saldo = (perfil && perfil.saldoDigital) ? perfil.saldoDigital.toFixed(2) : '0.00';
-
-            sidebar.innerHTML = `
-                <div style="text-align:center; margin-bottom: 30px;">
-                    <img src="/icone.png" style="width: 50px; margin-bottom: 10px;">
-                    <h2 style="color: var(--cor-destaque); margin: 0; font-family: 'Orbitron'; font-size: 20px;">KING AGENDA</h2>
-                </div>
-
-                <div style="display:flex; align-items:center; gap:10px; padding:15px; background:#222; border-radius:12px; margin-bottom:20px; cursor:pointer; border: 1px solid #444;" onclick="abrirModalPerfil()">
-                    <img src="${foto}" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
-                    <div>
-                        <div style="font-weight:bold; color:#fff; font-size: 14px;">${nome}</div>
-                        <div style="font-size:12px; color:#00c6ff;">💎 ${saldo}</div>
-                    </div>
-                </div>
-
-                <div style="flex-grow: 1; overflow-y: auto;">
-                    <h4 style="color:#666; font-size:10px; text-transform:uppercase; letter-spacing: 1px; margin-bottom: 10px;">Menu Principal</h4>
-                    
-                    <button onclick="switchView('${perfil && perfil.tipo === 'cliente' ? 'cliente' : 'barbeiro'}')" style="text-align:left; background:transparent; border:none; color:#ddd; padding:10px; width:100%; border-radius:8px; display:flex; align-items:center; gap:10px; transition: 0.2s;">
-                        <span style="font-size:18px">🏠</span> Início
-                    </button>
-                    
-                    <button onclick="switchView('emAlta')" style="text-align:left; background:transparent; border:none; color:#ddd; padding:10px; width:100%; border-radius:8px; display:flex; align-items:center; gap:10px; transition: 0.2s;">
-                        <span style="font-size:18px">🔥</span> Em Alta
-                    </button>
-                    
-                    <button onclick="switchView('loja')" style="text-align:left; background:transparent; border:none; color:#ddd; padding:10px; width:100%; border-radius:8px; display:flex; align-items:center; gap:10px; transition: 0.2s;">
-                        <span style="font-size:18px">🛍️</span> Loja
-                    </button>
-
-                    <h4 style="color:#666; font-size:10px; text-transform:uppercase; margin-top:20px; margin-bottom: 10px;">Atalhos</h4>
-                    
-                    <button onclick="abrirModalCarteira()" style="text-align:left; background:transparent; border:none; color:#ccc; padding:8px 10px;">💰 Minha Carteira</button>
-                    <button onclick="abrirModal('modalConfiguracoes')" style="text-align:left; background:transparent; border:none; color:#ccc; padding:8px 10px;">⚙️ Configurações</button>
-                    
-                    ${perfil && perfil.tipo === 'admin' ? `<button onclick="switchView('admin')" style="text-align:left; color:#e74c3c; font-weight:bold; padding:10px; margin-top:10px;">🧠 Painel Admin</button>` : ''}
-                </div>
-
-                <div style="margin-top:auto;">
-                    <button onclick="fazerLogout()" style="width:100%; background:#222; color:#aaa; border: 1px solid #444;">🚪 Sair</button>
-                </div>
-            `;
             document.body.appendChild(sidebar);
         }
 
+        // Dados do perfil com segurança
+        const p = perfil || {};
+        const foto = p.fotoPerfil || p.logo_url || '/icone.png';
+        const nome = p.nome || 'Visitante';
+        const saldo = (p.saldoDigital || 0).toFixed(2);
+        const isProfissional = ['barbeiro', 'manicure_pedicure', 'designer_cilios', 'cabelereira'].includes(p.tipo);
+        const isDono = p.isProprietario;
+        const isAdmin = p.tipo === 'admin';
+
+        // Lógica do Botão de Foto (Aparece se não tiver foto)
+        let btnFotoHtml = '';
+        if (!p.fotoPerfil && !p.logo_url && p.tipo) {
+            btnFotoHtml = `
+            <div style="margin-bottom:15px; border:1px dashed #e74c3c; padding:10px; border-radius:10px; text-align:center;">
+                <p style="font-size:10px; color:#e74c3c; margin:0 0 5px 0;">Sem foto de perfil</p>
+                <button onclick="abrirModal('modalLogomarca')" style="width:100%; font-size:11px; padding:5px; background:#e74c3c; color:white;">📸 Adicionar Foto</button>
+            </div>`;
+        }
+
+        // HTML da Sidebar (Com os novos botões solicitados)
+        sidebar.innerHTML = `
+            <div style="text-align:center; margin-bottom: 20px;">
+                <img src="/icone.png" style="width: 50px; margin-bottom: 10px; filter: drop-shadow(0 0 5px gold);">
+                <h2 style="color: var(--cor-destaque); margin: 0; font-family: 'Orbitron'; font-size: 18px; letter-spacing: 2px;">KING AGENDA</h2>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:10px; padding:15px; background:rgba(255,255,255,0.05); border-radius:12px; margin-bottom:15px; cursor:pointer; border: 1px solid #333; transition:0.3s;"
+                 onclick="abrirModalPerfil()" onmouseover="this.style.borderColor='var(--cor-destaque)'" onmouseout="this.style.borderColor='#333'">
+                <img src="${foto}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid var(--cor-destaque);">
+                <div style="overflow:hidden;">
+                    <div style="font-weight:bold; color:#fff; font-size: 13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${nome}</div>
+                    <div style="font-size:11px; color:#00c6ff;">💎 ${saldo} Moedas</div>
+                </div>
+            </div>
+            
+            ${btnFotoHtml}
+
+            <div style="flex-grow: 1; overflow-y: auto; padding-right: 5px;">
+                
+                <p style="font-size:10px; color:#666; text-transform:uppercase; margin-bottom:10px;">Principal</p>
+                
+                <button onclick="switchView('${p.tipo === 'cliente' ? 'cliente' : 'barbeiro'}')" 
+                    style="text-align:left; background:transparent; border:none; color:#ddd; padding:10px; width:100%; border-radius:8px; display:flex; align-items:center; gap:10px; transition: 0.2s; font-size:14px; cursor:pointer;">
+                    <span>🏠</span> Início
+                </button>
+                
+                <button onclick="switchView('loja'); carregarProdutos();" 
+                    style="text-align:left; background:transparent; border:none; color:#ddd; padding:10px; width:100%; border-radius:8px; display:flex; align-items:center; gap:10px; transition: 0.2s; font-size:14px; cursor:pointer;">
+                    <span>🛍️</span> Loja & Produtos
+                </button>
+
+                <button onclick="switchView('emAlta')" 
+                    style="text-align:left; background:transparent; border:none; color:#ddd; padding:10px; width:100%; border-radius:8px; display:flex; align-items:center; gap:10px; transition: 0.2s; font-size:14px; cursor:pointer;">
+                    <span>🔥</span> Em Alta
+                </button>
+
+                ${ (isProfissional || isDono || isAdmin) ? `
+                    <p style="font-size:10px; color:#d4af37; text-transform:uppercase; margin:15px 0 10px 0; border-top:1px solid #333; padding-top:15px;">Gestão Profissional</p>
+                    
+                    <button onclick="abrirServicos()" style="text-align:left; background:transparent; border:1px solid #444; color:#ccc; padding:10px; width:100%; border-radius:8px; display:flex; align-items:center; gap:10px; margin-bottom:5px;">
+                        <span>✂️</span> Meus Serviços
+                    </button>
+
+                    <button onclick="abrirConfiguracaoHorario()" style="text-align:left; background:transparent; border:1px solid #444; color:#ccc; padding:10px; width:100%; border-radius:8px; display:flex; align-items:center; gap:10px; margin-bottom:5px;">
+                        <span>⏰</span> Expediente & Almoço
+                    </button>
+
+                    <button onclick="abrirAgendamentosBarbeiro()" style="text-align:left; background:rgba(212, 175, 55, 0.1); border:1px solid #d4af37; color:#fff; padding:10px; width:100%; border-radius:8px; display:flex; align-items:center; gap:10px; margin-bottom:5px;">
+                        <span>🗓️</span> Meus Agendamentos
+                    </button>
+
+                    <button onclick="abrirModalCriarAgendamentoManual()" style="text-align:left; background:transparent; border:1px solid #444; color:#ccc; padding:10px; width:100%; border-radius:8px; display:flex; align-items:center; gap:10px; margin-bottom:5px;">
+                        <span>➕</span> Novo Agendamento
+                    </button>
+
+                    <button onclick="abrirModalDashboardBarbeiro()" style="text-align:left; background:transparent; border:1px solid #444; color:#ccc; padding:10px; width:100%; border-radius:8px; display:flex; align-items:center; gap:10px; margin-bottom:5px;">
+                        <span>📊</span> Relatórios & Metas
+                    </button>
+                ` : ''}
+
+                ${ isDono ? `
+                    <p style="font-size:10px; color:#00c6ff; text-transform:uppercase; margin:15px 0 10px 0; border-top:1px solid #333; padding-top:15px;">Administração</p>
+                    <button onclick="abrirModalFinanceiroProprietario()" style="text-align:left; background:rgba(0, 198, 255, 0.1); border:1px solid #00c6ff; color:#fff; padding:10px; width:100%; border-radius:8px; display:flex; align-items:center; gap:10px; margin-bottom:5px;">
+                        <span>💰</span> Gestão Financeira
+                    </button>
+                    <button onclick="switchView('profissionais')" style="text-align:left; background:transparent; border:1px solid #444; color:#ccc; padding:10px; width:100%; border-radius:8px; display:flex; align-items:center; gap:10px; margin-bottom:5px;">
+                        <span>👥</span> Minha Equipe
+                    </button>
+                ` : ''}
+                
+                ${ isAdmin ? `
+                    <p style="font-size:10px; color:red; text-transform:uppercase; margin:15px 0 10px 0;">Super Admin</p>
+                    <button onclick="switchView('admin')" style="text-align:left; background:transparent; border:1px solid red; color:#fff; padding:10px; width:100%; border-radius:8px; display:flex; align-items:center; gap:10px;">
+                        <span>🧠</span> Painel Geral
+                    </button>
+                ` : ''}
+
+                <p style="font-size:10px; color:#666; text-transform:uppercase; margin:15px 0 10px 0; border-top:1px solid #333; padding-top:15px;">Conta</p>
+                <button onclick="abrirModal('modalConfiguracoes')" style="text-align:left; background:transparent; border:none; color:#aaa; padding:10px; width:100%; border-radius:8px; display:flex; align-items:center; gap:10px;">
+                    <span>⚙️</span> Configurações
+                </button>
+
+            </div>
+
+            <div style="margin-top:10px;">
+                <button onclick="fazerLogout()" style="width:100%; background:#222; color:#aaa; border: 1px solid #444; padding:10px; border-radius:8px; cursor:pointer;">🚪 Sair</button>
+            </div>
+        `;
+
         // 2. FORÇA A ABERTURA DO CHAT (Barra Direita)
-        // O CSS já posiciona, mas o JS precisa carregar as mensagens
         const chatModal = document.getElementById('janelaChat');
-        
-        // Verifica se o chat já está inicializado para não recarregar em loop
         if (chatModal && !chatModal.classList.contains('desktop-initialized')) {
             console.log("🖥️ Inicializando Chat Desktop na direita...");
-            
-            // Adiciona classe para marcar que já inicializamos
             chatModal.classList.add('desktop-initialized');
-            
-            // Adiciona classe 'show' para o CSS entender que está visível (mas o CSS Desktop força display flex de qualquer jeito)
             chatModal.classList.add('show'); 
-            
-            // Carrega as mensagens do Global
-            alternarChat('global'); 
+            alternarChat('global');
         }
 
     } else {
-        // Se voltar para Mobile, remove a Sidebar
+        // MODO MOBILE: Limpeza
         const sidebar = document.getElementById('desktopSidebar');
         if (sidebar) sidebar.remove();
         
-        // Reseta o Chat para comportamento Mobile (Escondido)
         const chatModal = document.getElementById('janelaChat');
         if (chatModal) {
             chatModal.classList.remove('desktop-initialized');
             chatModal.classList.remove('show');
-            // O CSS media query cuidará de esconder visualmente
         }
     }
 }
@@ -11211,20 +11669,24 @@ function fecharAguarde(event, force = false) {
 function abrirModal(modalId) {
     const novoModal = document.getElementById(modalId);
 
-    // Verifica se o modal existe e se já não está aberto
     if (novoModal && !novoModal.classList.contains('show')) {
         
         const baseZIndex = 2000;
         const incremento = modalStack.length * 10;
+        const zIndexFinal = baseZIndex + incremento;
         
-        novoModal.style.zIndex = baseZIndex + incremento;
-
+        novoModal.style.zIndex = zIndexFinal;
         novoModal.style.display = 'flex';
+
         setTimeout(() => {
             novoModal.classList.add('show');
-            modalStack.push(novoModal); // Adiciona à pilha
+            modalStack.push(novoModal);
             
-            // --- MUDANÇA AQUI: Adiciona estado no histórico para o botão voltar funcionar ---
+            // Disparar faíscas NA FRENTE do modal
+            if (typeof soltarFaiscasDeLuxo === 'function') {
+                soltarFaiscasDeLuxo();
+            }
+
             window.history.pushState({ modalOpen: true, modalId: modalId }, "");
         }, 10);
     }
@@ -11246,68 +11708,69 @@ function fecharModal(event) {
         modalElement = document.getElementById(event.target.closest('.modal-content button[data-modal-id]').dataset.modalId);
     }
 
-    // Se identificamos um modal E a pilha de modais não está vazia, 
-    // chamamos a função principal de fechamento.
+    // Se identificamos um modal E a pilha de modais não está vazia
     if (modalElement && modalStack.length > 0) {
-        
-        // CORREÇÃO: Força o uso da função fecharModalAtual()
-        // Esta função se encarrega de verificar qual modal está no topo, fechá-lo
-        // e, o mais importante, limpar o estado do histórico com history.back().
+        // Chama a função principal que agora tem o fadeout luxuoso
         fecharModalAtual(); 
         
     } else if (modalElement) {
-        // Lógica de fechamento manual (apenas se a pilha estiver vazia, para o caso de
-        // modais que não foram abertos via abrirModal, como o popupAguarde, se ele fosse clicável)
-        modalElement.classList.remove('show');
-        setTimeout(() => modalElement.style.display = 'none', 300);
+        // Fallback para modais fora da pilha (Ex: Popup Aguarde se for clicável)
+        modalElement.classList.add('closing');
+        setTimeout(() => {
+            modalElement.classList.remove('show', 'closing');
+            modalElement.style.display = 'none';
+        }, 300);
     }
 }
 
 async function fecharModalAtual(forcePopupAguarde = false, fromHistory = false) {
-    // --- IMPLEMENTAÇÃO DO BATIMENTO CARDÍACO E ANIMAÇÃO ---
+    // 1. IMPLEMENTAÇÃO DO BATIMENTO CARDÍACO E ANIMAÇÃO (MANTIDO)
     if (typeof pontosAcumuladosBatalha !== 'undefined' && pontosAcumuladosBatalha > 0 && auth.currentUser) {
-        
-        // 1. DISPARA A ANIMAÇÃO VISUAL IMEDIATAMENTE!
-        // O usuário vê a festa enquanto o banco salva em segundo plano.
         exibirAnimacaoRecompensaFinal(pontosAcumuladosBatalha);
-
         try {
             const userRef = db.collection('usuarios').doc(auth.currentUser.uid);
-            // Faz o update no banco
             await userRef.update({
                 pontosFidelidade: firebase.firestore.FieldValue.increment(pontosAcumuladosBatalha)
             });
-            
-            pontosAcumuladosBatalha = 0; // Reseta
+            pontosAcumuladosBatalha = 0; 
             console.log("✅ Batimento e Animação concluídos!");
         } catch (e) {
             console.error("Erro ao sincronizar batimento na saída:", e);
         }
     }
 
-    // --- SUA LÓGICA ORIGINAL MANTIDA ---
+    // 2. LÓGICA PARA POPUP AGUARDE (COM FADEOUT)
     if (forcePopupAguarde) {
         const popup = document.getElementById('popupAguarde');
         if (popup) {
-            popup.classList.remove('show');
-            setTimeout(() => popup.style.display = 'none', 300);
+            popup.classList.add('closing'); // Inicia animação de saída
+            await new Promise(resolve => setTimeout(resolve, 300)); // Aguarda 0.3s
+            popup.classList.remove('show', 'closing');
+            popup.style.display = 'none';
         }
         return;
     }
     
+    // 3. LIMPEZA DE INTERVALOS (MANTIDO)
     if (intervaloRelogiosPerfil) {
         clearInterval(intervaloRelogiosPerfil);
         intervaloRelogiosPerfil = null;
     }
 
+    // 4. FECHAMENTO DA PILHA DE MODAIS (LUXO)
     if (modalStack && modalStack.length > 0) {
         const modalParaFechar = modalStack.pop();
-        modalParaFechar.classList.remove('show');
         
-        setTimeout(() => {
-            modalParaFechar.style.display = 'none';
-        }, 300);
+        // Dispara o FadeOut Fluído
+        modalParaFechar.classList.add('closing');
+        
+        // Aguarda a animação terminar antes de remover do DOM visual
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        modalParaFechar.classList.remove('show', 'closing');
+        modalParaFechar.style.display = 'none';
 
+        // Lógica de Histórico (MANTIDO)
         if (!fromHistory) {
             ignoreNextPopstate = true;
             window.history.back();
@@ -11315,16 +11778,32 @@ async function fecharModalAtual(forcePopupAguarde = false, fromHistory = false) 
     }
 }
 
-function fecharTodosOsModais(manterAberto = false) {
+// --- FUNÇÃO: FECHAR TODOS OS MODAIS (COM FADEOUT COLETIVO) ---
+async function fecharTodosOsModais(manterAberto = false) {
     const modais = document.querySelectorAll('.modal, .modal-overlay, #modal-pagamento');
+    const modaisParaFechar = [];
+
     modais.forEach(m => {
-        // PROTEÇÃO: Não fecha o Chat nem o Perfil se for atualização automática
+        // PROTEÇÃO: Não fecha o Chat nem o Perfil se for atualização automática (MANTIDO)
         if (manterAberto && (m.id === 'janelaChat' || m.id === 'modalMeuPerfil')) {
             return; 
         }
-        m.style.display = 'none';
-        m.classList.remove('show');
+        if (m.style.display === 'flex' || m.classList.contains('show')) {
+            m.classList.add('closing');
+            modaisParaFechar.push(m);
+        }
     });
+
+    // Se houver modais abertos, aguarda o fadeout de todos
+    if (modaisParaFechar.length > 0) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        modaisParaFechar.forEach(m => {
+            m.style.display = 'none';
+            m.classList.remove('show', 'closing');
+        });
+    }
+
+    modalStack = []; // Limpa a pilha
 }
 
 function mostrar(id) {
@@ -13828,6 +14307,56 @@ window.addEventListener('beforeinstallprompt', (e) => {
     }
 });
 
+// ESTA É A FUNÇÃO QUE SALVA NO BANCO (Verifique se a sua está assim):
+async function confirmarPagamentoEConcluir() {
+    const agId = window.agendamentoIdParaConcluir;
+    const metodos = {
+        pix: parseFloat(document.getElementById('pag-pix').value) || 0,
+        dinheiro: parseFloat(document.getElementById('pag-dinheiro').value) || 0,
+        debito: parseFloat(document.getElementById('pag-debito').value) || 0,
+        credito: parseFloat(document.getElementById('pag-credito').value) || 0
+    };
+    const valorTotal = metodos.pix + metodos.dinheiro + metodos.debito + metodos.credito;
+
+    try {
+        const batch = db.batch();
+        const agRef = db.collection('agendamentos').doc(agId);
+        const agDoc = await agRef.get();
+        const agData = agDoc.data();
+
+        // 1. Atualiza o agendamento
+        batch.update(agRef, {
+            status: 'concluido',
+            metodosPagamento: metodos,
+            valorFinal: valorTotal,
+            dataConclusao: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // 2. GRAVA O EXTRATO COM O ID DO AGENDAMENTO (O SEGREDO ESTÁ AQUI)
+        const extratoRef = db.collection('extrato_financeiro').doc();
+        batch.set(extratoRef, {
+            agendamentoId: agId, // <--- ISSO VAI IMPEDIR A DUPLICIDADE NA GESTÃO
+            donoUid: agData.donoUid || auth.currentUser.uid,
+            usuarioUid: agData.barbeiroUid,
+            tipo: 'receita_servico',
+            descricao: `Serviço: ${agData.servico}`,
+            valor: valorTotal,
+            metodos: metodos,
+            dataEvento: firebase.firestore.Timestamp.now(),
+            ts: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        await batch.commit();
+        exibirPopup("Sucesso!", "Agendamento concluído com sucesso.");
+        fecharModal('modal-pagamento');
+        carregarFinanceiro(); // Recarrega a lista sem duplicados
+
+    } catch (e) {
+        console.error("Erro ao concluir:", e);
+        exibirPopup("Erro", "Não foi possível concluir o agendamento.");
+    }
+}
+
 // Substitua a função abrirModalCarteira inteira por esta:
 async function abrirModalCarteira() {
     const modalId = 'modalCarteira';
@@ -15345,8 +15874,8 @@ function executarAgendamentoNoBanco(valorFinalCliente, valorOriginalServico) {
     const { barbeiroUid, barbeiroNome, servico, horario } = agendamentoState;
     const barbeiroTelefone = agendamentoState.barbeiroTelefone;
     
-    // Define quem é o Dono para salvar no agendamento (importante para a secretária ver)
-    const donoUid = agendamentoState.donoUid || barbeiroUid; 
+    // CORREÇÃO DE DONO UID (Recupera do estado salvo ao abrir o perfil ou define agora)
+    let donoUid = agendamentoState.donoUid || barbeiroUid;
 
     exibirAguarde("Processando...");
     
@@ -15366,7 +15895,7 @@ function executarAgendamentoNoBanco(valorFinalCliente, valorOriginalServico) {
         valor: valorFinalCliente,          
         valorOriginal: valorOriginalServico, 
         descontoVipAplicado: false, 
-        donoUid: donoUid, 
+        donoUid: donoUid, // USA O ID DO DONO CORRETO
         status: statusInicial,
         ts: firebase.firestore.FieldValue.serverTimestamp(),
         confirmadoEm: dataConfirmacao, // Data de confirmação para Programados
@@ -15698,6 +16227,36 @@ function abrirHistoricoCliente() {
     });
 }
 
+function soltarFaiscasDeLuxo() {
+    if (typeof confetti === 'undefined') return;
+
+    const duracao = 1000; // Tempo total das faíscas subindo
+    const finalDaAnimacao = Date.now() + duracao;
+
+    // Função interna para criar o fluxo ascendente
+    (function frame() {
+        // Dispara pequenas partículas de pontos aleatórios no fundo da tela
+        confetti({
+            particleCount: 3,
+            angle: 90,        // Direção: para cima
+            spread: 100,      // Espalha um pouco na largura
+            origin: { x: Math.random(), y: 1.1 }, // Começa um pouco abaixo do rodapé
+            colors: ['#FFD700', '#fcf6ba', '#aa771c'], // Tons de ouro
+            ticks: 300,       // Quanto tempo a partícula vive (o suficiente para subir a tela)
+            gravity: -0.4,    // GRAVIDADE NEGATIVA: Faz as faíscas subirem!
+            scalar: 0.1,      // Tamanho bem pequeno e discreto
+            drift: Math.random() - 0.5, // Movimento lateral aleatório (fluidez)
+            velocity: 15,     // Velocidade inicial de subida
+            zIndex: 999999
+        });
+
+        // Continua disparando enquanto o tempo não acabar
+        if (Date.now() < finalDaAnimacao) {
+            requestAnimationFrame(frame);
+        }
+    }());
+}
+
 // --- FUNÇÃO AUXILIAR PARA GERAR BOTÕES COM BLOQUEIO DE TIER (CORRIGIDA) ---
 function gerarBotaoPro(label, onclickOriginal, tierNecessario, perfilUsuario) {
     const niveis = { 'tier1': 1, 'tier2': 2, 'tier3': 3, 'tier4': 4 };
@@ -15739,6 +16298,7 @@ function abrirModalAvaliacao(agendamentoId, barbeiroUid) {
   document.getElementById('inputAvaliacaoFotoFile').value = ''; // Limpa o input de arquivo
   document.getElementById('avaliacaoUploadProgress').style.display = 'none'; // Esconde a barra
   
+  soltarFaiscasDeLuxo();
   abrirModal('modalAvaliacaoCliente');
 }
 
@@ -15964,6 +16524,7 @@ function abrirModalVip() {
         `;
     }
     abrirModal('modalVip');
+    soltarFaiscasDeLuxo();
 }
 
 const SKUS = {
@@ -16276,6 +16837,26 @@ function isVipAtivo(perfilUsuario) {
     } catch (e) {
         console.error("Erro ao verificar VIP:", e);
         return false;
+    }
+}
+
+// FUNÇÃO GLOBAL PARA IDENTIFICAR O PROPRIETÁRIO REAL
+async function obterDonoUidReal(profissionalUid) {
+    try {
+        const docProf = await db.collection('usuarios').doc(profissionalUid).get();
+        if (!docProf.exists) return profissionalUid;
+
+        const dados = docProf.data();
+        // Se o profissional pertence a uma barbearia, o dono é o UID do patrão
+        if (dados.pertenceABarbearia && dados.pertenceABarbearia.uid) {
+            console.log("Vínculo encontrado: Dono é " + dados.pertenceABarbearia.uid);
+            return dados.pertenceABarbearia.uid;
+        }
+        // Se não tem vínculo, ele é o próprio dono
+        return profissionalUid;
+    } catch (e) {
+        console.error("Erro ao identificar dono:", e);
+        return profissionalUid;
     }
 }
 
@@ -17015,110 +17596,74 @@ async function abrirModalEntradaManual(uidProf, idAgendamento = null) {
 async function confirmarEntradaManual() {
     if (!uidProfissionalFocado) return;
 
-    // 1. Validação de Serviço
     const radios = document.getElementsByName('servicoManual');
-    let indexSelecionado = -1;
-    for (const radio of radios) {
-        if (radio.checked) {
-            indexSelecionado = radio.value;
-            break;
-        }
-    }
-    if (indexSelecionado === -1) return alert("Selecione um serviço!");
+    let index = -1;
+    for (const r of radios) { if (r.checked) { index = r.value; break; } }
+    if (index === -1) return alert("Selecione um serviço!");
 
-    // Fecha modal e mostra aguarde
-    document.getElementById('modalEntradaManualProfissional').style.display = 'none';
-    exibirAguarde("Processando métricas...");
+    exibirAguarde("Processando entrada...");
 
     try {
+        // 1. Pega dados do profissional e o seu 'vinculoSalao'
         const profDoc = await db.collection('usuarios').doc(uidProfissionalFocado).get();
         const profDados = profDoc.data();
-        const servicoObj = profDados.listaServicos[indexSelecionado];
+        const servicoObj = profDados.listaServicos[index];
         const formaPagamento = document.getElementById('entradaManualPagamento').value;
 
-        // CÁLCULOS
+        // BUSCA DO DONO PELO VINCULO
+        let uidDonoReal = profDados.vinculoSalao || uidProfissionalFocado;
+
         const valorBruto = parseFloat(servicoObj.valor);
-        const taxaSalao = parseFloat(profDados.taxaComissao || profDados.comissao || 0) || 0; 
-        const ganhoProfissional = valorBruto * ((100 - taxaSalao) / 100);
-        
-        const donoUid = auth.currentUser.uid;
+        const taxa = parseFloat(profDados.taxaComissao || profDados.comissao || 0);
+        const ganhoDono = valorBruto * (taxa / 100);
+        const ganhoProf = valorBruto - ganhoDono;
+        let metodos = {}; metodos[formaPagamento] = valorBruto;
 
-        // --- TRAVA DE SEGURANÇA 1 MINUTO (ANTI-DUPLICIDADE) ---
-        const duplicado = await verificarTransacaoRecente(donoUid, valorBruto, uidProfissionalFocado);
-        if (duplicado) {
-            fecharTodosOsModais();
-            return alert("⚠️ ALERTA: Essa transação parece já ter sido lançada agora pouco! Bloqueamos para evitar duplicidade no financeiro.");
-        }
+        const batch = db.batch();
 
-        let metodosPagamentoObj = {};
-        metodosPagamentoObj[formaPagamento] = valorBruto;
+        // 2. Criar Agendamento já concluído (Gera ID antes)
+        const agendRef = db.collection('agendamentos').doc();
+        const agendamentoId = agendRef.id; // Guarda o ID
 
-        // --- CAMINHO A: CONCLUIR AGENDAMENTO EXISTENTE ---
-        if (idAgendamentoFocado) {
-            // Atualiza o agendamento que já existe
-            await db.collection('agendamentos').doc(idAgendamentoFocado).update({
-                status: 'concluido',
-                concluidoEm: firebase.firestore.FieldValue.serverTimestamp(),
-                valor: valorBruto, // Atualiza valor caso tenha mudado
-                metodosPagamento: metodosPagamentoObj,
-                servico: servicoObj.nome // Atualiza nome do serviço selecionado
-            });
-            
-            // Usa o ID do cliente original para o histórico
-            // (Poderia buscar o doc do agendamento aqui, mas para economizar leitura, usamos um genérico ou mantemos a lógica de extrato abaixo)
-        } 
-        
-        // --- CAMINHO B: CRIAR NOVO (BALCÃO PURO) ---
-        else {
-            const fakeUidCliente = 'manual_' + new Date().getTime();
-            await db.collection('agendamentos').add({
-                barbeiroUid: uidProfissionalFocado,
-                barbeiroNome: profDados.nome,
-                clienteUid: fakeUidCliente,
-                clienteNome: "Cliente Balcão (Manual)",
-                servico: servicoObj.nome,
-                valor: valorBruto,
-                valorOriginal: valorBruto,
-                horario: "Manual",
-                data: new Date().toLocaleDateString('pt-BR'),
-                status: 'concluido',
-                donoUid: donoUid,
-                ts: firebase.firestore.FieldValue.serverTimestamp(),
-                concluidoEm: firebase.firestore.FieldValue.serverTimestamp(),
-                origem: 'manual_painel',
-                metodosPagamento: metodosPagamentoObj
-            });
-        }
-
-        // --- PARTE FINAL: LANÇAR NO EXTRATO (COMUM AOS DOIS) ---
-        // É isso que gera o gráfico perfeito
-        await db.collection('extrato_financeiro').add({
-            donoUid: donoUid,
-            usuarioUid: uidProfissionalFocado,
-            // Se tinha agendamento, idealmente pegaria o clienteUid dele, mas 'manual' serve para não quebrar
-            clienteUid: idAgendamentoFocado ? 'cliente_agendado' : 'cliente_manual', 
-            tipo: 'receita_servico',
-            descricao: idAgendamentoFocado ? `Conclusão: ${servicoObj.nome}` : `Entrada Manual: ${servicoObj.nome}`,
+        batch.set(agendRef, {
+            barbeiroUid: uidProfissionalFocado,
+            barbeiroNome: profDados.nome,
+            clienteNome: "Cliente Balcão",
+            servico: servicoObj.nome,
             valor: valorBruto,
-            comissao: ganhoProfissional, 
-            dataEvento: firebase.firestore.FieldValue.serverTimestamp(),
+            status: 'concluido', // Já nasce concluído
+            donoUid: uidDonoReal, // Vínculo com o Patrão
+            data: new Date().toLocaleDateString('pt-BR'),
             ts: firebase.firestore.FieldValue.serverTimestamp(),
-            metodos: metodosPagamentoObj,
-            origem: 'manual_seguro'
+            metodosPagamento: metodos
         });
 
-        fecharTodosOsModais();
-        exibirPopup("Sucesso", "Serviço concluído e métricas registradas!");
+        // 3. Criar Extrato Financeiro (VINCULADO AO ID DO AGENDAMENTO)
+        const extratoRef = db.collection('extrato_financeiro').doc();
+        batch.set(extratoRef, {
+            agendamentoId: agendamentoId, // <--- BLINDAGEM: Vincula ao agendamento
+            donoUid: uidDonoReal, 
+            usuarioUid: uidProfissionalFocado,
+            tipo: 'receita_servico',
+            descricao: `Balcão: ${servicoObj.nome}`,
+            valor: valorBruto,
+            comissaoRetida: ganhoDono,
+            valorLiquidoProfissional: ganhoProf,
+            metodos: metodos,
+            dataEvento: firebase.firestore.Timestamp.now(),
+            ts: firebase.firestore.FieldValue.serverTimestamp(),
+            extratoIdNoBanco: extratoRef.id
+        });
 
-        // Recarrega telas
-        setTimeout(() => {
-            if (document.getElementById('modalGestaoV2')) abrirGestaoMembroV2(uidProfissionalFocado);
-            if (document.getElementById('modalGestaoUnica')) abrirGestaoUnica(uidProfissionalFocado);
-            if (typeof carregarAgenda === 'function') carregarAgenda(); // Atualiza agenda se existir
-        }, 500);
+        await batch.commit();
+
+        fecharTodosOsModais();
+        exibirPopup("Venda Registrada", "Venda de balcão concluída com sucesso.");
+        
+        if (typeof sincronizarPainelDeGestao === 'function') sincronizarPainelDeGestao();
 
     } catch (e) {
-        console.error(e);
+        console.error("Erro no balcão:", e);
         fecharTodosOsModais();
         alert("Erro: " + e.message);
     }
@@ -20019,81 +20564,150 @@ function agendarPeloStory() {
 // E adicione o botão "Postar Story" no renderCurrentView (para profissionais).
 
 function abrirAgendamentosBarbeiro() {
-  abrirModal('modalAgendamentosBarbeiro');
-  const painel = document.getElementById("agendamentosPainel");
-  painel.innerHTML = "<div style='text-align:center; margin-top:20px;'><div class='spinner'></div><p>Carregando agenda...</p></div>";
-  
-  db.collection("agendamentos")
-    .where("barbeiroUid", "==", auth.currentUser.uid)
-    .where("status", "in", ["pendente", "confirmado", "imediato", "conclusão pendente"])
-    .orderBy("ts", "asc")
-    .onSnapshot(snap => {
-        painel.innerHTML = !snap.empty ? "" : "<p style='text-align:center; opacity:0.7;'>Nenhum agendamento ativo no momento.</p>";
-        
-        snap.forEach(doc => {
-            const ag = doc.data();
-            const docId = doc.id; // ID do Agendamento
-            let botoes = "";
-            let statusTexto = ""; 
-            let corStatus = "#fff";
-            let horarioInfo = ag.horario ? `Horário: ${ag.horario}` : '⚡ Vaga Imediata';
-            
-            if (ag.status === "pendente") {
-                statusTexto = "⏳ Aguardando Aprovação";
-                corStatus = "#f1c40f";
-                botoes = `
-                    <div style="display:flex; gap:5px; margin-top:10px;">
-                        <button onclick="aprovarAgendamento('${docId}','${ag.clienteUid}',${ag.valor},'${ag.horario}')" style="background:#2ecc71; flex:1;">✅ Aprovar</button>
-                        <button onclick="recusarAgendamento('${docId}','${ag.clienteUid}')" style="background:#c0392b; flex:1;">❌ Recusar</button>
+    abrirModal('modalAgendamentosBarbeiro');
+    const painel = document.getElementById("agendamentosPainel");
+    
+    // Feedback de carregamento
+    painel.innerHTML = `
+        <div style='text-align:center; padding:40px; color:#aaa;'>
+            <div class="spinner-premium"></div>
+            <p style="margin-top:15px; font-weight:600;">Sincronizando sua agenda...</p>
+        </div>
+    `;
+
+    // Listener em tempo real
+    db.collection("agendamentos")
+        .where("barbeiroUid", "==", auth.currentUser.uid)
+        .where("status", "in", ["pendente", "confirmado", "imediato", "conclusão pendente"])
+        .orderBy("ts", "asc")
+        .onSnapshot(snap => {
+            if (snap.empty) {
+                painel.innerHTML = `
+                    <div style='text-align:center; padding:60px; opacity:0.6;'>
+                        <span style="font-size:50px;">📅</span>
+                        <p style="margin-top:10px;">Nenhum agendamento ativo.<br>Suas solicitações aparecerão aqui.</p>
                     </div>`;
-            
-            } else if (ag.status === "imediato") {
-                statusTexto = "⚡ Vaga Imediata Pendente";
-                corStatus = "#e67e22";
-                botoes = `
-                    <div style="display:flex; gap:5px; margin-top:10px;">
-                        <button onclick="aprovarAgendamentoImediato('${docId}','${ag.clienteUid}',${ag.valor})" style="background:#2ecc71; flex:1;">✅ Aprovar</button>
-                        <button onclick="recusarAgendamento('${docId}','${ag.clienteUid}')" style="background:#c0392b; flex:1;">❌ Recusar</button>
-                    </div>`;
-            
-            } else if (ag.status === "confirmado" || ag.status === "conclusão pendente") {
-                statusTexto = "🚀 Em Andamento / Aprovado";
-                corStatus = "#00c6ff";
-                
-                // CORREÇÃO AQUI: Passamos docId como 3º parâmetro
-                botoes = `
-                    <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
-                        <button onclick="iniciarRastreamentoBusca('${ag.clienteUid}', '${ag.clienteNome}', '${docId}')" style="background: linear-gradient(45deg, #00c6ff, #0072ff); border:1px solid #fff; box-shadow: 0 0 10px rgba(0,198,255,0.4);">
-                            📍 Abrir Rota (GPS)
-                        </button>
-                        
-                        <div style="display:flex; gap:5px;">
-                            <button onclick="document.getElementById('modalDetalhesAgendamento').remove(); abrirModalEntradaManual('${dados.barbeiroUid}', '${docId}')" 
-    style="background-color: #2ecc71; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; flex: 1;">
-    ✅ Concluir e Lançar
-</button>
-                            <button onclick="cancelarAgendamentoManualmente('${docId}','${ag.clienteUid}',${ag.valor})" style="flex:1; background:#c0392b;">❌ Cancelar</button>
-                        </div>
-                    </div>`;
+                return;
             }
 
-            const wppLink = ag.clienteTelefone 
-                ? `<a href="https://wa.me/55${ag.clienteTelefone.replace(/\D/g, '')}" target="_blank" style="color:#25D366; text-decoration:none; font-size:12px; display:block; margin-top:5px;">💬 Contatar no WhatsApp</a>` 
-                : '';
+            painel.innerHTML = ""; // Limpa para renderizar
+            
+            snap.forEach(doc => {
+                const ag = doc.data();
+                const docId = doc.id;
+                
+                // Configurações Visuais por Status
+                let config = {
+                    label: "Agendado",
+                    cor: "#3498db",
+                    icon: "📅",
+                    bg: "rgba(52, 152, 219, 0.1)"
+                };
 
-            painel.innerHTML += `
-                <div class="card" style="border-left: 4px solid ${corStatus};">
-                    <div style="display:flex; justify-content:space-between;">
-                        ${ag.clienteNome}
-                        <span style="color:${corStatus}; font-size:12px; font-weight:bold;">${statusTexto}</span>
+                if (ag.status === "pendente") {
+                    config = { label: "Aguardando", cor: "#f1c40f", icon: "⏳", bg: "rgba(241, 196, 15, 0.1)" };
+                } else if (ag.status === "imediato") {
+                    config = { label: "Imediato", cor: "#e67e22", icon: "⚡", bg: "rgba(230, 126, 34, 0.1)" };
+                } else if (ag.status === "confirmado" || ag.status === "conclusão pendente") {
+                    config = { label: "Em Andamento", cor: "#2ecc71", icon: "🚀", bg: "rgba(46, 204, 113, 0.1)" };
+                }
+
+                // Foto do Cliente (Fallback se não existir)
+                const fotoCliente = ag.clienteFoto || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(ag.clienteNome) + '&background=random&color=fff';
+                const horarioDisplay = ag.horario ? `<b>${ag.horario}</b>` : '<span style="color:#e67e22; font-weight:bold;">AGORA</span>';
+
+                // Lógica de Botões Dinâmicos
+                let botoesAcao = "";
+                if (ag.status === "pendente" || ag.status === "imediato") {
+                    const funcAprovar = ag.status === "imediato" ? `aprovarAgendamentoImediato('${docId}','${ag.clienteUid}',${ag.valor})` : `aprovarAgendamento('${docId}','${ag.clienteUid}',${ag.valor},'${ag.horario}')`;
+                    botoesAcao = `
+                        <div style="display:flex; gap:8px; margin-top:12px;">
+                            <button onclick="${funcAprovar}" style="flex:2; background:#2ecc71; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">✅ Aceitar</button>
+                            <button onclick="recusarAgendamento('${docId}','${ag.clienteUid}')" style="flex:1; background:#333; color:#ff4444; border:1px solid #ff4444; padding:10px; border-radius:8px; cursor:pointer;">Recusar</button>
+                        </div>`;
+                } else {
+                    botoesAcao = `
+                        <div style="margin-top:12px; display:flex; flex-direction:column; gap:8px;">
+                            <button onclick="iniciarRastreamentoBusca('${ag.clienteUid}', '${ag.clienteNome}', '${docId}')" 
+                                style="background: linear-gradient(45deg, #00c6ff, #0072ff); color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow: 0 4px 15px rgba(0,198,255,0.3);">
+                                📍 Iniciar Rota GPS
+                            </button>
+                            <div style="display:flex; gap:8px;">
+                                <button onclick="abrirModalEntradaManual('${ag.barbeiroUid}', '${docId}')" 
+                                    style="flex:1; background:#2ecc71; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:bold;">
+                                    ✅ Concluir
+                                </button>
+                                <button onclick="cancelarAgendamentoManualmente('${docId}','${ag.clienteUid}',${ag.valor})" 
+                                    style="flex:1; background:#e74c3c; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:bold;">
+                                    ❌ Cancelar
+                                </button>
+                            </div>
+                        </div>`;
+                }
+
+                // Link do WhatsApp formatado
+                const wppLink = ag.clienteTelefone ? `
+                    <a href="https://wa.me/55${ag.clienteTelefone.replace(/\D/g, '')}" target="_blank" 
+                       style="display:flex; align-items:center; gap:5px; color:#25D366; text-decoration:none; font-size:13px; font-weight:600; margin-top:8px;">
+                        <img src="https://cdn-icons-png.flaticon.com/512/124/124034.png" width="16"> Chamar no WhatsApp
+                    </a>` : '';
+
+                // Template do Card
+                painel.innerHTML += `
+                    <div class="card-agendamento-premium" style="border-left: 6px solid ${config.cor};">
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                            <div style="display:flex; align-items:center; gap:12px;">
+                                <img src="${fotoCliente}" style="width:50px; height:50px; border-radius:50%; object-fit:cover; border:2px solid #333;">
+                                <div>
+                                    <h4 style="margin:0; font-size:16px; color:#fff;">${ag.clienteNome}</h4>
+                                    <span style="background:${config.bg}; color:${config.cor}; font-size:10px; padding:3px 8px; border-radius:20px; font-weight:800; text-transform:uppercase;">
+                                        ${config.icon} ${config.label}
+                                    </span>
+                                </div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-size:18px; color:#fff;">${horarioDisplay}</div>
+                                <div style="font-size:12px; color:#aaa;">R$ ${parseFloat(ag.valor).toFixed(2)}</div>
+                            </div>
+                        </div>
+
+                        <div style="background: #1a1a1a; padding:10px; border-radius:8px; border:1px solid #333;">
+                            <div style="font-size:13px; color:#ddd;">✂️ <b>Serviço:</b> ${ag.servico}</div>
+                            ${wppLink}
+                        </div>
+
+                        ${botoesAcao}
                     </div>
-                    <p style="margin:5px 0;">${ag.servico} - R$ ${ag.valor.toFixed(2)}</p>
-                    <p style="margin:0; font-size:13px; opacity:0.8;">${horarioInfo}</p>
-                    ${wppLink}
-                    ${botoes}
-                </div>`;
+                `;
+            });
         });
-    });
+
+    // Injeta CSS se ainda não existir
+    if (!document.getElementById('styleAgendamentos')) {
+        const style = document.createElement('style');
+        style.id = 'styleAgendamentos';
+        style.innerHTML = `
+            .card-agendamento-premium {
+                background: #222;
+                border-radius: 15px;
+                padding: 15px;
+                margin-bottom: 15px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                transition: transform 0.2s;
+            }
+            .card-agendamento-premium:active { transform: scale(0.98); }
+            .spinner-premium {
+                width: 40px; height: 40px;
+                border: 4px solid #333;
+                border-top: 4px solid #00c6ff;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin: 0 auto;
+            }
+            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        `;
+        document.head.appendChild(style);
+    }
 }
 
 function obterLocalizacaoAtual() {
@@ -21180,15 +21794,13 @@ function abrirModalSaidas() {
 }
 
 async function abrirModalFinanceiroEspecifico(tipo) {
-    // Reutiliza o modal de financeiro, mas com configuração específica
     const modal = document.getElementById('modalFinanceiroProprietario');
-    modal.classList.add('modal-large'); // Usa o estilo grande
+    modal.classList.add('modal-large');
     abrirModal('modalFinanceiroProprietario');
 
     const titulo = tipo === 'entradas' ? '📈 Relatório de Entradas' : '📉 Relatório de Saídas';
-    const corTema = tipo === 'entradas' ? '#2ecc71' : '#e74c3c'; // Verde ou Vermelho
+    const corTema = tipo === 'entradas' ? '#2ecc71' : '#e74c3c';
     
-    // HTML Personalizado
     const content = modal.querySelector('.modal-content');
     content.innerHTML = `
         <div class="modal-header-premium" style="border-bottom: 2px solid ${corTema};">
@@ -21197,134 +21809,233 @@ async function abrirModalFinanceiroEspecifico(tipo) {
         </div>
         
         <div style="flex-grow:1; overflow-y:auto; padding:20px; background:#0f0f0f;">
-            
-            <div class="chart-card">
+            <button onclick="abrirModalLancamentoManual('${tipo === 'entradas' ? 'entrada' : 'saida'}')" 
+                    style="width:100%; background:${corTema}; color:#000; border:none; padding:15px; border-radius:12px; font-weight:bold; margin-bottom:20px; font-size:16px; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer;">
+                ${tipo === 'entradas' ? '➕ Adicionar Entrada Manual' : '➖ Adicionar Saída Manual'}
+            </button>
+
+            <div class="chart-card" style="background:#1a1a1a; border-radius:15px; padding:15px; margin-bottom:20px;">
                 <canvas id="graficoEspecifico" height="200"></canvas>
             </div>
             
             <div id="resumoDetalhadoHeader"></div>
 
-            <h4 style="color:#fff; margin-bottom:15px; margin-top:20px;">Detalhes (${tipo === 'entradas' ? 'Receitas' : 'Despesas'})</h4>
+            <h4 style="color:#fff; margin-bottom:15px; margin-top:20px;">Histórico com Profissionais</h4>
             <div id="listaDetalhesEspecifico" class="scrollable-list">
                 <div class="spinner"></div>
             </div>
         </div>
     `;
 
-    // Carrega dados
-    const inicioMes = new Date();
-    inicioMes.setDate(1); 
-    inicioMes.setHours(0,0,0,0);
+    // Carregamento de dados com suporte a Fotos
+    const agora = new Date();
+    const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
+    const uidDono = auth.currentUser.uid;
 
-    const snapshot = await db.collection('extrato_financeiro')
-        .where('donoUid', '==', auth.currentUser.uid)
-        .where('dataEvento', '>=', firebase.firestore.Timestamp.fromDate(inicioMes))
-        .get();
+    try {
+        const [snapExtrato, snapAgendamentos] = await Promise.all([
+            db.collection('extrato_financeiro').where('donoUid', '==', uidDono).where('dataEvento', '>=', firebase.firestore.Timestamp.fromDate(inicioMes)).get(),
+            db.collection('agendamentos').where('donoUid', '==', uidDono).where('status', '==', 'concluido').where('ts', '>=', firebase.firestore.Timestamp.fromDate(inicioMes)).get()
+        ]);
 
-    const dadosGrafico = {};
-    let htmlLista = '';
-    let total = 0;
-    
-    // Contadores para o resumo do topo
-    let tPix = 0, tDin = 0, tDeb = 0, tCred = 0;
+        let total = 0, tPix = 0, tDin = 0, tDeb = 0, tCred = 0;
+        const dadosGrafico = {};
+        const itensMostrar = [];
+        const uidsFotos = new Set();
 
-    snapshot.forEach(doc => {
-        const d = doc.data();
-        const val = Number(d.valor) || 0;
-        
-        // Filtro Lógico
-        let ehOItem = false;
-        if (tipo === 'entradas' && (d.tipo === 'receita_servico' || d.tipo === 'entrada_manual')) ehOItem = true;
-        if (tipo === 'saidas' && (d.tipo.includes('despesa') || d.tipo === 'saida_manual')) ehOItem = true;
-
-        if (ehOItem) {
-            total += val;
+        // 1. Processa Extrato (Geral)
+        snapExtrato.forEach(doc => {
+            const d = doc.data();
+            const ehOItem = (tipo === 'entradas' && (d.tipo.includes('entrada') || d.tipo.includes('receita'))) ||
+                           (tipo === 'saidas' && (d.tipo.includes('saida') || d.tipo.includes('despesa') || d.tipo.includes('pagamento')));
             
-            // Soma detalhada (apenas se tiver dados, senão joga em dinheiro por padrão ou ignora)
-            if (d.metodos) {
-                tPix += (d.metodos.pix || 0);
-                tDin += (d.metodos.dinheiro || 0);
-                tDeb += (d.metodos.debito || 0);
-                tCred += (d.metodos.credito || 0);
-            } else {
-                // Se não tem detalhe (ex: manual), soma como dinheiro ou genérico
-                tDin += val;
+            if (ehOItem) {
+                const val = Number(d.valor) || 0;
+                total += val;
+                if (d.metodos) {
+                    tPix += (d.metodos.pix || 0); tDin += (d.metodos.dinheiro || 0);
+                    tDeb += (d.metodos.debito || 0); tCred += (d.metodos.credito || 0);
+                } else { tDin += val; }
+                
+                const data = d.dataEvento.toDate();
+                const dia = data.toLocaleDateString('pt-BR');
+                dadosGrafico[dia] = (dadosGrafico[dia] || 0) + val;
+                if (d.usuarioUid) uidsFotos.add(d.usuarioUid);
+                itensMostrar.push({ ...d, data, valor: val, uidProfissional: d.usuarioUid, ehEntrada: tipo === 'entradas' });
             }
+        });
 
-            const data = d.dataEvento.toDate();
-            const diaStr = data.toLocaleDateString('pt-BR');
-            dadosGrafico[diaStr] = (dadosGrafico[diaStr] || 0) + val;
+        // 2. Processa Agendamentos (Apenas se for relatório de Entradas)
+        if (tipo === 'entradas') {
+            snapAgendamentos.forEach(doc => {
+                const ag = doc.data();
+                const val = Number(ag.valor) || 0;
+                total += val;
+                if (ag.metodosPagamento) {
+                    tPix += (ag.metodosPagamento.pix || 0); tDin += (ag.metodosPagamento.dinheiro || 0);
+                    tDeb += (ag.metodosPagamento.debito || 0); tCred += (ag.metodosPagamento.credito || 0);
+                } else { tDin += val; }
+                
+                const data = ag.ts.toDate();
+                const dia = data.toLocaleDateString('pt-BR');
+                dadosGrafico[dia] = (dadosGrafico[dia] || 0) + val;
+                if (ag.barbeiroUid) uidsFotos.add(ag.barbeiroUid);
+                itensMostrar.push({ descricao: `Serviço: ${ag.servico}`, data, valor: val, uidProfissional: ag.barbeiroUid, ehEntrada: true });
+            });
+        }
 
-            let detalheMetodo = "";
-            if(d.metodos) {
-                 let arr = [];
-                 if(d.metodos.pix > 0) arr.push("Pix");
-                 if(d.metodos.dinheiro > 0) arr.push("Din");
-                 if(d.metodos.credito > 0) arr.push("Créd");
-                 if(d.metodos.debito > 0) arr.push("Déb");
-                 if(arr.length > 0) detalheMetodo = `<span style="font-size:9px; color:#aaa; border:1px solid #555; padding:0 3px; border-radius:3px; margin-left:5px;">${arr.join('/')}</span>`;
-            }
+        // 3. Busca fotos dos envolvidos
+        const mapaFotos = {};
+        await Promise.all(Array.from(uidsFotos).map(async uid => {
+            const u = (await db.collection('usuarios').doc(uid).get()).data();
+            mapaFotos[uid] = u?.fotoPerfil || u?.logo_url || '/icone.png';
+        }));
 
-            htmlLista += `
-                <div style="background:#1a1a1a; padding:12px; margin-bottom:8px; border-radius:8px; border-left:4px solid ${corTema}; display:flex; justify-content:space-between;">
-                    <div>
-                        <div style="color:#fff; font-weight:bold;">${d.descricao} ${detalheMetodo}</div>
-                        <div style="font-size:11px; color:#777;">${data.toLocaleString()}</div>
-                    </div>
-                    <div style="color:${corTema}; font-weight:bold; font-size:16px;">R$ ${val.toFixed(2)}</div>
+        // 4. Renderiza a Lista 3D
+        itensMostrar.sort((a,b) => b.data - a.data);
+        let htmlLista = "";
+        itensMostrar.forEach(item => {
+            const foto = mapaFotos[item.uidProfissional] || '/icone.png';
+            htmlLista += renderizarCardFinanceiro3D(item, corTema, foto);
+        });
+
+        document.getElementById('listaDetalhesEspecifico').innerHTML = htmlLista || '<p style="text-align:center; padding:20px; opacity:0.5;">Sem registros.</p>';
+        
+        // Injeta o Resumo de Métodos
+        document.getElementById('resumoDetalhadoHeader').innerHTML = `
+            <div style="background: #1a1a1a; border-radius: 12px; padding: 15px; border: 1px solid #333;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid #333; padding-bottom:10px;">
+                    <span style="color:#aaa;">SOMA TOTAL</span>
+                    <span style="color:#fff; font-size:20px; font-weight:bold;">R$ ${total.toFixed(2)}</span>
                 </div>
-            `;
-        }
-    });
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:12px;">
+                    <div style="display:flex; justify-content:space-between;"><span style="color:#00C851">Pix</span> <b>R$ ${tPix.toFixed(2)}</b></div>
+                    <div style="display:flex; justify-content:space-between;"><span style="color:#33b5e5">Dinheiro</span> <b>R$ ${tDin.toFixed(2)}</b></div>
+                    <div style="display:flex; justify-content:space-between;"><span style="color:#ffbb33">Débito</span> <b>R$ ${tDeb.toFixed(2)}</b></div>
+                    <div style="display:flex; justify-content:space-between;"><span style="color:#ff4444">Crédito</span> <b>R$ ${tCred.toFixed(2)}</b></div>
+                </div>
+            </div>
+        `;
 
-    // INJETA O RESUMO NO TOPO (AQUI É O SEGREDO DO "EXTRATO DETALHADO")
-    const resumoHeader = document.getElementById('resumoDetalhadoHeader');
-    resumoHeader.innerHTML = `
-        <div style="background: #222; border: 1px solid #444; border-radius: 10px; padding: 15px; margin-top: 15px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #444; padding-bottom:10px; margin-bottom:10px;">
-                <span style="color:#aaa;">TOTAL GERAL</span>
-                <span style="color:#fff; font-size:18px; font-weight:bold;">R$ ${total.toFixed(2)}</span>
-            </div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:12px;">
-                <div style="display:flex; justify-content:space-between;"><span style="color:#00C851">Pix</span> <b>R$ ${tPix.toFixed(2)}</b></div>
-                <div style="display:flex; justify-content:space-between;"><span style="color:#33b5e5">Dinheiro</span> <b>R$ ${tDin.toFixed(2)}</b></div>
-                <div style="display:flex; justify-content:space-between;"><span style="color:#ffbb33">Débito</span> <b>R$ ${tDeb.toFixed(2)}</b></div>
-                <div style="display:flex; justify-content:space-between;"><span style="color:#ff4444">Crédito</span> <b>R$ ${tCred.toFixed(2)}</b></div>
-            </div>
+        // Renderiza o gráfico linear (usando sua lógica original)
+        renderizarGraficoLinearFinanceiro(dadosGrafico, corTema, tipo);
+
+    } catch (e) { console.error(e); }
+}
+
+function renderizarCardFinanceiro3D(item, cor, fotoUrl) {
+    // 1. Formata a hora: 14:05, 09:30, etc.
+    const horas = item.data.getHours().toString().padStart(2, '0');
+    const minutos = item.data.getMinutes().toString().padStart(2, '0');
+    const horarioFormatado = `${horas}:${minutos}`;
+
+    // 2. BLINDAGEM: Trata aspas para não quebrar o HTML do botão
+    const descricaoSegura = (item.descricao || 'Lançamento').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    
+    // 3. IDENTIFICAÇÃO: Pega o ID e a Coleção de Origem (extrato_financeiro ou agendamentos)
+    const idSeguro = item.id;
+    const origemSegura = item.colecaoOrigem || ''; 
+
+    return `
+    <div class="card-financeiro gsap-feed-item" style="position: relative; margin: 15px 10px 20px 35px; background: #222; border-radius: 12px; border-left: 5px solid ${cor}; padding: 15px 15px 15px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 8px 15px rgba(0,0,0,0.4); z-index: 1;">
+        
+        <div style="position: absolute; left: -30px; top: 50%; transform: translateY(-50%); width: 60px; height: 60px; border-radius: 50%; border: 3px solid ${cor}; box-shadow: 5px 5px 15px rgba(0,0,0,0.6); background: #000; overflow: hidden; z-index: 99;">
+            <img src="${fotoUrl}" onerror="this.src='/icone.png'" style="width:100%; height:100%; object-fit:cover;">
         </div>
-    `;
 
-    document.getElementById('listaDetalhesEspecifico').innerHTML = htmlLista || '<p style="text-align:center; padding:20px; opacity:0.5;">Nenhum registro encontrado.</p>';
+        <div style="flex-grow:1;">
+            <div style="color:#fff; font-weight:bold; font-size:14px; text-transform:capitalize;">${item.descricao || 'Lançamento'}</div>
+            <div style="color:#888; font-size:11px; margin-top:3px; display:flex; gap:10px;">
+                <span>📅 ${item.data.toLocaleDateString('pt-BR')}</span>
+                <span style="color:#bbb;">⏰ ${horarioFormatado}</span>
+            </div>
+            ${origemSegura === 'agendamentos' ? '<div style="font-size:9px; color:#f1c40f; margin-top:2px;">🔔 Pendente no Extrato</div>' : ''}
+        </div>
 
-    // Renderiza Gráfico
-    const ctx = document.getElementById('graficoEspecifico').getContext('2d');
-    const labels = Object.keys(dadosGrafico).sort();
-    const dataValues = labels.map(l => dadosGrafico[l]);
+        <div style="text-align:right; display:flex; flex-direction:column; align-items:flex-end; gap:5px;">
+            <div style="color:${cor}; font-weight:bold; font-size:16px;">
+                ${item.ehEntrada ? '+' : '-'} R$ ${item.valor.toFixed(2)}
+            </div>
+            
+            <button onclick="excluirMovimentacaoFinanceira('${idSeguro}', '${descricaoSegura}', '${origemSegura}')" 
+                    style="background: rgba(231, 76, 60, 0.2); border: 1px solid #e74c3c; color: #e74c3c; cursor: pointer; font-size: 13px; padding: 6px 12px; border-radius: 6px; margin-top: 5px; font-weight: bold; transition: 0.2s;">
+                🗑️ Excluir
+            </button>
+        </div>
+    </div>`;
+}
 
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: tipo === 'entradas' ? 'Receita Diária' : 'Despesa Diária',
-                data: dataValues,
-                borderColor: corTema,
-                backgroundColor: tipo === 'entradas' ? 'rgba(46, 204, 113, 0.1)' : 'rgba(231, 76, 60, 0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: { beginAtZero: true, grid: { color: '#333' } },
-                x: { grid: { display: false } }
-            },
-            plugins: { legend: { display: false } }
+async function excluirMovimentacaoFinanceira(id, descricao) {
+    if (!id) return;
+
+    const confirmar = confirm(`⚠️ EXCLUSÃO DEFINITIVA\n\nRegistro: "${descricao}"\n\nDeseja apagar este lançamento de TODOS os registros (Extrato e Agenda)?`);
+    if (!confirmar) return;
+
+    exibirAguarde("Limpando banco de dados...");
+
+    try {
+        // 1. Criamos as referências iniciais
+        const refExtrato = db.collection('extrato_financeiro').doc(id);
+        const refAgendamento = db.collection('agendamentos').doc(id);
+
+        // 2. BUSCA CRUZADA: Vamos ver se esse ID tem um "parceiro" vinculado
+        const [docExtrato, docAgendamento] = await Promise.all([
+            refExtrato.get(),
+            refAgendamento.get()
+        ]);
+
+        const batch = db.batch(); // Usamos Batch para deletar tudo de uma vez só
+
+        // Caso A: O ID clicado era de um Extrato
+        if (docExtrato.exists) {
+            batch.delete(refExtrato);
+            const dados = docExtrato.data();
+            // Se dentro do extrato existia o ID do agendamento, marcamos para deletar também
+            if (dados.agendamentoId) {
+                const parceiroRef = db.collection('agendamentos').doc(dados.agendamentoId);
+                batch.delete(parceiroRef);
+            }
         }
-    });
+
+        // Caso B: O ID clicado era de um Agendamento
+        if (docAgendamento.exists) {
+            batch.delete(refAgendamento);
+            // Procuramos no extrato se existe algum documento apontando para este agendamento
+            const extratosVinculados = await db.collection('extrato_financeiro')
+                .where('agendamentoId', '==', id).get();
+            
+            extratosVinculados.forEach(docVinculado => {
+                batch.delete(docVinculado.ref);
+            });
+        }
+
+        // Caso C: Segurança (Tenta deletar o ID puro nas duas, caso não tenha entrado nos ifs acima)
+        if (!docExtrato.exists && !docAgendamento.exists) {
+            batch.delete(refExtrato);
+            batch.delete(refAgendamento);
+        }
+
+        // 3. EXECUTA A LIMPEZA
+        await batch.commit();
+
+        console.log("Sucesso: Registros removidos de ambas as coleções.");
+        
+        // 4. FINALIZAÇÃO
+        fecharAguarde();
+        exibirPopup("Excluído", "O registro foi removido completamente.");
+
+        // Força o recarregamento da lista
+        if (typeof carregarFinanceiro === 'function') {
+            setTimeout(() => {
+                carregarFinanceiro();
+            }, 400);
+        }
+
+    } catch (error) {
+        console.error("Erro crítico na exclusão:", error);
+        fecharAguarde(); // Garante que o popup de "Aguarde" não fique eterno
+        alert("Erro ao excluir do banco: " + error.message);
+    }
 }
 
 async function realizarPagamentoEquipe(uidProfissional, nomeProfissional, valor) {
@@ -21392,12 +22103,15 @@ async function salvarFachada() {
     exibirPopup("Fachada salva!");
 }
 
+// 1. ABRIR MODAL (HTML com altura forçada)
+// 1. ABRIR MODAL (HTML com altura forçada e IDs Verificados)
 async function abrirModalFinanceiroProprietario() {
     abrirModal('modalFinanceiroProprietario');
-    
     const modalContent = document.querySelector('#modalFinanceiroProprietario .modal-content');
+    
+    // Garante layout flexível, fundo escuro e scroll interno
     modalContent.style.cssText = "display: flex !important; flex-direction: column !important; max-height: 90vh !important; height: 90vh !important; padding: 0 !important; overflow: hidden !important; background: #000;";
-
+    
     const hoje = new Date();
     const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
     const formatarDataInput = (d) => d.toISOString().split('T')[0];
@@ -21408,14 +22122,14 @@ async function abrirModalFinanceiroProprietario() {
             <p style="font-size:12px; color:#aaa; margin:0;">Controle de Caixa</p>
         </div>
 
-        <div id="gestaoBodyScroll" style="flex-grow: 1; overflow-y: auto; padding: 15px; min-height: 0;">
+        <div id="gestaoBodyScroll" style="flex-grow: 1; overflow-y: auto; padding: 15px; min-height: 0; position: relative;">
             
             <div style="display:flex; gap:10px; margin-bottom:20px;">
-                <button onclick="abrirModalEntradas()" style="flex:1; background: linear-gradient(145deg, #1a1a1a, #0f0f0f); border:1px solid #2ecc71; color:#2ecc71; padding:15px; font-weight:bold;">
-                    📈 REGISTRAR<br>ENTRADAS
+                <button onclick="abrirModalLancamentoManual('entrada')" style="flex:1; background: linear-gradient(145deg, #1a1a1a, #0f0f0f); border:1px solid #2ecc71; color:#2ecc71; padding:15px; font-weight:bold;">
+                    📈 REGISTRAR<br>ENTRADA
                 </button>
-                <button onclick="abrirModalSaidas()" style="flex:1; background: linear-gradient(145deg, #1a1a1a, #0f0f0f); border:1px solid #e74c3c; color:#e74c3c; padding:15px; font-weight:bold;">
-                    📉 REGISTRAR<br>SAÍDAS
+                <button onclick="abrirModalLancamentoManual('saida')" style="flex:1; background: linear-gradient(145deg, #1a1a1a, #0f0f0f); border:1px solid #e74c3c; color:#e74c3c; padding:15px; font-weight:bold;">
+                    📉 REGISTRAR<br>SAÍDA
                 </button>
             </div>
 
@@ -21430,11 +22144,6 @@ async function abrirModalFinanceiroProprietario() {
                 <span style="font-size:10px;">até</span>
                 <input type="date" id="finDataFim" value="${formatarDataInput(hoje)}" style="flex:1; font-size:11px; background:#222; border:none; color:#fff;">
                 <button onclick="carregarFinanceiro('custom')" style="width:auto; padding:5px 10px;">🔍</button>
-            </div>
-
-            <div style="display:flex; gap:10px; margin-bottom:15px;">
-                <button onclick="prepararTransacaoManual('entrada')" style="flex:1; background: rgba(46, 204, 113, 0.2); border: 1px solid #2ecc71; color: #2ecc71; font-size:10px;">+ Receita Avulsa</button>
-                <button onclick="prepararTransacaoManual('saida')" style="flex:1; background: rgba(231, 76, 60, 0.2); border: 1px solid #e74c3c; color: #e74c3c; font-size:10px;">- Despesa Avulsa</button>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
@@ -21452,23 +22161,24 @@ async function abrirModalFinanceiroProprietario() {
                 </div>
             </div>
 
-            <h4 style="font-size:12px; color:#888; margin-bottom:5px; text-transform:uppercase;">Evolução do Lucro</h4>
-            <div style="background: linear-gradient(to bottom, #1a1a1a, #0f0f0f); padding: 15px; border-radius: 12px; height: 220px; margin-bottom: 20px; border: 1px solid #333; box-shadow: inset 0 0 20px #000;">
-                <canvas id="graficoFinanceiroProprietario"></canvas>
-            </div>
-
-            <h4 style="font-size:12px; color:#888; margin-bottom:5px; text-transform:uppercase;">Métodos de Pagamento</h4>
-            <div style="background: #1a1a1a; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #333;">
-                <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:center;">
-                    <div style="width: 140px; height: 140px;">
-                        <canvas id="chartMetodosPagamento"></canvas>
-                    </div>
-                    <div id="legendaMetodos" style="flex:1; margin-left:15px; display:flex; flex-direction:column; gap:5px; min-width:120px;">
-                        </div>
+            <h4 style="font-size:12px; color:#888; margin-bottom:5px; text-transform:uppercase;">📈 Evolução do Lucro</h4>
+            <div style="background: linear-gradient(to bottom, #1a1a1a, #0f0f0f); padding: 10px; border-radius: 12px; border: 1px solid #333; box-shadow: inset 0 0 20px #000; margin-bottom: 20px;">
+                <div style="position: relative; height: 250px; width: 100%;">
+                    <canvas id="graficoEvolucaoLucro"></canvas>
                 </div>
             </div>
 
-            <h4 style="font-size:14px; margin-bottom:10px; border-left:3px solid var(--cor-destaque); padding-left:10px;">Movimentações</h4>
+            <h4 style="font-size:12px; color:#888; margin-bottom:5px; text-transform:uppercase;">💳 Métodos de Pagamento</h4>
+            <div style="background: #1a1a1a; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #333;">
+                <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:center;">
+                    <div style="width: 140px; height: 140px; position: relative;">
+                        <canvas id="chartMetodosPagamento"></canvas>
+                    </div>
+                    <div id="legendaMetodos" style="flex:1; margin-left:15px; display:flex; flex-direction:column; gap:5px; min-width:120px;"></div>
+                </div>
+            </div>
+
+            <h4 style="font-size:14px; margin-bottom:10px; border-left:3px solid var(--cor-destaque); padding-left:10px;">Movimentações Recentes</h4>
             <div id="listaGanhosEquipe"></div>
             
             <div style="height: 50px;"></div> 
@@ -21478,115 +22188,373 @@ async function abrirModalFinanceiroProprietario() {
             <button onclick="fecharModalAtual()" style="background:#333; width:100%;">❌ Fechar</button>
         </div>
     `;
-    carregarFinanceiro('mes'); 
+    
+    // Pequeno delay para garantir que o DOM renderizou
+    setTimeout(() => {
+        carregarFinanceiro('mes'); 
+    }, 100);
 }
 
-// --- FUNÇÃO DE GESTÃO DO PROPRIETÁRIO (BRUTO E SAÍDAS REAIS) ---
-async function carregarFinanceiro(periodo) {
+async function carregarFinanceiro(periodo = 'mes') {
     const elEntradas = document.getElementById('resumoEntradas');
     const elSaidas = document.getElementById('resumoSaidas');
     const elSaldo = document.getElementById('resumoSaldo');
     const lista = document.getElementById('listaGanhosEquipe');
-    
-    if (!elSaldo || !lista) return;
 
+    if (!elSaldo || !lista) return;
     lista.innerHTML = '<div class="spinner"></div>';
-    elSaldo.textContent = '...';
 
     const agora = new Date();
     let dataInicio, dataFim;
 
+    // --- LÓGICA DE DATAS ---
     if (periodo === 'custom') {
         const inpInicio = document.getElementById('finDataInicio').value;
         const inpFim = document.getElementById('finDataFim').value;
-        if (!inpInicio || !inpFim) return exibirPopup("Selecione as datas.");
+        if (!inpInicio || !inpFim) return;
         dataInicio = new Date(inpInicio + 'T00:00:00');
         dataFim = new Date(inpFim + 'T23:59:59');
     } else {
-        dataFim = new Date(); 
-        if (periodo === 'dia') dataInicio = new Date(agora.setHours(0,0,0,0));
-        else if (periodo === 'semana') {
-            const diff = agora.getDate() - agora.getDay() + (agora.getDay() === 0 ? -6 : 1); 
-            dataInicio = new Date(agora.setDate(diff)); dataInicio.setHours(0,0,0,0);
+        dataFim = new Date();
+        dataFim.setHours(23, 59, 59, 999);
+        if (periodo === 'dia') {
+            dataInicio = new Date(agora);
+            dataInicio.setHours(0, 0, 0, 0);
+        } else if (periodo === 'semana') {
+            dataInicio = new Date(agora);
+            const diff = agora.getDate() - agora.getDay() + (agora.getDay() === 0 ? -6 : 1);
+            dataInicio.setDate(diff); dataInicio.setHours(0, 0, 0, 0);
         } else {
             dataInicio = new Date(agora.getFullYear(), agora.getMonth(), 1);
+            dataInicio.setHours(0, 0, 0, 0);
         }
     }
 
     try {
-        const snapshot = await db.collection('extrato_financeiro')
-            .where('donoUid', '==', auth.currentUser.uid)
-            .where('dataEvento', '>=', dataInicio)
-            .where('dataEvento', '<=', dataFim)
-            .get();
+        const uidDono = auth.currentUser.uid;
+        // Buscamos as duas coleções
+        const [snapExtrato, snapAgendamentos] = await Promise.all([
+            db.collection('extrato_financeiro').where('donoUid', '==', uidDono)
+                .where('dataEvento', '>=', firebase.firestore.Timestamp.fromDate(dataInicio))
+                .where('dataEvento', '<=', firebase.firestore.Timestamp.fromDate(dataFim)).get(),
+            db.collection('agendamentos').where('donoUid', '==', uidDono).where('status', '==', 'concluido')
+                .where('ts', '>=', firebase.firestore.Timestamp.fromDate(dataInicio))
+                .where('ts', '<=', firebase.firestore.Timestamp.fromDate(dataFim)).get()
+        ]);
 
-        let totalEntradas = 0;
-        let totalSaidas = 0;
+        let totalEntradas = 0, totalSaidas = 0;
+        let mPix = 0, mDinheiro = 0, mDebito = 0, mCredito = 0;
         const itens = [];
-        const dadosGrafico = {}; 
+        const idsAgendamentosJaProcessados = new Set(); // TRAVA REAL POR ID
+        const uidsParaBuscarFoto = new Set();
+        const mapaResultados = {};
 
-        snapshot.forEach(doc => {
+        // 1. PROCESSAMOS PRIMEIRO O EXTRATO (Fonte da verdade financeira)
+        snapExtrato.forEach(doc => {
             const d = doc.data();
             const val = Number(d.valor) || 0;
             const data = d.dataEvento.toDate();
-            const diaStr = data.toLocaleDateString('pt-BR');
+            const diaStr = data.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
+            
+            // Se este extrato estiver vinculado a um agendamento, guardamos o ID dele
+            if (d.agendamentoId) {
+                idsAgendamentosJaProcessados.add(d.agendamentoId);
+            }
 
-            let ehEntrada = false;
-            let ehSaida = false;
-
-            // Classifica Entradas e Saídas
-            if (d.tipo === 'receita_servico' || d.tipo === 'entrada_manual') {
+            const ehEntrada = d.tipo.includes('entrada') || d.tipo.includes('receita');
+            if (ehEntrada) {
                 totalEntradas += val;
-                ehEntrada = true;
-                dadosGrafico[diaStr] = (dadosGrafico[diaStr] || 0) + val;
-            } 
-            else if (d.tipo === 'despesa_comissao' || d.tipo === 'saida_manual') {
+                mapaResultados[diaStr] = (mapaResultados[diaStr] || 0) + val;
+                if (d.metodos) {
+                    mPix += (d.metodos.pix || 0); mDinheiro += (d.metodos.dinheiro || 0);
+                    mDebito += (d.metodos.debito || 0); mCredito += (d.metodos.credito || 0);
+                } else { mDinheiro += val; }
+            } else {
                 totalSaidas += val;
-                ehSaida = true;
-                dadosGrafico[diaStr] = (dadosGrafico[diaStr] || 0) - val;
+                mapaResultados[diaStr] = (mapaResultados[diaStr] || 0) - val;
             }
-
-            if (ehEntrada || ehSaida) {
-                itens.push({ ...d, valor: val, data: data, ehEntrada });
-            }
+            if (d.usuarioUid) uidsParaBuscarFoto.add(d.usuarioUid);
+            itens.push({ ...d, id: doc.id, valor: val, data, ehEntrada, uidProfissional: d.usuarioUid });
         });
+
+        // 2. PROCESSAMOS AGENDAMENTOS (Apenas os que NÃO estão no extrato)
+        snapAgendamentos.forEach(doc => {
+            // Se o ID deste agendamento já foi processado no passo anterior (Extrato), ignoramos
+            if (idsAgendamentosJaProcessados.has(doc.id)) return;
+
+            const ag = doc.data();
+            const val = parseFloat(ag.valor) || 0;
+            const dataAg = ag.ts?.toDate() || new Date();
+            const diaStr = dataAg.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
+
+            totalEntradas += val;
+            mapaResultados[diaStr] = (mapaResultados[diaStr] || 0) + val;
+            
+            if (ag.metodosPagamento) {
+                mPix += (ag.metodosPagamento.pix || 0); mDinheiro += (ag.metodosPagamento.dinheiro || 0);
+                mDebito += (ag.metodosPagamento.debito || 0); mCredito += (ag.metodosPagamento.credito || 0);
+            } else { mDinheiro += val; }
+            
+            if (ag.barbeiroUid) uidsParaBuscarFoto.add(ag.barbeiroUid);
+            itens.push({ id: doc.id, descricao: `Serviço: ${ag.servico}`, valor: val, data: dataAg, ehEntrada: true, uidProfissional: ag.barbeiroUid });
+        });
+
+        // --- BUSCA FOTOS DE PERFIL (MANTIDO) ---
+        const mapaFotos = {};
+        await Promise.all(Array.from(uidsParaBuscarFoto).map(async uid => {
+            if(!uid) return;
+            const u = (await db.collection('usuarios').doc(uid).get()).data();
+            mapaFotos[uid] = u?.fotoPerfil || u?.logo_url || '/icone.png';
+        }));
 
         itens.sort((a, b) => b.data - a.data);
+        
         let html = '';
-
         itens.forEach(item => {
             const cor = item.ehEntrada ? '#2ecc71' : '#e74c3c';
-            const sinal = item.ehEntrada ? '+' : '-';
-            const icone = item.ehEntrada ? '💰' : '💸';
-            
-            html += `
-            <div class="card" style="padding:10px; margin-bottom:5px; border-left: 4px solid ${cor}; background:#222;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <div style="font-size:13px; font-weight:bold; color:#fff;">${icone} ${item.descricao}</div>
-                        <div style="font-size:10px; color:#aaa;">${item.data.toLocaleString()}</div>
-                    </div>
-                    <div style="text-align:right;">
-                        <span style="font-size:14px; font-weight:bold; color:${cor};">${sinal} R$ ${item.valor.toFixed(2)}</span>
-                    </div>
-                </div>
-            </div>`;
+            const foto = mapaFotos[item.uidProfissional] || '/icone.png';
+            html += renderizarCardFinanceiro3D(item, cor, foto);
         });
 
-        lista.innerHTML = html || '<p style="text-align:center; opacity:0.6; padding:20px;">Sem movimentações.</p>';
-
+        lista.innerHTML = html || '<p style="text-align:center; opacity:0.5; padding:20px;">Nenhuma movimentação.</p>';
+        
+        // --- ATUALIZA TOTAIS E GRÁFICOS ---
         elEntradas.textContent = `R$ ${totalEntradas.toFixed(2)}`;
         elSaidas.textContent = `R$ ${totalSaidas.toFixed(2)}`;
-        const liquido = totalEntradas - totalSaidas;
-        elSaldo.textContent = `R$ ${liquido.toFixed(2)}`;
-        elSaldo.style.color = liquido >= 0 ? '#2ecc71' : '#e74c3c';
+        const saldoFinal = totalEntradas - totalSaidas;
+        elSaldo.textContent = `R$ ${saldoFinal.toFixed(2)}`;
+        elSaldo.style.color = saldoFinal >= 0 ? '#2ecc71' : '#e74c3c';
 
-        renderizarGraficoFinanceiro(dadosGrafico);
+        renderizarGraficoResultados(mapaResultados);
+        if (window.renderizarGraficoMetodos) renderizarGraficoMetodos(mPix, mDinheiro, mDebito, mCredito);
+        
+        // === GSAP: ANIMAÇÃO (MANTIDO) ===
+        if (typeof gsap !== "undefined" && typeof ScrollTrigger !== "undefined" && itens.length > 0) {
+            gsap.registerPlugin(ScrollTrigger);
+            ScrollTrigger.getAll().forEach(t => t.kill());
+            const cards = gsap.utils.toArray(".gsap-feed-item");
+            cards.forEach((card) => {
+                gsap.fromTo(card, { opacity: 0, y: 80, scale: 0.85 }, {
+                    opacity: 1, y: 0, scale: 1, duration: 0.8, ease: "back.out(1.7)",
+                    scrollTrigger: { trigger: card, scroller: "#gestaoBodyScroll", start: "top 95%", toggleActions: "play none none none" }
+                });
+            });
+        }
 
-    } catch (e) {
-        console.error("Erro financeiro:", e);
-        lista.innerHTML = '<p>Erro ao carregar.</p>';
+    } catch (e) { 
+        console.error(e);
+        lista.innerHTML = `<p style="color:red; text-align:center;">Erro: ${e.message}</p>`;
     }
+}
+
+function renderizarGraficoResultados(mapaResultados) {
+    const canvas = document.getElementById('graficoEvolucaoLucro');
+    
+    if (!canvas) {
+        console.warn("Canvas 'graficoEvolucaoLucro' não encontrado.");
+        return;
+    }
+    
+    const ctx = canvas.getContext('2d');
+
+    // Destroi gráfico anterior para não sobrepor
+    if (window.chartEvolucao instanceof Chart) {
+        window.chartEvolucao.destroy();
+    }
+
+    const labels = Object.keys(mapaResultados).sort();
+    const valores = labels.map(l => mapaResultados[l]);
+    
+    // Cores dinâmicas (Verde se positivo, Vermelho se negativo)
+    const cores = valores.map(v => v >= 0 ? '#2ecc71' : '#e74c3c');
+    const coresFundo = valores.map(v => v >= 0 ? 'rgba(46, 204, 113, 0.2)' : 'rgba(231, 76, 60, 0.2)');
+
+    window.chartEvolucao = new Chart(ctx, {
+        type: 'line', // Linha fica mais bonito para evolução
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Saldo do Dia (R$)',
+                data: valores,
+                backgroundColor: coresFundo, // Preenchimento abaixo da linha
+                borderColor: '#d4af37',      // Linha Dourada
+                pointBackgroundColor: cores, // Bolinha Verde/Vermelha
+                pointBorderColor: '#fff',
+                borderWidth: 2,
+                pointRadius: 4,
+                fill: true,                  // Ativa preenchimento
+                tension: 0.4                 // Curva suave
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `R$ ${context.raw.toFixed(2)}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: { 
+                    grid: { color: 'rgba(255,255,255,0.05)' }, 
+                    ticks: { color: '#888', callback: (val) => `R$${val}` } 
+                },
+                x: { 
+                    grid: { display: false }, 
+                    ticks: { color: '#aaa', maxRotation: 45, minRotation: 45 } 
+                }
+            }
+        }
+    });
+}
+
+async function abrirModalLancamentoManual(tipo) {
+    const modal = document.getElementById('modalFluxoFinanceiro');
+    if (!modal) return;
+    
+    const titulo = tipo === 'entrada' ? '💰 Adicionar Entrada' : '💸 Adicionar Saída';
+    const cor = tipo === 'entrada' ? '#2ecc71' : '#e74c3c';
+    const hoje = new Date().toISOString().split('T')[0];
+    
+    // Injeta o formulário no corpo do modal
+    const container = modal.querySelector('.modal-body') || modal.querySelector('.conteudo-modal-fluxo') || modal.querySelector('.modal-content');
+    
+    // Limpa conteúdo anterior mantendo a estrutura do modal se possível, ou recria
+    // Aqui recriamos o interior do modal-content para garantir
+    container.innerHTML = `
+        <h3 style="color:${cor}; margin-top:0; text-align:center;">${titulo}</h3>
+        <p style="text-align:center; font-size:12px; color:#aaa;">Registro manual no caixa do proprietário.</p>
+        
+        <div style="padding:10px;">
+            <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Nome do Registro / Descrição</label>
+            <input type="text" id="manualDescricao" placeholder="Ex: Venda de Produto, Conta de Luz..." style="width:100%; padding:12px; margin-bottom:15px; background:#222; border:1px solid #444; color:#fff; border-radius:8px;">
+            
+            <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Valor (R$)</label>
+            <input type="number" id="manualValor" placeholder="0.00" step="0.01" style="width:100%; padding:12px; margin-bottom:15px; background:#222; border:1px solid #444; color:#fff; border-radius:8px; font-weight:bold; font-size:18px;">
+            
+            <label style="color:#aaa; font-size:12px; display:block; margin-bottom:5px;">Data do Registro</label>
+            <input type="date" id="manualData" value="${hoje}" style="width:100%; padding:12px; margin-bottom:15px; background:#222; border:1px solid #444; color:#fff; border-radius:8px;">
+            
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button onclick="fecharModalAtual()" style="flex:1; background:#333;">Cancelar</button>
+                <button onclick="salvarLancamentoManualDefinitivo('${tipo}')" style="flex:1; background:${cor}; color:#000; font-weight:bold;">💾 Salvar</button>
+            </div>
+        </div>
+    `;
+    
+    abrirModal('modalFluxoFinanceiro');
+}
+
+// Função para salvar no banco
+async function salvarLancamentoManualDefinitivo(tipo) {
+    const desc = document.getElementById('manualDescricao').value.trim();
+    const valor = parseFloat(document.getElementById('manualValor').value);
+    const dataStr = document.getElementById('manualData').value;
+
+    if (!desc) return exibirPopup("Erro", "Digite o nome/descrição do registro.");
+    if (isNaN(valor) || valor <= 0) return exibirPopup("Erro", "Digite um valor válido.");
+    if (!dataStr) return exibirPopup("Erro", "Selecione uma data.");
+
+    exibirAguarde("Salvando...");
+
+    try {
+        // Cria a data correta (meio-dia para evitar problemas de fuso horário)
+        const dataEvento = new Date(dataStr + 'T12:00:00');
+        
+        await db.collection('extrato_financeiro').add({
+            descricao: desc,
+            valor: valor,
+            usuarioUid: auth.currentUser.uid, // Quem lançou
+            donoUid: auth.currentUser.uid,    // Dono do caixa
+            tipo: tipo === 'entrada' ? 'entrada_manual' : 'saida_manual',
+            dataEvento: firebase.firestore.Timestamp.fromDate(dataEvento),
+            ts: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        fecharTodosOsModais();
+        exibirPopup("Sucesso", "Lançamento registrado!");
+        
+        // Garante que o painel financeiro seja recarregado
+        if (document.getElementById('modalFinanceiroProprietario')) {
+            abrirModalFinanceiroProprietario();
+        }
+        
+    } catch (e) {
+        console.error(e);
+        fecharTodosOsModais();
+        exibirPopup("Erro", "Falha ao salvar: " + e.message);
+    }
+}
+
+// Resolve o ReferenceError: renderizarGraficoLinearFinanceiro is not defined
+function renderizarGraficoLinearFinanceiro(dadosDiarios, cor, tipo) {
+    const ctx = document.getElementById('graficoEspecifico')?.getContext('2d');
+    if (!ctx) return;
+
+    if (window.chartEspecifico) window.chartEspecifico.destroy();
+
+    const labels = Object.keys(dadosDiarios).reverse();
+    const valores = labels.map(l => dadosDiarios[l]);
+
+    window.chartEspecifico = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: tipo === 'entradas' ? 'Entradas R$' : 'Saídas R$',
+                data: valores,
+                borderColor: cor,
+                backgroundColor: cor + '22',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+}
+
+// Função para o Gráfico de Evolução de Lucro do Painel Principal
+function renderizarGraficoEvolucaoLucro(labels, valores) {
+    const ctx = document.getElementById('graficoEvolucaoLucro')?.getContext('2d');
+    if (!ctx) return;
+
+    if (window.chartEvolucao) window.chartEvolucao.destroy();
+
+    window.chartEvolucao = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Lucro Líquido',
+                data: valores,
+                borderColor: '#2ecc71',
+                pointBackgroundColor: valores.map(v => v >= 0 ? '#2ecc71' : '#e74c3c'),
+                tension: 0.3,
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: false } }
+        }
+    });
+}
+
+async function excluirItemFinanceiro(id, origem, valor) {
+    if (!confirm(`Excluir permanentemente R$ ${valor}?`)) return;
+    exibirAguarde("Apagando...");
+    try {
+        if (origem === 'extrato') await db.collection('extrato_financeiro').doc(id).delete();
+        else await db.collection('agendamentos').doc(id).delete();
+        fecharTodosOsModais();
+        carregarFinanceiro('mes'); 
+    } catch (e) { fecharTodosOsModais(); exibirPopup("Erro", e.message); }
 }
 
 // --- NOVO: FUNÇÃO PARA VER DÍVIDA E PAGAR PROFISSIONAL ---
@@ -21914,115 +22882,124 @@ function recusarAgendamento(agendamentoId, clienteUid) {
 }
 
 async function cancelarAgendamentoManualmente(agendamentoId, clienteUid, valor) {
-  if (!confirm("Cancelar este agendamento? O dinheiro será reembolsado e sua reputação será afetada.")) return;
-  
-  // ADIÇÃO: Para o efeito chiclete do mapa imediatamente
-  if (typeof encerrarRastreamentoTotal === 'function') encerrarRastreamentoTotal(); 
+    // 1. Confirmação inicial
+    if (!confirm("Cancelar este agendamento? O dinheiro será reembolsado e sua reputação será afetada.")) return;
 
-  exibirAguarde("Cancelando...");
-  
-  // Base de Taxas
-  const TAXA_ADMIN = 0.10; // Taxa de 10%
-  
-  try {
-      await db.runTransaction(async t => {
-          const agendamentoRef = db.collection("agendamentos").doc(agendamentoId);
-          
-          // --- 1. FASE DE LEITURAS (TUDO DEVE SER LIDO AQUI) ---
-          
-          // Lê o agendamento
-          const agendamentoDoc = await t.get(agendamentoRef);
-          if (!agendamentoDoc.exists) throw "Agendamento não encontrado.";
-          
-          const agData = agendamentoDoc.data();
-          const status = agData.status;
-          
-          if (status !== 'confirmado' && status !== 'conclusão pendente' && status !== 'imediato') {
-              throw "Apenas agendamentos ativos podem ser cancelados.";
-          }
-          
-          // Lê o barbeiro (CORREÇÃO: Agora lemos antes de qualquer update!)
-          const barbeiroRef = db.collection("usuarios").doc(agData.barbeiroUid);
-          const barbeiroDoc = await t.get(barbeiroRef);
-          const barbeiroData = barbeiroDoc.data();
+    // ADIÇÃO: Para o efeito chiclete do mapa imediatamente
+    if (typeof encerrarRastreamentoTotal === 'function') encerrarRastreamentoTotal();
 
-          const clienteRef = db.collection("usuarios").doc(clienteUid);
-          
-          // Observação: O adminSnap é uma query externa, idealmente deveria ser feita fora, 
-          // mas como não é transacional (t.get), geralmente não trava, mas vamos focar na correção principal.
+    exibirAguarde("Cancelando...");
 
-          // --- 2. FASE DE CÁLCULOS ---
-          const valorComTaxa = valor * (1 - TAXA_ADMIN); 
-          const valorTaxaAdmin = valor * TAXA_ADMIN; 
+    // Base de Taxas
+    const TAXA_ADMIN = 0.10; // Taxa de 10%
 
-          // --- 3. FASE DE ESCRITAS (AGORA PODE SALVAR) ---
+    try {
+        await db.runTransaction(async t => {
+            const agendamentoRef = db.collection("agendamentos").doc(agendamentoId);
 
-          // 1. Reembolsa o Cliente
-          if (clienteUid !== 'manual') {
-              t.update(clienteRef, { 
-                  saldo: firebase.firestore.FieldValue.increment(valor) 
-              });
-          }
-          
-          // 2. Penaliza o Barbeiro
-          t.update(barbeiroRef, { 
-              reputacao: firebase.firestore.FieldValue.increment(-10) 
-          });
+            // --- 1. FASE DE LEITURAS ---
+            
+            // Lê o agendamento
+            const agendamentoDoc = await t.get(agendamentoRef);
+            if (!agendamentoDoc.exists) throw new Error("Agendamento não encontrado.");
 
-          // 3. Atualiza Agendamento
-          t.update(agendamentoRef, { status: "cancelado" });
-          
-          // 4. Libera o horário na agenda (Usando os dados que lemos lá em cima)
-          const horario = agData.horario;
-          
-          if (barbeiroData && barbeiroData.usaAgendaManual && horario && horario !== 'imediato') {
-              const campoHorario = `agenda.${horario}`;
-              t.update(barbeiroRef, { 
-                  [campoHorario]: true // Volta o slot para disponível
-              });
-          }
-          // Se for vaga imediata, religa a vaga imediata no perfil
-          else if (horario === 'imediato' || status === 'imediato') {
-               t.update(barbeiroRef, { vagaImediata: true });
-          }
+            const agData = agendamentoDoc.data();
+            const status = agData.status;
 
-          // 5. Estorno de taxas Admin (Lógica mantida, mas feita via set merge sem leitura transacional do admin)
-          // Nota: Para ser 100% transacional, deveríamos ler o admin lá em cima, mas para corrigir o erro atual isso basta.
-          const adminRef = db.collection("config").doc("financeiro");
-          t.set(adminRef, { 
-              arrecadadoTaxas: firebase.firestore.FieldValue.increment(-valorTaxaAdmin) 
-          }, { merge: true });
-          
-          // Lançamento no Extrato
-          const extratoRef = db.collection("extrato_financeiro").doc();
-          t.set(extratoRef, {
-              donoUid: agData.donoUid || agData.barbeiroUid,
-              usuarioUid: agData.barbeiroUid,
-              tipo: "cancelamento_servico",
-              descricao: `Cancelamento: ${agData.servico} (Reputação -10)`,
-              valor: 0,
-              dataEvento: firebase.firestore.Timestamp.now(),
-              ts: firebase.firestore.FieldValue.serverTimestamp()
-          });
-      });
+            if (status !== 'confirmado' && status !== 'conclusão pendente' && status !== 'imediato') {
+                throw new Error("Apenas agendamentos ativos podem ser cancelados.");
+            }
 
-      // --- SUCESSO ---
-      // Notifica o cliente
-      if(typeof notifyUser === 'function') {
-        notifyUser(clienteUid, "🔄 Agendamento Cancelado", `O profissional cancelou seu horário. O valor de R$ ${valor.toFixed(2)} foi estornado.`);
-      }
-      
-      fecharTodosOsModais();
-      exibirPopup("Agendamento cancelado e valor reembolsado. Sua reputação diminuiu.");
-      
-      // Recarrega a página
-      setTimeout(() => location.reload(), 1500);
+            // Lê o barbeiro
+            const barbeiroRef = db.collection("usuarios").doc(agData.barbeiroUid);
+            const barbeiroDoc = await t.get(barbeiroRef);
+            if (!barbeiroDoc.exists) throw new Error("Profissional não encontrado.");
+            const barbeiroData = barbeiroDoc.data();
 
-  } catch (e) {
-      fecharTodosOsModais();
-      console.error("Erro cancelamento:", e);
-      exibirPopup("Erro ao cancelar: " + (e.message || e));
-  }
+            // --- 2. FASE DE CÁLCULOS ---
+            const valorTaxaAdmin = valor * TAXA_ADMIN;
+
+            // --- 3. FASE DE ESCRITAS ---
+
+            // A. Reembolsa o Cliente (BLINDAGEM AQUI)
+            // Verificamos se NÃO é manual (pelo prefixo 'manual_') e se o UID existe
+            const ehClienteManual = !clienteUid || clienteUid === 'manual' || clienteUid.startsWith('manual_');
+            
+            if (!ehClienteManual) {
+                const clienteRef = db.collection("usuarios").doc(clienteUid);
+                // Opcional: Você pode ler o cliente antes se quiser garantir que o doc existe, 
+                // mas se ele chegou aqui com UID real, o update deve funcionar.
+                t.update(clienteRef, {
+                    saldo: firebase.firestore.FieldValue.increment(valor)
+                });
+            }
+
+            // B. Penaliza o Barbeiro
+            t.update(barbeiroRef, {
+                reputacao: firebase.firestore.FieldValue.increment(-10)
+            });
+
+            // C. Atualiza status do Agendamento
+            t.update(agendamentoRef, { status: "cancelado" });
+
+            // D. Libera o horário na agenda
+            const horario = agData.horario;
+            if (barbeiroData && barbeiroData.usaAgendaManual && horario && horario !== 'imediato') {
+                const campoHorario = `agenda.${horario}`;
+                t.update(barbeiroRef, {
+                    [campoHorario]: true // Volta o slot para disponível
+                });
+            }
+            // Se for vaga imediata, religa a vaga imediata no perfil
+            else if (horario === 'imediato' || status === 'imediato') {
+                t.update(barbeiroRef, { vagaImediata: true });
+            }
+
+            // E. Estorno de taxas Admin
+            const adminRef = db.collection("config").doc("financeiro");
+            t.set(adminRef, {
+                arrecadadoTaxas: firebase.firestore.FieldValue.increment(-valorTaxaAdmin)
+            }, { merge: true });
+
+            // F. Lançamento no Extrato Financeiro (Histórico)
+            const extratoRef = db.collection("extrato_financeiro").doc();
+            t.set(extratoRef, {
+                donoUid: agData.donoUid || agData.barbeiroUid,
+                usuarioUid: agData.barbeiroUid,
+                clienteUid: clienteUid, // Salva o ID manual no histórico para conferência
+                tipo: "cancelamento_servico",
+                descricao: `Cancelamento: ${agData.servico} (Reputação -10)`,
+                valor: 0,
+                dataEvento: firebase.firestore.Timestamp.now(),
+                ts: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        });
+
+        // --- APÓS A TRANSAÇÃO (SUCESSO) ---
+
+        // Notifica o cliente via Push (Apenas se for cliente real do App)
+        const ehClienteManualPos = !clienteUid || clienteUid === 'manual' || clienteUid.startsWith('manual_');
+        if (!ehClienteManualPos && typeof notifyUser === 'function') {
+            notifyUser(clienteUid, "🔄 Agendamento Cancelado", `O profissional cancelou seu horário. O valor de R$ ${valor.toFixed(2)} foi estornado.`);
+        }
+
+        fecharTodosOsModais();
+        
+        // Mensagem customizada dependendo do tipo de cliente
+        if (ehClienteManualPos) {
+            exibirPopup("Agendamento de balcão cancelado. Ninguém foi reembolsado pois não houve pagamento via app.");
+        } else {
+            exibirPopup("Agendamento cancelado e valor reembolsado. Sua reputação diminuiu.");
+        }
+
+        // Recarrega para atualizar a agenda visualmente
+        setTimeout(() => location.reload(), 1500);
+
+    } catch (e) {
+        fecharAguarde(null, true); // Fecha o "Cancelando..."
+        console.error("Erro detalhado no cancelamento:", e);
+        exibirPopup("Erro ao cancelar: " + (e.message || e));
+    }
 }
 
 function tocarSom(tipo, volume = 1.0) {
@@ -22467,23 +23444,18 @@ async function salvarAgendamentoManual() {
 window.agendamentoIdParaConcluir = null;
 window.clienteUidParaConcluir = null;
 
-// 1. Função chamada pelo botão "Concluir" nos cards
+// Esta é a função que você chamou
 function concluirAgendamento(agendamentoId, clienteUid) {
-    // Guarda os dados para usar depois de confirmar o pagamento
     window.agendamentoIdParaConcluir = agendamentoId;
     window.clienteUidParaConcluir = clienteUid;
-
-    // Reseta e abre o modal de pagamento específico que você criou
-    resetarModal(); // Limpa inputs anteriores
+    resetarModal(); 
     document.getElementById('modal-pagamento').style.display = 'flex';
 }
 
-// --- FUNÇÃO FINAL: CONECTADA CORRETAMENTE COM SEU CÓDIGO ---
 async function salvarConclusao() {
     const idAgendamento = window.agendamentoIdParaConcluir;
     if (!idAgendamento) return;
 
-    // 1. Coletar valores e métodos
     let valorTotalInformado = 0;
     let metodos = { pix: 0, dinheiro: 0, credito: 0, debito: 0 };
     
@@ -22494,250 +23466,108 @@ async function salvarConclusao() {
         valorTotalInformado += v;
     });
 
-    if (valorTotalInformado <= 0) {
-        return alert("Por favor, informe os valores pagos.");
-    }
+    if (valorTotalInformado <= 0) return alert("Informe os valores pagos.");
 
-    exibirAguarde("Finalizando faturamento...");
+    exibirAguarde("Finalizando e vinculando ao Proprietário...");
 
     try {
-        // 2. Buscar os dados do agendamento para saber quem é o barbeiro e o serviço
+        // 1. Pegar dados do agendamento para saber quem é o barbeiro e O STATUS ATUAL
         const agendRef = db.collection('agendamentos').doc(idAgendamento);
         const docAgend = await agendRef.get();
-        if (!docAgend.exists) throw new Error("Agendamento não encontrado.");
         
-        const dados = docAgend.data();
-        const uidBarbeiro = dados.barbeiroUid;
-        const uidDono = dados.donoUid || auth.currentUser.uid;
+        if (!docAgend.exists) throw new Error("Agendamento não encontrado.");
+        const dadosAgend = docAgend.data();
 
-        // 3. Buscar a taxa de comissão do barbeiro no perfil dele
+        // --- BLINDAGEM 1: Verifica se já foi concluído ---
+        if (dadosAgend.status === 'concluido') {
+            fecharTodosOsModais();
+            return exibirPopup("Já Concluído", "Este agendamento já foi finalizado e contabilizado anteriormente.");
+        }
+
+        // --- BLINDAGEM 2: Verifica se já existe extrato para este ID (Dupla proteção) ---
+        const checkExtrato = await db.collection('extrato_financeiro')
+            .where('agendamentoId', '==', idAgendamento)
+            .limit(1)
+            .get();
+            
+        if (!checkExtrato.empty) {
+            // Se já tem extrato, apenas atualiza o status do agendamento se necessário e sai
+            if (dadosAgend.status !== 'concluido') {
+                await agendRef.update({ status: 'concluido' });
+            }
+            fecharTodosOsModais();
+            return exibirPopup("Aviso", "Este serviço já possui registro financeiro gerado.");
+        }
+
+        const uidBarbeiro = dadosAgend.barbeiroUid;
+
+        // 2. BUSCAR O PATRÃO PELO CAMPO 'vinculoSalao'
         const profDoc = await db.collection('usuarios').doc(uidBarbeiro).get();
-        const taxaComissaoSalao = profDoc.exists ? (profDoc.data().comissao || 0) : 0;
+        const profDados = profDoc.data();
+        
+        // Se o campo vinculoSalao existir, esse é o ID do proprietário.
+        // Se não existir, o próprio barbeiro é o dono.
+        let uidDonoReal = profDados.vinculoSalao || uidBarbeiro;
+        console.log("LOG: Barbeiro:", uidBarbeiro, "-> Dono (vinculoSalao):", uidDonoReal);
 
-        // Cálculos de divisão
-        const valorCustoSalao = valorTotalInformado * (taxaComissaoSalao / 100);
-        const valorLiquidoBarbeiro = valorTotalInformado - valorCustoSalao;
+        const taxaComissao = profDados.comissao || profDados.taxaComissao || 0;
+        const valorComissaoDono = valorTotalInformado * (taxaComissao / 100);
+        const valorLiquidoProfissional = valorTotalInformado - valorComissaoDono;
 
         const batch = db.batch();
 
-        // A) Atualizar Status do Agendamento
+        // 3. Atualizar Agendamento com o Dono Correto e Status
         batch.update(agendRef, {
             status: 'concluido',
             valorFinalPago: valorTotalInformado,
             metodosPagamento: metodos,
-            dataConclusao: firebase.firestore.FieldValue.serverTimestamp()
+            dataConclusao: firebase.firestore.FieldValue.serverTimestamp(),
+            donoUid: uidDonoReal 
         });
 
-        // B) Atualizar Métricas do Profissional (O que ele tem pra receber e o Bruto histórico)
-        const profRef = db.collection('usuarios').doc(uidBarbeiro);
-        batch.update(profRef, {
-            faturamentoPendente: firebase.firestore.FieldValue.increment(valorLiquidoBarbeiro),
-            "metrics.faturamentoBruto": firebase.firestore.FieldValue.increment(valorTotalInformado),
-            "metrics.totalServicos": firebase.firestore.FieldValue.increment(1)
-        });
-
-        // C) Registrar no Extrato Financeiro do Salão (Para os gráficos do Dono)
+        // 4. Gravar Extrato Financeiro
         const extratoRef = db.collection('extrato_financeiro').doc();
         batch.set(extratoRef, {
-            donoUid: uidDono,
-            usuarioUid: uidBarbeiro, // Quem realizou
+            agendamentoId: idAgendamento, // <--- IMPORTANTE: Vincula o ID para a blindagem funcionar
+            donoUid: uidDonoReal, // O Proprietário verá por causa deste campo
+            usuarioUid: uidBarbeiro,
+            clienteUid: dadosAgend.clienteUid || 'balcao',
             tipo: 'receita_servico',
-            descricao: `Serviço: ${dados.servico}`,
-            valor: valorTotalInformado, // Bruto que entrou no salão
-            comissaoRetida: valorCustoSalao,
+            descricao: `Serviço: ${dadosAgend.servico}`,
+            valor: valorTotalInformado,
+            comissaoRetida: valorComissaoDono,
+            valorLiquidoProfissional: valorLiquidoProfissional,
             metodos: metodos,
             dataEvento: firebase.firestore.Timestamp.now(),
-            ts: firebase.firestore.FieldValue.serverTimestamp()
+            ts: firebase.firestore.FieldValue.serverTimestamp(),
+            extratoIdNoBanco: extratoRef.id
         });
 
-        // Executar tudo
         await batch.commit();
 
-        fecharTodosOsModais(); // Fecha o aguarde e o de pagamento
-        exibirPopup("Concluído!", "O financeiro e as métricas foram atualizados com sucesso.");
+        fecharTodosOsModais();
+        exibirPopup("Sucesso!", `Concluído. ID do Registro: ${extratoRef.id}`);
         
-        // Sincroniza a tela se o dono estiver no painel de gestão
         if (typeof sincronizarPainelDeGestao === 'function') sincronizarPainelDeGestao();
 
     } catch (e) {
-        console.error(e);
+        console.error("Erro na conclusão:", e);
         fecharTodosOsModais();
-        alert("Erro ao concluir: " + e.message);
+        alert("Erro: " + e.message);
     }
 }
 
-async function carregarFinanceiro(periodo = 'mes') {
-    const elEntradas = document.getElementById('resumoEntradas');
-    const elSaidas = document.getElementById('resumoSaidas');
-    const elSaldo = document.getElementById('resumoSaldo');
-    const lista = document.getElementById('listaGanhosEquipe');
-    
-    if (!elSaldo || !lista) return;
-
-    lista.innerHTML = '<div class="spinner"></div>';
-    elSaldo.textContent = '...';
-
-    // Configuração de Datas
-    const agora = new Date();
-    let dataInicio, dataFim;
-
-    if (periodo === 'custom') {
-        const inpInicio = document.getElementById('finDataInicio').value;
-        const inpFim = document.getElementById('finDataFim').value;
-        if (!inpInicio || !inpFim) return exibirPopup("Selecione data inicial e final.");
-        dataInicio = new Date(inpInicio + 'T00:00:00');
-        dataFim = new Date(inpFim + 'T23:59:59');
-    } else {
-        dataFim = new Date(); 
-        dataFim.setHours(23,59,59,999);
-        
-        if (periodo === 'dia') {
-            dataInicio = new Date();
-            dataInicio.setHours(0,0,0,0);
-        }
-        else if (periodo === 'semana') {
-            dataInicio = new Date();
-            const diff = dataInicio.getDate() - dataInicio.getDay() + (dataInicio.getDay() === 0 ? -6 : 1); 
-            dataInicio.setDate(diff); 
-            dataInicio.setHours(0,0,0,0);
-        } else {
-            // Mês
-            dataInicio = new Date(agora.getFullYear(), agora.getMonth(), 1);
-            dataInicio.setHours(0,0,0,0);
-        }
-        
-        if(document.getElementById('finDataInicio')) {
-            document.getElementById('finDataInicio').value = dataInicio.toISOString().split('T')[0];
-            document.getElementById('finDataFim').value = dataFim.toISOString().split('T')[0];
-        }
-    }
-
-    try {
-        const snapshot = await db.collection('extrato_financeiro')
-            .where('donoUid', '==', auth.currentUser.uid)
-            .where('dataEvento', '>=', dataInicio)
-            .where('dataEvento', '<=', dataFim)
-            .get();
-
-        // Totais Gerais
-        let totalServicos = 0;       
-        let totalReceitasAvulsas = 0;
-        let totalComissoes = 0;      
-        let totalDespesasAvulsas = 0;
-        
-        // Detalhamento de Métodos (Novo)
-        let mPix = 0, mDinheiro = 0, mDebito = 0, mCredito = 0;
-
-        const itens = [];
-        const dadosGrafico = {}; 
-
-        snapshot.forEach(doc => {
-            const d = doc.data();
-            const val = Number(d.valor) || 0;
-            const dataObj = d.dataEvento.toDate();
-            
-            let ehEntrada = false;
-            let ehSaida = false;
-
-            // Classifica Entradas e Saídas
-            if (d.tipo === 'receita_servico' || d.tipo === 'entrada_manual') {
-                totalServicos += (d.tipo === 'receita_servico' ? val : 0);
-                totalReceitasAvulsas += (d.tipo === 'entrada_manual' ? val : 0);
-                ehEntrada = true;
-                
-                // --- SOMA DE MÉTODOS (Apenas para receitas de serviço) ---
-                if (d.tipo === 'receita_servico' && d.metodos) {
-                    mPix += (d.metodos.pix || 0);
-                    mDinheiro += (d.metodos.dinheiro || 0);
-                    mDebito += (d.metodos.debito || 0);
-                    mCredito += (d.metodos.credito || 0);
-                } else if (d.tipo === 'receita_servico') {
-                    // Se não tiver detalhe, assume dinheiro (ou ajuste conforme necessidade)
-                    mDinheiro += val; 
-                }
-
-                const diaStr = dataObj.toLocaleDateString('pt-BR');
-                dadosGrafico[diaStr] = (dadosGrafico[diaStr] || 0) + val;
-            } 
-            else if (d.tipo === 'despesa_comissao' || d.tipo === 'saida_manual') {
-                totalComissoes += (d.tipo === 'despesa_comissao' ? val : 0);
-                totalDespesasAvulsas += (d.tipo === 'saida_manual' ? val : 0);
-                ehSaida = true;
-                
-                const diaStr = dataObj.toLocaleDateString('pt-BR');
-                dadosGrafico[diaStr] = (dadosGrafico[diaStr] || 0) - val;
-            }
-
-            if (ehEntrada || ehSaida) {
-                itens.push({ ...d, valor: val, data: dataObj, ehEntrada });
-            }
-        });
-
-        itens.sort((a, b) => b.data - a.data);
-        let html = '';
-        itens.forEach(item => {
-            let corLista = '#2ecc71'; 
-            if (item.tipo === 'entrada_manual') corLista = '#f1c40f'; 
-            if (!item.ehEntrada) corLista = '#e74c3c'; 
-            if (item.tipo === 'saida_manual') corLista = '#e67e22'; 
-
-            const sinal = item.ehEntrada ? '+' : '-';
-            const icone = item.ehEntrada ? '💰' : '💸';
-            const dataFmt = item.data.toLocaleDateString('pt-BR') + ' ' + item.data.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-            
-            // Texto detalhado do método (se houver)
-            let textoMetodo = "";
-            if (item.metodos) {
-                let partes = [];
-                if(item.metodos.pix > 0) partes.push("Pix");
-                if(item.metodos.dinheiro > 0) partes.push("Din");
-                if(item.metodos.credito > 0) partes.push("Créd");
-                if(item.metodos.debito > 0) partes.push("Déb");
-                if(partes.length > 0) textoMetodo = ` <span style="font-size:9px; color:#aaa; border:1px solid #444; padding:0 3px; border-radius:3px;">${partes.join('/')}</span>`;
-            }
-
-            html += `
-            <div class="card" style="padding:10px; margin-bottom:5px; border-left: 4px solid ${corLista}; background:#222; display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <div style="font-size:13px; font-weight:bold; color:#fff;">${icone} ${item.descricao} ${textoMetodo}</div>
-                    <div style="font-size:10px; color:#aaa;">${dataFmt}</div>
-                </div>
-                <div style="text-align:right;">
-                    <span style="font-size:14px; font-weight:bold; color:${corLista};">${sinal} R$ ${item.valor.toFixed(2)}</span>
-                </div>
-            </div>`;
-        });
-
-        lista.innerHTML = html || '<p style="text-align:center; opacity:0.6; padding:20px;">Sem movimentações no período.</p>';
-
-        const totalEntradasGeral = totalServicos + totalReceitasAvulsas;
-        const totalSaidasGeral = totalComissoes + totalDespesasAvulsas;
-        
-        elEntradas.textContent = `R$ ${totalEntradasGeral.toFixed(2)}`;
-        elSaidas.textContent = `R$ ${totalSaidasGeral.toFixed(2)}`;
-        
-        const liquido = totalEntradasGeral - totalSaidasGeral;
-        elSaldo.textContent = `R$ ${liquido.toFixed(2)}`;
-        elSaldo.style.color = liquido >= 0 ? '#2ecc71' : '#e74c3c';
-
-        // --- RENDERIZA O GRÁFICO PRINCIPAL (LINHA/ROSCA 1) ---
-        renderizarGraficoFinanceiro(totalServicos, totalReceitasAvulsas, totalComissoes, totalDespesasAvulsas);
-
-        // --- RENDERIZA O GRÁFICO DE MÉTODOS (NOVO) ---
-        renderizarGraficoMetodos(mPix, mDinheiro, mDebito, mCredito);
-
-    } catch (e) {
-        console.error("Erro financeiro:", e);
-        lista.innerHTML = '<p style="color:red">Erro ao carregar dados.</p>';
-    }
-}
-
-// NOVA FUNÇÃO AUXILIAR PARA O GRÁFICO DE MÉTODOS
+// 4. RENDERIZAR GRÁFICO DE MÉTODOS DE PAGAMENTO (Rosca)
 function renderizarGraficoMetodos(pix, din, deb, cred) {
     const ctx = document.getElementById('chartMetodosPagamento');
     const legContainer = document.getElementById('legendaMetodos');
-    if (!ctx || !legContainer) return;
+    
+    if (!ctx || !legContainer) {
+         console.warn("Container do gráfico de métodos não encontrado.");
+         return;
+    }
 
+    // Destrói instância anterior
     if (window.chartMetodos instanceof Chart) {
         window.chartMetodos.destroy();
     }
@@ -22767,7 +23597,8 @@ function renderizarGraficoMetodos(pix, din, deb, cred) {
         cores = ['#333'];
     }
 
-    window.chartMetodos = new Chart(ctx, {
+    const context = ctx.getContext('2d');
+    window.chartMetodos = new Chart(context, {
         type: 'doughnut',
         data: {
             labels: ['Pix', 'Dinheiro', 'Débito', 'Crédito'],
@@ -22780,131 +23611,21 @@ function renderizarGraficoMetodos(pix, din, deb, cred) {
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
+            maintainAspectRatio: false, // Importante
             plugins: {
                 legend: { display: false },
                 tooltip: {
                     callbacks: {
                         label: function(context) {
                             let val = context.raw || 0;
+                            // Se for o gráfico "vazio" (cinza), não mostra valor
+                            if(context.dataset.backgroundColor[0] === '#333') return 'Sem dados';
                             return ` R$ ${val.toFixed(2)}`;
                         }
                     }
                 }
             }
         }
-    });
-}
-
-function renderizarGraficoFinanceiro(servicos, receitasAvulsas, comissoes, despesasAvulsas) {
-    const ctx = document.getElementById('graficoFinanceiroProprietario').getContext('2d');
-    if (!ctx) return;
-    
-    // Destrói gráfico anterior
-    if (window.chartProprietario instanceof Chart) {
-        window.chartProprietario.destroy();
-    }
-
-    // Configuração dos Dados
-    let dadosChart = [servicos, receitasAvulsas, comissoes, despesasAvulsas];
-    
-    // CORES SOLICITADAS:
-    // 1. Serviços (Entrada Padrão) -> Verde (#2ecc71)
-    // 2. Receita Avulsa -> Dourado (#f1c40f)
-    // 3. Comissões (Saída Padrão) -> Vermelho (#e74c3c)
-    // 4. Despesa Avulsa -> Laranja (#e67e22)
-    let coresChart = ['#2ecc71', '#f1c40f', '#e74c3c', '#e67e22']; 
-    let labelsChart = ['Serviços', 'Receita Extra', 'Comissões/Custos', 'Despesa Extra'];
-
-    // Se tudo for zero, mostra gráfico vazio cinza
-    if (servicos === 0 && receitasAvulsas === 0 && comissoes === 0 && despesasAvulsas === 0) {
-        dadosChart = [1]; 
-        coresChart = ['#333']; 
-        labelsChart = ['Sem dados'];
-    }
-
-    window.chartProprietario = new Chart(ctx, {
-        type: 'doughnut', 
-        data: {
-            labels: labelsChart,
-            datasets: [{
-                data: dadosChart,
-                backgroundColor: coresChart,
-                borderColor: '#000', 
-                borderWidth: 2,
-                hoverOffset: 10 
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '70%', 
-            plugins: {
-                legend: {
-                    position: 'right', 
-                    labels: {
-                        color: '#fff',
-                        font: { size: 11 },
-                        usePointStyle: true,
-                        boxWidth: 8
-                    }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(0,0,0,0.9)',
-                    bodyColor: '#fff',
-                    borderColor: '#d4af37',
-                    borderWidth: 1,
-                    padding: 10,
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.label || '';
-                            let value = context.raw || 0;
-                            if (label === 'Sem dados') return 'Nenhuma movimentação';
-                            
-                            let formattedValue = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-                            
-                            // Calcula porcentagem baseada no total geral (soma de tudo)
-                            let total = context.chart._metasets[context.datasetIndex].total;
-                            let percentage = Math.round((value / total) * 100) + '%';
-                            
-                            return `${label}: ${formattedValue} (${percentage})`;
-                        }
-                    }
-                }
-            },
-            animation: {
-                animateScale: true,
-                animateRotate: true
-            }
-        },
-        // Texto no Centro: "Balanço"
-        plugins: [{
-            id: 'textCenter',
-            beforeDraw: function(chart) {
-                if (dadosChart.length === 1 && dadosChart[0] === 1) return; // Não desenha se vazio
-                
-                var width = chart.width,
-                    height = chart.height,
-                    ctx = chart.ctx;
-
-                ctx.restore();
-                var fontSize = (height / 160).toFixed(2);
-                ctx.font = "bold " + fontSize + "em sans-serif";
-                ctx.textBaseline = "middle";
-                ctx.fillStyle = "#fff";
-
-                var text = "Balanço",
-                    textX = Math.round((width - ctx.measureText(text).width) / 2),
-                    textY = height / 2;
-                
-                // Ajuste para centralizar na área do gráfico (descontando a legenda na direita)
-                var centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
-                var centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
-
-                ctx.fillText(text, centerX - (ctx.measureText(text).width / 2), centerY);
-                ctx.save();
-            }
-        }]
     });
 }
 
@@ -25385,6 +26106,9 @@ function fecharDenuncia(id) {
 async function renderizarGraficoFinanceiro() {
     const ctx = document.getElementById('chartFinanceiro').getContext('2d');
     
+    // PROTEÇÃO: Só roda se tiver usuário logado e for admin
+    if (!auth.currentUser || (perfil && perfil.tipo !== 'admin')) return;
+
     try {
         // 1. Busca os dados reais do seu servidor
         const response = await fetch('https://navalhabackend.onrender.com/admin/stats-financeiro', {
@@ -25392,7 +26116,6 @@ async function renderizarGraficoFinanceiro() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ adminUid: auth.currentUser.uid })
         });
-
         const result = await response.json();
 
         if (!result.success) throw new Error("Falha ao carregar dados.");
@@ -25403,7 +26126,9 @@ async function renderizarGraficoFinanceiro() {
         gradientGreen.addColorStop(1, 'rgba(0, 255, 127, 0)');
 
         // 3. Cria o gráfico com os dados do banco
-        new Chart(ctx, {
+        if (window.adminChartInstance) window.adminChartInstance.destroy(); // Limpa anterior
+        
+        window.adminChartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: result.labels, // Meses vindos do servidor (ex: 2025-11, 2025-12)
@@ -25444,9 +26169,6 @@ async function renderizarGraficoFinanceiro() {
         console.error("Erro ao renderizar gráfico financeiro:", e);
     }
 }
-
-// Inicializa o gráfico
-renderizarGraficoFinanceiro();
 
 async function abrirModalGerenciarUsuario(uid) {
     exibirAguarde("Carregando painel de gestão...");
@@ -27443,86 +28165,145 @@ function obterIconeMaiorConquista(conquistas, tipo) {
     return maiorLevel > -1 ? `<span class="chat-medal">${melhorIcone}</span>` : '';
 }
 
+// SUBSTITUA A FUNÇÃO renderizarPainelProfissionalPadrao INTEIRA POR ESTA:
 function renderizarPainelProfissionalPadrao() {
     const parent = document.getElementById('barbeiroFuncoesContainer');
-    parent.innerHTML = ''; 
+    parent.innerHTML = '';
     const contentDiv = document.createElement('div');
     parent.appendChild(contentDiv);
-    
+
     if (contentDiv) {
         const temPermissaoSOS = perfil.isProprietario || (perfil.permissoes && perfil.permissoes.sos === true);
         const temNivelTecnico = perfil.tipo === 'admin' || (perfil.proAtivo && perfil.proTier === 'tier4');
         const podeCriarPlanos = perfil.isProprietario || (perfil.permissoes && perfil.permissoes.planos === true);
         const temPermissaoPromo = perfil.isProprietario || (perfil.permissoes && perfil.permissoes.promocoes === true);
-        const temConviteAtivo = perfil.temConvitesPendentes === true;
+        const isDono = perfil.isProprietario;
 
+        // Estilos Inline
+        const gridStyle = `display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px;`;
+        const cardStyle = `background: #222; border: 1px solid #333; border-radius: 12px; padding: 10px 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 90px; text-align: center; cursor: pointer; transition: transform 0.2s; position: relative;`;
+        
+        // Botão SOS
         let htmlSOS = '';
         if (typeof abrirModalSOS === 'function' && temPermissaoSOS) {
             htmlSOS = temNivelTecnico 
-                ? `<button onclick="abrirModalSOS()" class="btn-sos-opportunity" style="width:100%; margin-bottom: 15px;">🚨 SOS Cadeira Vazia</button>`
-                : `<button onclick="cliqueBloqueado('tier4')" style="width:100%; margin-bottom: 15px; background: #222; color: #888; border: 1px solid #444;">🔒 SOS Cadeira Vazia <span style="font-size:9px; color:#00c6ff;">(Requer Diamante)</span></button>`;
+                ? `<button onclick="abrirModalSOS()" class="btn-sos-opportunity" style="width:100%; margin-bottom: 15px; padding:15px; border-radius:12px; font-size:16px;">🚨 SOS Cadeira Vazia</button>`
+                : `<button onclick="cliqueBloqueado('tier4')" style="width:100%; margin-bottom: 15px; background: #222; color: #888; border: 1px solid #444; padding:15px; border-radius:12px;">🔒 SOS Cadeira Vazia <span style="font-size:9px; color:#00c6ff;">(Diamante)</span></button>`;
         }
 
-        let htmlOperacional = `
-            <button class="super-btn" onclick="toggleSubMenu('menu_operacional', this)">📅 Operacional</button>
-            <div id="menu_operacional" class="sub-menu-container hidden">
-                <button onclick="abrirConfiguracaoHorario()" style="width:100%; margin-bottom:5px; background:#181818; border:1px solid #444; color:#fff;">⏰ Expediente e Almoço</button>
-                
-                <button onclick="abrirAgenda()" style="width:100%; margin-bottom:5px;">⚙️ Configurar Horários & Folgas (Antigo)</button>
-                
-                <button onclick="abrirClientesBarbeiro()" style="width:48%">🧑‍🤝‍🧑 Clientes</button>
-                <button onclick="abrirHistoricoBarbeiro()" style="width:48%">📜 Histórico</button>
-            </div>`;
+        // --- GRID PRINCIPAL ---
+        let htmlGridPrincipal = `
+            <div>
+                <div style="${gridStyle}">
+                    <div onclick="abrirModalCriarAgendamentoManual()" style="${cardStyle} border-color: #d4af37;">
+                         <span style="font-size: 20px;">➕</span>
+                        <span style="font-size: 11px; margin-top: 5px; color: #d4af37; font-weight: bold;">Novo<br>Agend.</span>
+                    </div>
+                    
+                   <div onclick="abrirAgendamentosBarbeiro()" style="${cardStyle} border-color: #2ecc71;">
+                        <span style="font-size: 20px;">⏰</span>
+                        <span style="font-size: 11px; margin-top: 5px; color: #2ecc71; font-weight: bold;">Meus<br>Agend.</span>
+                    </div>
 
+                   <div onclick="abrirAgenda()" style="${cardStyle}">
+                        <span style="font-size: 20px;">📅</span>
+                        <span style="font-size: 11px; margin-top: 5px; color: #fff;">Agenda<br>Config</span>
+                    </div>
+
+                    <div onclick="abrirServicos()" style="${cardStyle}">
+                        <span style="font-size: 20px;">✂️</span>
+                        <span style="font-size: 11px; margin-top: 5px; color: #fff;">Meus<br>Serviços</span>
+                    </div>
+
+                    <div onclick="abrirConfiguracaoHorario()" style="${cardStyle}">
+                        <span style="font-size: 20px;">⏰</span>
+                        <span style="font-size: 11px; margin-top: 5px; color: #fff;">Expediente<br>Almoço</span>
+                    </div>
+
+                    ${isDono ? `
+                    <div onclick="abrirModalFinanceiroProprietario()" style="${cardStyle} background: linear-gradient(145deg, #1a1a1a, #2a2a2a); border-color: #d4af37;">
+                        <span style="font-size: 20px;">📊</span>
+                        <span style="font-size: 11px; margin-top: 5px; color: gold; font-weight: bold;">Gestão<br>Dono</span>
+                    </div>` : `
+                    <div onclick="abrirModalDashboardBarbeiro()" style="${cardStyle}">
+                        <span style="font-size: 20px;">🚀</span>
+                        <span style="font-size: 11px; margin-top: 5px; color: #fff;">Meu<br>Desempenho</span>
+                    </div>`}
+                </div>
+            </div>
+        `;
+
+        // Menus Expansíveis (AGORA INICIAM FECHADOS - CLASSE 'hidden' ADICIONADA)
         let htmlFinanceiro = `
-            <button class="super-btn" onclick="toggleSubMenu('menu_financeiro', this)">💰 Financeiro & Negócio</button>
-            <div id="menu_financeiro" class="sub-menu-container hidden">
-                <button onclick="abrirModalCarteira()" style="width:48%">💵 Carteira / Saque</button>
-                <button onclick="abrirModalDashboardBarbeiro()" style="width:48%">🚀 Desempenho</button>
-                ${podeCriarPlanos ? `<button onclick="abrirCriarPlano()" style="width:48%; border: 1px solid gold; color: gold;">👑 Criar Assinatura</button>` : ''}
-                ${(perfil.lojaLiberada || perfil.tipo === 'admin') ? `<button id="btnGerenciarLojaBarbeiro" onclick="abrirGerenciarLoja()" style="width:48%">🏪 Minha Loja</button>` : gerarBotaoPro("🏪 Minha Loja", "abrirModalParaVender()", "tier3", perfil).replace('width:45%', 'width:48%')}
-                <button id="btnMinhasComprasBarbeiro" onclick="abrirMinhasCompras()" style="width:48%">🛍️ Minhas Compras</button>
-                ${perfil.isProprietario ? `<div style="width:100%; height:1px; background:#333; margin:5px 0;"></div><button id="btnFinanceiroProp" onclick="abrirModalFinanceiroProprietario()" style="width:100%; border: 1px solid var(--cor-destaque); background: linear-gradient(45deg, #1a1a1a, #2a2a2a);">📊 Gestão Proprietário</button>` : ''}
+            <div>
+                <button class="super-btn" onclick="toggleSubMenu('menu_financeiro', this)">💰 Outros Financeiros</button>
+                <div id="menu_financeiro" class="sub-menu-container hidden"> <button onclick="abrirModalCarteira()" style="width:48%">💵 Carteira / Saque</button>
+                    <button onclick="abrirModalDashboardBarbeiro()" style="width:48%">📈 Relatórios</button>
+                    ${podeCriarPlanos ? `<button onclick="abrirCriarPlano()" style="width:48%; border: 1px solid gold; color: gold;">👑 Criar Assinatura</button>` : ''}
+                    ${(perfil.lojaLiberada || perfil.tipo === 'admin') ? `<button id="btnGerenciarLojaBarbeiro" onclick="abrirGerenciarLoja()" style="width:48%">🏪 Minha Loja</button>` : gerarBotaoPro("🏪 Minha Loja", "abrirModalParaVender()", "tier3", perfil).replace('width:45%', 'width:48%')}
+                    <button id="btnMinhasComprasBarbeiro" onclick="abrirMinhasCompras()" style="width:48%">🛍️ Minhas Compras</button>
+                </div>
             </div>`;
 
-        const styleBtnConvite = temConviteAtivo ? `width:48%; background: #c0392b; border: 1px solid white; color: white; font-weight:bold; animation: pulse-red 1.5s infinite;` : `width:48%;`; 
-        const txtBtnConvite = temConviteAtivo ? `📩 ACEITAR CONVITE (1)` : `📩 Convites`;
-        
+        let htmlOperacional = `
+            <div>
+                <button class="super-btn" onclick="toggleSubMenu('menu_operacional', this)">⚙️ Clientes & Histórico</button>
+                <div id="menu_operacional" class="sub-menu-container hidden"> <button onclick="abrirClientesBarbeiro()" style="width:48%">🧑‍🤝‍🧑 Lista Clientes</button>
+                    <button onclick="abrirHistoricoBarbeiro()" style="width:48%">📜 Histórico Completo</button>
+                     ${isDono ? `<button onclick="switchView('profissionais')" style="width:98%; border:1px solid #aaa;">👥 Gerenciar Equipe</button>` : ''}
+                </div>
+            </div>`;
+            
         let htmlMarketing = `
-            <button class="super-btn" onclick="toggleSubMenu('menu_marketing', this)">🎨 Visual & Marketing</button>
-            <div id="menu_marketing" class="sub-menu-container hidden">
-                <button onclick="abrirModalIdentidadeVisual()" style="width:100%; background: linear-gradient(45deg, #333, #444); border:1px solid #aaa; margin-bottom:5px;">📸 Identidade Visual</button>
-                <button onclick="abrirServicos()" style="width:48%">✂️ Meus Serviços</button>
-                ${temPermissaoPromo ? `<button onclick="abrirPromocoes()" style="width:48%">🎁 Criar Promoções</button>` : ''}
-                <button onclick="abrirModalTurbinar()" style="width:48%; background: linear-gradient(45deg, var(--cor-destaque), #ffeb3b); color:#000;">🚀 Turbinar</button>
-                <button onclick="abrirModal('modalAlterarEnderecoBarbeiro')" style="width:48%">📍 Endereço</button>
-                <button onclick="abrirModalConvitesEquipe()" style="${styleBtnConvite}">${txtBtnConvite}</button>
+            <div>
+                <button class="super-btn" onclick="toggleSubMenu('menu_marketing', this)">🎨 Visual & Marketing</button>
+                <div id="menu_marketing" class="sub-menu-container hidden"> <button onclick="abrirModalIdentidadeVisual()" style="width:100%; margin-bottom:5px;">📸 Identidade Visual</button>
+                    ${temPermissaoPromo ? `<button onclick="abrirPromocoes()" style="width:48%">🎁 Criar Promoções</button>` : ''}
+                    <button onclick="abrirModalTurbinar()" style="width:48%; background: linear-gradient(45deg, var(--cor-destaque), #ffeb3b); color:#000;">🚀 Turbinar</button>
+                    <button onclick="abrirModal('modalAlterarEnderecoBarbeiro')" style="width:48%">📍 Endereço</button>
+                </div>
             </div>`;
-
+            
         let htmlCarreira = `
-            <button class="super-btn" onclick="toggleSubMenu('menu_carreira', this)">🏆 Carreira & Comunidade</button>
-            <div id="menu_carreira" class="sub-menu-container hidden">
-                <button id="btnVipPro" onclick="abrirModalVipPro()" style="width:100%; background: linear-gradient(45deg, var(--cor-destaque-azul), #00c6ff); color:white; font-weight:bold; margin-bottom:5px;">🌟 Assinar Plano PRO</button>
-                ${gerarBotaoPro("📸 Stories", "postarStory()", "tier4", perfil).replace('width:45%', 'width:48%')}
-                <button onclick="abrirModalBatalha()" style="width:48%">⚔️ Batalha</button>
-                <button onclick="abrirModalConquistasBarbeiro()" style="width:48%">🏅 Conquistas</button>
-                <button onclick="abrirModalRankingUnificado()" style="width:48%">📊 Ranking</button>
-                <button onclick="carregarListaBlog(); abrirModal('modalBlog')" style="width:48%">📰 Blog</button>
-                <button id="btnAvaliacoesBarbeiro" onclick="abrirAvaliacoesBarbeiro()" style="width:48%">⭐ Avaliações</button>
-                <button onclick="abrirModalFidelidade()" style="width:48%">💎 Meus Pontos</button>
+            <div>
+                <button class="super-btn" onclick="toggleSubMenu('menu_carreira', this)">🏆 Carreira & Comunidade</button>
+                <div id="menu_carreira" class="sub-menu-container hidden"> <button id="btnVipPro" onclick="abrirModalVipPro()" style="width:100%; background: linear-gradient(45deg, var(--cor-destaque-azul), #00c6ff); color:white; font-weight:bold; margin-bottom:5px;">🌟 Assinar Plano PRO</button>
+                    ${gerarBotaoPro("📸 Stories", "postarStory()", "tier4", perfil).replace('width:45%', 'width:48%')}
+                     <button onclick="abrirModalBatalha()" style="width:48%">⚔️ Batalha</button>
+                    <button onclick="abrirModalConquistasBarbeiro()" style="width:48%">🏅 Conquistas</button>
+                    <button onclick="abrirModalRankingUnificado()" style="width:48%">📊 Ranking</button>
+                    <button onclick="carregarListaBlog(); abrirModal('modalBlog')" style="width:48%">📰 Blog</button>
+                    <button id="btnAvaliacoesBarbeiro" onclick="abrirAvaliacoesBarbeiro()" style="width:48%">⭐ Avaliações</button>
+                    <button onclick="abrirModalFidelidade()" style="width:48%">💎 Meus Pontos</button>
+                </div>
             </div>`;
-
-        contentDiv.innerHTML = htmlSOS + htmlOperacional + htmlFinanceiro + htmlMarketing + htmlCarreira;
         
+        // Renderiza
+        contentDiv.innerHTML = htmlSOS + htmlGridPrincipal + htmlFinanceiro + htmlOperacional + htmlMarketing + htmlCarreira;
+
         // Mapa 3D Button Logic
         const containerMapa = document.getElementById('mapaBtnContainerBarbeiro');
         if (containerMapa) {
-            containerMapa.innerHTML = ''; 
+            containerMapa.innerHTML = '';
             const btnMapa = document.createElement('button');
             btnMapa.innerHTML = '🗺️ Mapa da Beleza (3D)';
             btnMapa.style.cssText = "width: 100%; margin-bottom: 10px; background: linear-gradient(45deg, #d4af37, #f1c40f); color: white; font-weight: bold; border-radius: 12px;";
             btnMapa.onclick = abrirMapaGeral;
             containerMapa.appendChild(btnMapa);
+        }
+
+        // --- FORÇAR GAVETA ABERTA AO INICIAR? NÃO! (REMOVIDO CÓDIGO QUE FORÇAVA ABRIR) ---
+        const containerFuncoes = document.getElementById('barbeiroFuncoesContainer');
+        const btnToggle = containerFuncoes ? containerFuncoes.previousElementSibling : null; 
+
+        if (containerFuncoes) {
+            // Apenas garante que o container pai esteja visível, mas as gavetas dentro estarão hidden
+            containerFuncoes.classList.remove('hidden');
+            containerFuncoes.style.display = 'block';
+        }
+        if (btnToggle && btnToggle.classList.contains('blinking-button')) {
+            btnToggle.classList.remove('closed');
+            btnToggle.classList.add('open');
         }
     }
 }
@@ -27857,154 +28638,155 @@ async function abrirModalDashboardBarbeiro(uidTarget) {
     const uidMembro = uidTarget || auth.currentUser.uid;
     const uidDono = auth.currentUser.uid; 
     
+    // Verifica se sou eu mesmo ou se sou o dono vendo um membro
+    const souDonoDoNegocio = perfil.isProprietario;
+    const souEuMesmo = (auth.currentUser.uid === uidMembro);
+
     // Limpeza visual
     const anterior = document.getElementById('modalDashBarbeiro');
     if (anterior) anterior.remove();
     fecharTodosOsModais();
-
     exibirAguarde("Calculando métricas...");
 
     try {
-        // 1. BUSCA DADOS DO USUÁRIO (Para saber a comissão)
         const docUser = await db.collection('usuarios').doc(uidMembro).get();
         if (!docUser.exists) throw new Error("Usuário não encontrado");
         const dados = docUser.data();
         
-        // Define a comissão do barbeiro (ex: 100 - 40 = 60%)
         let taxaSalao = parseFloat(dados.taxaComissao || dados.comissao || 0);
         if (isNaN(taxaSalao)) taxaSalao = 0;
         const pctBarbeiro = 100 - taxaSalao;
 
-        // 2. DEFINIR DATAS DO MÊS ATUAL (Para os filtros mensais)
         const agora = new Date();
         const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
         const fimMes = new Date(agora.getFullYear(), agora.getMonth() + 1, 0, 23, 59, 59);
-
-        // 3. BUSCAR DADOS
+        
         let queryAg = db.collection('agendamentos')
             .where('barbeiroUid', '==', uidMembro)
             .where('status', 'in', ['concluido', 'avaliado']);
-        
-        // Se quem vê é o dono, filtra pelo salão dele para garantir
+
         if (dados.tipo === 'dono' || uidMembro !== auth.currentUser.uid) {
              queryAg = queryAg.where('donoUid', '==', uidDono);
         }
 
-        // Executa as queries em paralelo
         const [snapshotAg, snapshotPag] = await Promise.all([
             queryAg.get(),
             db.collection('pagamentos_equipe').where('recebedorUid', '==', uidMembro).get()
         ]);
 
-        // --- 4. CÁLCULOS ---
         let acumuladoComissaoGlobal = 0;
         let totalPagoGlobal = 0;
         let liquidoMes = 0;
-        let metodosMes = { pix:0, dinheiro:0, credito:0, debito:0 }; 
-        
-        // ARRAY PARA O HISTÓRICO (NOVO)
+        let metodosMes = { pix:0, dinheiro:0, credito:0, debito:0 };
         let listaHistorico = [];
 
-        // A. Processa Agendamentos (Entradas)
         snapshotAg.forEach(doc => {
             const d = doc.data();
             const val = parseFloat(d.valor) || 0;
             const comissao = val * (pctBarbeiro / 100);
             
-            // Tratamento de data
             let dataServico = new Date();
             if(d.dataConclusao && d.dataConclusao.toDate) { dataServico = d.dataConclusao.toDate(); }
             else if(d.ts && d.ts.toDate) { dataServico = d.ts.toDate(); }
             else if(d.data) { dataServico = new Date(d.data + 'T00:00:00'); }
 
-            // Soma no Global
             acumuladoComissaoGlobal += comissao;
 
-            // Se for deste mês, processa dados mensais
             if (dataServico >= inicioMes && dataServico <= fimMes) {
                 liquidoMes += comissao;
-
-                // Soma Métodos
                 if (d.metodosPagamento) {
                     metodosMes.pix += (d.metodosPagamento.pix || 0);
                     metodosMes.dinheiro += (d.metodosPagamento.dinheiro || 0);
                     metodosMes.credito += (d.metodosPagamento.credito || 0);
                     metodosMes.debito += (d.metodosPagamento.debito || 0);
                 } else {
-                    metodosMes.dinheiro += val; 
+                    metodosMes.dinheiro += val;
                 }
             }
 
-            // ADICIONA À LISTA (INDEPENDENTE DO MÊS, OU PODE FILTRAR SE QUISER)
-            // Aqui estou pegando todos para exibir o histórico completo, ou você pode colocar o 'if (dataServico >= inicioMes...)' em volta se quiser só histórico do mês.
-            // Vou deixar mostrando TUDO ordenado por data (mais recente primeiro).
             listaHistorico.push({
+                id: doc.id, 
                 nomeCliente: d.nomeCliente || (d.clienteNome ? d.clienteNome : 'Cliente Avulso'),
+                servico: d.servico || 'Serviço',
                 hora: dataServico.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}),
-                dataCompleta: dataServico, // Usado para ordenar
+                dataCompleta: dataServico,
                 dataLegivel: dataServico.toLocaleDateString('pt-BR'),
+                dataISO: dataServico.toLocaleString('pt-BR'),
                 valorComissao: comissao
             });
         });
 
-        // B. Processa Pagamentos (Saídas)
         snapshotPag.forEach(doc => {
             const val = parseFloat(doc.data().valor) || 0;
             totalPagoGlobal += val;
         });
 
-        // C. Cálculo Final "A Receber"
         let aReceber = acumuladoComissaoGlobal - totalPagoGlobal;
-        if (aReceber < 0.1 && aReceber > -0.1) aReceber = 0; 
-
-        // ORDENAR HISTÓRICO (Mais recente primeiro)
+        if (aReceber < 0.1 && aReceber > -0.1) aReceber = 0;
         listaHistorico.sort((a, b) => b.dataCompleta - a.dataCompleta);
+        
+        fecharTodosOsModais(); 
 
-        fecharTodosOsModais(); // Fecha o aguarde
-
-        // GERA O HTML DA LISTA DE HISTÓRICO
         let htmlListaHistorico = '';
         if (listaHistorico.length === 0) {
             htmlListaHistorico = '<div style="text-align:center; color:#666; padding:20px;">Nenhum serviço realizado ainda.</div>';
         } else {
-            // Pega apenas os últimos 50 para não pesar a tela
             listaHistorico.slice(0, 50).forEach(item => {
+                // Lógica do botão de deletar preservada
+                let deleteBtn = '';
+                if (souDonoDoNegocio || souEuMesmo) {
+                    deleteBtn = `
+                    <button onclick="deletarRegistroFinanceiro('${item.id}', '${uidMembro}')" 
+                            style="background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid rgba(231,76,60,0.3); width: 28px; height: 28px; border-radius: 6px; display:flex; align-items:center; justify-content:center; cursor:pointer; margin-left:10px;">
+                        🗑️
+                    </button>`;
+                }
+
+                // NOVO LAYOUT "EXTRATO PREMIUM" COM ID_BANCO INTEGRADO
                 htmlListaHistorico += `
-                <div style="display:flex; justify-content:space-between; align-items:center; background:#1a1a1a; padding:12px; border-bottom:1px solid #333; margin-bottom: 5px; border-radius: 8px;">
-                    <div>
-                        <div style="color:#fff; font-size:14px; font-weight:600;">${item.nomeCliente}</div>
-                        <div style="color:#888; font-size:11px;">📅 ${item.dataLegivel} às ${item.hora}</div>
-                    </div>
-                    <div style="text-align:right;">
-                        <div style="color:#2ecc71; font-weight:bold; font-size:14px;">
-                            + ${item.valorComissao.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}
+                <div class="card-extrato-premium" style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 3px solid #d4af37; border: 1px solid rgba(255,255,255,0.05); border-left: 4px solid #d4af37;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <strong style="display:block; font-size:14px; color:#fff;">${item.servico}</strong>
+                            <span style="font-size:12px; color:#888;">Cliente: ${item.nomeCliente}</span>
+                            <small style="display:block; color: #555; margin-top:2px;">${item.dataISO}</small>
                         </div>
-                        <div style="color:#555; font-size:9px; text-transform:uppercase;">Comissão</div>
+                        <div style="display: flex; align-items: center;">
+                            <div style="text-align:right;">
+                                <div style="color: #2ecc71; font-weight: bold; font-size:15px;">
+                                    + ${item.valorComissao.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}
+                                </div>
+                                <div style="color: #444; font-size: 9px; text-transform: uppercase; font-weight:bold;">Sua Comissão</div>
+                            </div>
+                            ${deleteBtn}
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); font-size: 9px; color: #444; display: flex; justify-content: space-between; align-items: center;">
+                        <span>DOC_ID: <span style="font-family:monospace;">${item.id}</span></span>
+                        <span style="color:#d4af37; cursor:pointer; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px;" 
+                              onclick="navigator.clipboard.writeText('${item.id}'); alert('ID Copiado!')">
+                              Copiar ID
+                        </span>
                     </div>
                 </div>`;
             });
         }
 
-        // --- 5. MONTAGEM DO HTML ---
         const modal = document.createElement('div');
         modal.id = 'modalDashBarbeiro';
-        modal.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 15000; overflow-y: auto;
-            display: flex; flex-direction: column;
-        `;
-
+        modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 15000; overflow-y: auto; display: flex; flex-direction: column;`;
+        
         modal.innerHTML = `
             <div style="padding: 20px; background: #111; border-bottom: 1px solid #333; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:10;">
                 <div>
                     <h2 style="color: #fff; margin:0; font-size:18px;">Desempenho</h2>
                     <span style="color: #888; font-size:12px;">${dados.nome}</span>
                 </div>
-                <button onclick="document.getElementById('modalDashBarbeiro').remove()" style="background:transparent; border:none; color:#fff; font-size:24px;">✕</button>
+                <button onclick="document.getElementById('modalDashBarbeiro').remove()" style="background:transparent; border:none; color:#fff; font-size:24px; cursor:pointer;">✕</button>
             </div>
 
             <div style="padding: 20px; max-width: 600px; margin: 0 auto; width: 100%; box-sizing: border-box;">
-                
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
                     <div style="background: #1a1a1a; padding: 15px; border-radius: 12px; border-left: 4px solid #f1c40f;">
                         <div style="color: #aaa; font-size: 11px; text-transform: uppercase;">Líquido (Mês)</div>
@@ -28034,27 +28816,19 @@ async function abrirModalDashboardBarbeiro(uidTarget) {
                     </div>
                 </div>
 
-                <div style="background: #181818; padding: 15px; border-radius: 15px; margin-bottom: 25px; border: 1px solid #333;">
-                    <h4 style="color:#ccc; margin:0 0 15px 0; font-size:14px;">Métodos (Mês Atual)</h4>
-                    <div style="height: 200px; position: relative;">
-                        <canvas id="chartMetodos"></canvas>
-                    </div>
-                </div>
-
                 <h3 style="color: #fff; font-size: 16px; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px; margin-top: 30px;">
-                    📜 Histórico de Serviços
+                    📜 Histórico de Serviços (Últimos 50)
                 </h3>
                 <div id="listaHistoricoContainer">
                     ${htmlListaHistorico}
                 </div>
-
                 <br><br>
             </div>
         `;
 
         document.body.appendChild(modal);
 
-        // --- 6. RENDERIZAR GRÁFICOS ---
+        // Renderiza Gráfico
         new Chart(document.getElementById('chartBalanco').getContext('2d'), {
             type: 'doughnut',
             data: {
@@ -28069,43 +28843,94 @@ async function abrirModalDashboardBarbeiro(uidTarget) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom', labels: { color: '#fff', font: {size: 12} } }
+                plugins: { 
+                    legend: { 
+                        position: 'bottom', 
+                        labels: { color: '#fff', font: {size: 12} } 
+                    } 
                 }
             }
         });
-
-        let dadosMetodos = [metodosMes.dinheiro, metodosMes.pix, metodosMes.credito, metodosMes.debito];
-        let coresMetodos = ['#2ecc71', '#00c6ff', '#e74c3c', '#f39c12'];
-        
-        if (dadosMetodos.reduce((a,b)=>a+b, 0) === 0) {
-            dadosMetodos = [1]; 
-            coresMetodos = ['#333'];
-        }
-
-        new Chart(document.getElementById('chartMetodos').getContext('2d'), {
-            type: 'doughnut',
-            data: {
-                labels: ['Dinheiro', 'Pix', 'Crédito', 'Débito'],
-                datasets: [{
-                    data: dadosMetodos,
-                    backgroundColor: coresMetodos,
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'right', labels: { color: '#fff', boxWidth: 12, font: {size: 11} } }
-                }
-            }
-        });
-
     } catch (e) {
         console.error(e);
         fecharTodosOsModais();
         alert("Erro ao carregar dashboard: " + e.message);
+    }
+}
+
+// NOVA FUNÇÃO: DELETAR REGISTRO FINANCEIRO/AGENDAMENTO (COM LIMPEZA COMPLETA)
+async function deletarRegistroFinanceiro(idAgendamento, uidMembro) {
+    if (!confirm("⚠️ ATENÇÃO: Tem certeza que deseja excluir este registro?\nIsso removerá o serviço do histórico e recalculará os ganhos. Essa ação não pode ser desfeita.")) return;
+    exibirAguarde("Excluindo registro de todos os bancos...");
+
+    try {
+        // --- ETAPA 1: Pega dados do agendamento antes de excluir (para achar o extrato) ---
+        const agDoc = await db.collection('agendamentos').doc(idAgendamento).get();
+        let dadosParaBusca = null;
+        
+        if (agDoc.exists) {
+            const d = agDoc.data();
+            dadosParaBusca = {
+                valor: parseFloat(d.valor),
+                barbeiroUid: d.barbeiroUid,
+                donoUid: d.donoUid
+            };
+            // Deleta o agendamento (Isso limpa a visão do Profissional)
+            await db.collection('agendamentos').doc(idAgendamento).delete();
+            console.log("Agendamento deletado.");
+        } else {
+            console.warn("Agendamento já não existia, tentando limpar extratos orfãos...");
+            // Se o agendamento não existe, tentamos limpar pelo menos pelo ID se ele foi usado como chave em algum lugar, 
+            // mas sem dados de valor fica difícil achar o extrato exato se não tiver ID vinculado.
+        }
+
+        // --- ETAPA 2: Tenta encontrar e remover do Extrato Financeiro (Visão do Dono) ---
+        // O extrato financeiro não tem o mesmo ID do agendamento, então buscamos por correspondência.
+        // Critérios: Mesmo valor, mesmo profissional, mesmo dono e criado num intervalo de tempo próximo (ex: 24h).
+        
+        if (dadosParaBusca) {
+            // Define uma janela de tempo ampla (ex: 7 dias) para garantir que ache mesmo se datas diferirem um pouco
+            // (Melhor seria salvar o ID do agendamento no extrato na hora de criar, mas como paliativo:)
+            
+            // Busca extratos desse profissional e dono
+            const snapshotExtrato = await db.collection('extrato_financeiro')
+                .where('usuarioUid', '==', dadosParaBusca.barbeiroUid)
+                .where('donoUid', '==', dadosParaBusca.donoUid)
+                .where('valor', '==', dadosParaBusca.valor)
+                .get();
+
+            if (!snapshotExtrato.empty) {
+                // Itera e deleta possíveis duplicatas ou o registro único
+                const batch = db.batch();
+                let deletouAlgo = false;
+                
+                snapshotExtrato.forEach(doc => {
+                    // Aqui poderíamos refinar por data se necessário, mas assumindo que valor+usuário+dono é único o suficiente 
+                    // para um "registro financeiro" específico que se quer deletar.
+                    batch.delete(doc.ref);
+                    deletouAlgo = true;
+                });
+                
+                if (deletouAlgo) {
+                    await batch.commit();
+                    console.log("Registro correspondente no Extrato Financeiro deletado.");
+                }
+            } else {
+                console.log("Nenhum extrato financeiro correspondente encontrado.");
+            }
+        }
+        
+        fecharTodosOsModais(); // Fecha o aguarde
+        exibirPopup("Excluído", "Registro removido permanentemente de todos os relatórios!");
+        
+        // Recarrega o dashboard para ver o novo saldo
+        setTimeout(() => {
+            abrirModalDashboardBarbeiro(uidMembro);
+        }, 500);
+
+    } catch (e) {
+        fecharTodosOsModais();
+        exibirPopup("Erro", "Falha ao excluir: " + e.message);
     }
 }
 
@@ -30687,6 +31512,42 @@ async function executarAlteracaoSenha() {
     }
 }
 
+// --- SISTEMA DE ANIMAÇÃO DE SCROLL (OBSERVER API) ---
+// Substitui a necessidade de bibliotecas pesadas como GSAP para coisas simples
+
+document.addEventListener("DOMContentLoaded", () => {
+    // Configura o observador
+    const observerOptions = {
+        threshold: 0.1, // Dispara quando 10% do elemento aparece
+        rootMargin: "0px 0px -50px 0px" // Margem negativa para disparar um pouco antes
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                // Se quiser que anime apenas uma vez, descomente a linha abaixo:
+                // observer.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+
+    // Função para aplicar a classe em novos elementos dinâmicos
+    window.ativarAnimacoesScroll = function() {
+        const elementos = document.querySelectorAll('.card, .produto-card, .em-alta-item');
+        elementos.forEach(el => {
+            el.classList.add('reveal-on-scroll'); // Adiciona a classe base
+            observer.observe(el); // Começa a observar
+        });
+    };
+
+    // Chama inicialmente e configura um intervalo para verificar novos conteúdos carregados via AJAX
+    ativarAnimacoesScroll();
+    
+    // Hack para observar elementos que surgem depois (ex: listas do Firebase)
+    setInterval(ativarAnimacoesScroll, 2000); 
+});
+
 async function solicitarAlteracaoCidade() {
     if (!perfil) return exibirPopup("Erro", "Não foi possível carregar seu perfil.");
 
@@ -30958,6 +31819,54 @@ function solicitarLiberacaoLoja() {
         notifyAdmins("🛍️ Liberação de Loja", `${perfil.nome} quer permissão para vender.`, { link: '#solicitacoes' });
     }).catch(e => exibirPopup("Erro ao criar solicitação: " + e.message));
 }
+
+// --- SISTEMA DE ANIMAÇÃO "ROLAGEM VIVA" (SCROLL REVEAL) ---
+
+document.addEventListener("DOMContentLoaded", () => {
+    
+    // Configuração do Observador
+    const observerOptions = {
+        root: null, // Usa a viewport do navegador
+        rootMargin: '0px', // Sem margem extra
+        threshold: 0.15 // Ativa quando 15% do elemento estiver visível
+    };
+
+    const scrollObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                // Quando entra na tela: Aparece
+                entry.target.classList.add('scroll-visible');
+                entry.target.classList.remove('scroll-hidden');
+            } else {
+                // Quando sai da tela: Some (Opcional: Se quiser que suma ao subir de volta)
+                // Se quiser que fique visível depois de carregar, comente as duas linhas abaixo.
+                entry.target.classList.remove('scroll-visible');
+                entry.target.classList.add('scroll-hidden');
+            }
+        });
+    }, observerOptions);
+
+    // Função para aplicar o observador em novos elementos (chamada periodicamente)
+    window.aplicarEfeitoScroll = function() {
+        // Seleciona todos os elementos que devem ter animação
+        const elementos = document.querySelectorAll('.card, .produto-card, .em-alta-item, .card-equipe-grid, .agenda-slot-card, .selectable-item');
+        
+        elementos.forEach(el => {
+            // Se o elemento ainda não está sendo observado
+            if (!el.classList.contains('observado-pelo-scroll')) {
+                el.classList.add('observado-pelo-scroll'); // Marca como observado
+                el.classList.add('scroll-hidden'); // Define estado inicial invisível
+                scrollObserver.observe(el); // Começa a vigiar
+            }
+        });
+    };
+
+    // Roda imediatamente
+    aplicarEfeitoScroll();
+
+    // Roda a cada 1.5 segundos para pegar novos elementos carregados via AJAX/Firebase
+    setInterval(aplicarEfeitoScroll, 1500);
+});
 
 function aprovarLiberacaoLoja(solicitacaoId, uid) {
     db.runTransaction(async t => {
@@ -34539,8 +35448,8 @@ async function girarRoleta() {
     const btnGirar = document.getElementById('btnGirarRoleta');
     if (!btnGirar) return;
     
-    // 1. Trava o botão imediatamente para evitar cliques duplos e bug de saldo
-    btnGirar.disabled = true; 
+    // 1. Trava o botão imediatamente
+    btnGirar.disabled = true;
     btnGirar.textContent = "Sorteando..."; 
 
     const API_URL = 'https://navalhabackend.onrender.com/api/girar-roleta'; 
@@ -34552,11 +35461,17 @@ async function girarRoleta() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ uid: auth.currentUser.uid })
         });
-
         const data = await response.json();
 
         if (!data.success) {
             throw new Error(data.message || "Erro ao processar roleta.");
+        }
+        
+        // --- CORREÇÃO: Atualiza a contagem localmente IMEDIATAMENTE para o botão não bugar ---
+        if (perfil) {
+            // Incrementa o contador local para o botão saber que gastou um giro
+            perfil.girosRealizadosHoje = (perfil.girosRealizadosHoje || 0) + 1;
+            perfil.ultimoGiroRoleta = new Date().toDateString();
         }
 
         // 3. Inicia a Animação Visual
@@ -34565,10 +35480,9 @@ async function girarRoleta() {
 
         const ITEM_WIDTH = 90; 
         const ITEMS_PER_SET = 20; 
-        const LOOPS = 30; 
-        
+        const LOOPS = 30;
         const finalIndex = (LOOPS * ITEMS_PER_SET) + targetIndex;
-        const containerWidth = 320; 
+        const containerWidth = 320;
         const targetCenterPixel = (finalIndex * ITEM_WIDTH) + (ITEM_WIDTH / 2);
         const viewCenterPixel = containerWidth / 2;
         let moveX = targetCenterPixel - viewCenterPixel;
@@ -34578,7 +35492,7 @@ async function girarRoleta() {
 
         const faixa = document.getElementById('roletaFaixa');
         if (faixa) {
-            faixa.style.transition = `transform 6s cubic-bezier(0.1, 0, 0.1, 1)`; 
+            faixa.style.transition = `transform 6s cubic-bezier(0.1, 0, 0.1, 1)`;
             faixa.style.transform = `translateX(-${moveX}px)`;
         }
 
@@ -34599,13 +35513,12 @@ async function girarRoleta() {
                 perfil = userDoc.data(); 
                 perfil.uid = auth.currentUser.uid;
 
-                // === CORREÇÃO: ATUALIZA O SALDO NA CARTEIRA DO TOPO ===
                 const saldoDigital = (perfil.saldoDigital || 0).toFixed(2);
                 const elSaldo = document.getElementById("saldoHeader");
                 if (elSaldo) elSaldo.textContent = saldoDigital;
-                // =====================================================
             }
 
+            // Atualiza o botão para mostrar os giros restantes corretamente
             atualizarBotaoRoleta(); 
 
             let tituloPopup = "🎉 Parabéns!";
@@ -34628,6 +35541,7 @@ async function girarRoleta() {
         console.error("Erro na Roleta:", e);
         exibirPopup("Erro", e.message);
         
+        // Em caso de erro, recarrega o perfil para garantir integridade
         const userDoc = await db.collection('usuarios').doc(auth.currentUser.uid).get();
         if (userDoc.exists) {
             perfil = userDoc.data();
