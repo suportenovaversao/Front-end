@@ -7282,6 +7282,80 @@ canvas.confetti-canvas {
     transition: none; /* Garante que o GSAP controle tudo */
 }
 
+.perfil-acoes-container {
+    display: flex;
+    justify-content: space-between; /* Espalha eles igualmente */
+    gap: 10px;
+    margin: 15px 0;
+    padding: 0 5px;
+}
+
+/* O Botão em si (Caixinha) */
+.btn-perfil-acao {
+    flex: 1; /* Faz todos terem a mesma largura */
+    background: rgba(255, 255, 255, 0.05); /* Fundo cinza bem clarinho/transparente */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.btn-perfil-acao:active {
+    transform: scale(0.95);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Texto abaixo do ícone */
+.btn-perfil-acao span {
+    margin-top: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #ddd;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* O Círculo do Ícone */
+.icone-perfil {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* Cores dos Ícones */
+.icone-perfil.fogo {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.icone-perfil.presente {
+    background: linear-gradient(135deg, #9b59b6, #8e44ad);
+}
+
+.icone-perfil.mapa {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+}
+
+/* Garante que o Check-in, Resgate e Mapa fiquem ACIMA do Perfil */
+#modalCheckIn, 
+#modalResgate, 
+#modalRastreamento,
+#modalPortaSecreta {
+    z-index: 15000 !important;
+}
+
+/* O perfil fica em 10000, então 15000 garante a sobreposição sem fechar o de baixo */
+
  </style>
 </head>
 <body>
@@ -7705,13 +7779,6 @@ canvas.confetti-canvas {
 </div>
 
 
-</div>
-
-<div class="redeem-container hidden" id="redeemContainer">
-  <button id="btnCheckInManual" onclick="verificarCheckInDiario(perfil)" style="display: none;">
-    🔥 Check-in Diário
-  </button>
-  <button id="btnResgatar" onclick="abrirPortaSecreta()">✨ Resgatar Código</button>
 </div>
 
 <div class="bottom-buttons-container hidden" id="bottomButtons">
@@ -9398,7 +9465,7 @@ canvas.confetti-canvas {
         </div>
 
     <div style="display: flex; gap: 10px; margin-top: 20px; border-top: 1px solid var(--cor-borda); padding-top: 15px;">
-        <button onclick="fecharModalAtual()" style="background-color: #555; flex: 1;">❌ Cancelar</button>
+        <button onclick="fecharModalAtual()" style="background-color: #555; flex: 1;">❌ Fechar</button>
         <button onclick="salvarNomePerfil()" style="flex: 1;">💾 Salvar Alterações</button>
     </div>
   </div>
@@ -9731,11 +9798,6 @@ input:checked + .slider:before { transform: translateX(24px); }
     </div>
 </div>
 
-<div id="footerMapContainer" class="hidden">
-     <button onclick="abrirMapaPrioritario()">
-        🗺️ MAPA
-     </button>
-</div>
 <button id="btnMinimizadoMapa" onclick="maximizarMapa()">🗺️ ABRIR MAPA EM ANDAMENTO</button>
 
 <div id="modalEntradaManualProfissional" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2147483647; justify-content: center; align-items: center;">
@@ -14357,6 +14419,60 @@ async function confirmarPagamentoEConcluir() {
     }
 }
 
+// ======================================================
+// ❌ FUNÇÃO FECHAR MODAL ATUAL (Completa e Blindada)
+// ======================================================
+function fecharModalAtual(veioDoHistorico = false) {
+    // 1. Proteção: Se a pilha de modais não existir ou estiver vazia
+    if (typeof modalStack === 'undefined' || modalStack.length === 0) {
+        // Fallback: Tenta encontrar qualquer modal aberto na marra e fechar
+        const modalsPerdidos = document.querySelectorAll('.modal.show');
+        if (modalsPerdidos.length > 0) {
+            modalsPerdidos.forEach(m => {
+                m.classList.remove('show');
+                setTimeout(() => m.style.display = 'none', 300);
+            });
+        }
+        return; 
+    }
+
+    // 2. Remove o último ID da pilha (LIFO - Last In, First Out)
+    const modalId = modalStack.pop(); 
+    const modal = document.getElementById(modalId);
+
+    if (modal) {
+        // 3. Efeito Visual (Remove classe e aguarda animação)
+        modal.classList.remove('show');
+        
+        // Pequeno delay para garantir que a animação CSS (opacity/transform) rode
+        setTimeout(() => {
+            modal.style.display = 'none';
+            
+            // Limpezas específicas (Opcional: reseta iframes ou vídeos se houver)
+            const iframes = modal.querySelectorAll('iframe');
+            iframes.forEach(i => { const src = i.src; i.src = ''; i.src = src; });
+        }, 300); // 300ms deve bater com o transition do seu CSS
+
+        // 4. Feedback Sonoro (Seu sistema de som)
+        if (typeof tocarSom === 'function') {
+            tocarSom('pop'); // Ou o som que você usa para fechar
+        }
+    }
+
+    // 5. Lógica Crítica do Botão Voltar (Android/iOS)
+    // Se o usuário clicou no "X" ou "Cancelar" (veioDoHistorico = false),
+    // nós precisamos remover o estado do navegador manualmente.
+    if (!veioDoHistorico) {
+        // Define flag para que o evento 'popstate' (arquivo 3.txt) não tente fechar de novo
+        window.ignoreNextPopstate = true; 
+        
+        // Volta um nível no histórico do navegador
+        if (window.history.state && window.history.state.page !== 'home') {
+            window.history.back();
+        }
+    }
+}
+
 // Substitua a função abrirModalCarteira inteira por esta:
 async function abrirModalCarteira() {
     const modalId = 'modalCarteira';
@@ -14761,6 +14877,7 @@ async function notifyAdmins(title, body, data = {}) {
 
 async function abrirPortaSecreta() {
   document.getElementById('inputCodigoResgate').value = ''; // Limpa o input
+  fecharModalAtual();
   abrirModal('modalResgatarCodigo');
 }
 
@@ -17928,8 +18045,20 @@ async function abrirDetalhesDoAgendamento(dados) {
     // Corrige dados que podem vir como string do HTML
     if (typeof dados === 'string') dados = JSON.parse(dados);
 
+    // =================================================================
+    // 🚑 CORREÇÃO DO ERRO PARA AGENDAMENTO MANUAL (BALCÃO)
+    // =================================================================
+    // Se o agendamento não tem o ID do barbeiro (comum em manuais), 
+    // assumimos que o barbeiro é o próprio usuário logado (auth.currentUser)
+    if (!dados.barbeiroUid) {
+        dados.barbeiroUid = dados.profissionalUid || (auth.currentUser ? auth.currentUser.uid : null);
+    }
+    // =================================================================
+
+    // --- SALVA DADOS GLOBAIS ---
     window.agendamentoAtualId = dados.id; 
     window.agendamentoIdParaConcluir = dados.id;
+    window.agendamentoAtualDados = dados; 
 
     abrirModal('modalDetalhesAgendamento');
     
@@ -17945,7 +18074,7 @@ async function abrirDetalhesDoAgendamento(dados) {
     document.getElementById('detalheStatus').textContent = (dados.status || '').toUpperCase();
     document.getElementById('detalheClienteFone').textContent = dados.telefone || 'Sem telefone';
     
-    // --- LÓGICA DA FOTO (CORREÇÃO) ---
+    // --- LÓGICA DA FOTO (MANTIDA ORIGINAL) ---
     const imgEl = document.getElementById('detalheClienteFoto');
     const badgeEl = document.getElementById('detalheClienteBadge');
     
@@ -17976,7 +18105,45 @@ async function abrirDetalhesDoAgendamento(dados) {
         }
     }
 
-    // --- CONFIGURAÇÃO DOS BOTÕES ---
+    // --- (NOVO) INJEÇÃO DO BOTÃO DE SERVIÇO ADICIONAL ---
+    // Verifica se o agendamento está ativo antes de permitir adicionar coisas
+    if (dados.status !== 'concluido' && dados.status !== 'cancelado') {
+        const containerBotoes = document.querySelector('#modalDetalhesAgendamento .modal-content');
+        
+        // Verifica se o botão já existe para não criar duplicado
+        let btnAdicional = document.getElementById('btnServicoAdicional');
+        
+        if (!btnAdicional) {
+            // Cria o botão dinamicamente se ele não existir no HTML
+            btnAdicional = document.createElement('button');
+            btnAdicional.id = 'btnServicoAdicional';
+            btnAdicional.innerHTML = '➕ Serviço Adicional';
+            // Estilo para destacar (Roxo/Gradiente)
+            btnAdicional.style.cssText = "width:100%; background: linear-gradient(45deg, #9b59b6, #8e44ad); color:white; font-weight:bold; border:none; padding:12px; border-radius:8px; margin-bottom:10px; margin-top:5px; cursor:pointer;";
+            
+            // Tenta inserir ANTES do botão concluir
+            const btnConcluirRef = document.getElementById('btnConcluirAgenda');
+            if(btnConcluirRef && btnConcluirRef.parentNode) {
+                btnConcluirRef.parentNode.insertBefore(btnAdicional, btnConcluirRef);
+            } else {
+                // Se não achar o botão concluir, adiciona no final
+                containerBotoes.appendChild(btnAdicional);
+            }
+        } else {
+            // Se já existe, garante que está visível
+            btnAdicional.style.display = 'block';
+            btnAdicional.textContent = '➕ Serviço Adicional'; // Reseta texto caso tenha mudado
+        }
+
+        // Define a ação: Abrir o modal de lista (Função que te enviei anteriormente)
+        btnAdicional.onclick = () => abrirModalAdicionarServico();
+    } else {
+        // Se estiver concluído ou cancelado, esconde o botão se ele existir
+        const btnAdicional = document.getElementById('btnServicoAdicional');
+        if (btnAdicional) btnAdicional.style.display = 'none';
+    }
+
+    // --- CONFIGURAÇÃO DOS BOTÕES ORIGINAIS ---
     const btnMapa = document.getElementById('btnAbrirRotaDetalhe');
     const btnWpp = document.getElementById('btnChamarWpp');
     const btnCancel = document.getElementById('btnCancelarAgenda');
@@ -18024,6 +18191,205 @@ async function abrirDetalhesDoAgendamento(dados) {
             fecharModalAtual();
             concluirAgendamento(dados.id, dados.clienteUid);
         };
+    }
+}
+
+// 1. Abre a lista de serviços POR CIMA dos detalhes
+async function abrirModalAdicionarServico() {
+    const dadosAgendamento = window.agendamentoAtualDados;
+    if (!dadosAgendamento || !dadosAgendamento.barbeiroUid) return exibirPopup("Erro", "Dados do agendamento perdidos.");
+
+    exibirAguarde("Carregando serviços...");
+
+    try {
+        // Busca os serviços atualizados do profissional
+        const docProf = await db.collection('usuarios').doc(dadosAgendamento.barbeiroUid).get();
+        if (!docProf.exists) throw new Error("Profissional não encontrado.");
+        
+        const servicos = docProf.data().listaServicos || [];
+        
+        fecharTodosOsModais(true); // Fecha o 'Aguarde' mantendo os outros
+
+        // --- CRIAÇÃO DINÂMICA DO MODAL 2 (LISTA) ---
+        let modal = document.getElementById('modalAddServicoLista');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'modalAddServicoLista';
+            modal.className = 'modal';
+            // Z-Index alto para ficar por cima dos Detalhes (que costuma ser 10000)
+            modal.style.zIndex = '12000'; 
+            document.body.appendChild(modal);
+        }
+
+        let htmlLista = '';
+        if (servicos.length === 0) {
+            htmlLista = '<p style="color:#aaa; text-align:center;">Nenhum serviço cadastrado.</p>';
+        } else {
+            servicos.forEach((s, index) => {
+                htmlLista += `
+                <div onclick="confirmarAdicaoServico('${s.nome}', ${s.valor}, ${s.duracao})" 
+                     style="background:#222; border:1px solid #444; padding:15px; margin-bottom:8px; border-radius:10px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="color:#fff; font-weight:bold;">${s.nome}</span>
+                    <span style="color:#2ecc71;">R$ ${s.valor.toFixed(2)}</span>
+                </div>`;
+            });
+        }
+
+        modal.innerHTML = `
+            <div class="modal-content" style="border: 2px solid #9b59b6; background:#111;">
+                <h3 style="color:#fff;">➕ Adicionar Serviço</h3>
+                <p style="color:#aaa; font-size:12px;">Isso será somado ao agendamento atual.</p>
+                
+                <div style="max-height: 300px; overflow-y: auto; margin: 15px 0;">
+                    ${htmlLista}
+                </div>
+
+                <button onclick="abrirModalCriarNovoServicoAdicional()" style="width:100%; background: #333; border: 1px dashed #777; color: #fff; margin-bottom: 10px;">
+                    ✨ Criar Novo Serviço Personalizado
+                </button>
+
+                <button onclick="fecharModalAdicional('modalAddServicoLista')" style="width:100%; background:transparent; color:#888;">Cancelar</button>
+            </div>
+        `;
+
+        // Abre sem fechar o anterior
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('show'), 10);
+
+    } catch (e) {
+        fecharTodosOsModais(true);
+        exibirPopup("Erro", e.message);
+    }
+}
+
+// 2. Abre o formulário de criação POR CIMA da lista
+function abrirModalCriarNovoServicoAdicional() {
+    let modal = document.getElementById('modalCriarServicoFast');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modalCriarServicoFast';
+        modal.className = 'modal';
+        modal.style.zIndex = '13000'; // Mais alto ainda
+        document.body.appendChild(modal);
+    }
+
+    modal.innerHTML = `
+        <div class="modal-content" style="border: 2px solid #fff;">
+            <h3>✨ Criar Serviço Rápido</h3>
+            
+            <label>Nome do Serviço</label>
+            <input id="inputFastNome" type="text" placeholder="Ex: Sobrancelha" style="width:100%; padding:10px; margin-bottom:10px; background:#222; border:1px solid #444; color:#fff; border-radius:5px;">
+            
+            <label>Valor (R$)</label>
+            <input id="inputFastValor" type="number" placeholder="0.00" style="width:100%; padding:10px; margin-bottom:10px; background:#222; border:1px solid #444; color:#fff; border-radius:5px;">
+            
+            <label>Tempo Estimado (min)</label>
+            <input id="inputFastTempo" type="number" placeholder="30" value="30" style="width:100%; padding:10px; margin-bottom:15px; background:#222; border:1px solid #444; color:#fff; border-radius:5px;">
+
+            <button onclick="salvarServicoRapido()" style="width:100%; background:#27ae60; color:#fff; font-weight:bold; padding:12px; border-radius:8px; border:none;">💾 Criar e Adicionar</button>
+            <button onclick="fecharModalAdicional('modalCriarServicoFast')" style="width:100%; background:transparent; color:#888; margin-top:10px;">Voltar</button>
+        </div>
+    `;
+
+    modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('show'), 10);
+}
+
+// 3. Salva o serviço no perfil e volta para a lista (ou adiciona direto)
+async function salvarServicoRapido() {
+    const nome = document.getElementById('inputFastNome').value;
+    const valor = parseFloat(document.getElementById('inputFastValor').value);
+    const duracao = parseInt(document.getElementById('inputFastTempo').value);
+
+    if (!nome || isNaN(valor)) return alert("Preencha nome e valor.");
+
+    exibirAguarde("Salvando...");
+
+    try {
+        const uidProf = window.agendamentoAtualDados.barbeiroUid;
+        
+        // Adiciona permanentemente ao perfil do profissional (opcional, mas recomendado pelo seu pedido)
+        await db.collection('usuarios').doc(uidProf).update({
+            listaServicos: firebase.firestore.FieldValue.arrayUnion({ nome, valor, duracao })
+        });
+
+        // Fecha o modal de criação e o aguarde
+        const modalCriar = document.getElementById('modalCriarServicoFast');
+        modalCriar.classList.remove('show');
+        modalCriar.style.display = 'none';
+        
+        // Fecha o aguarde
+        const aguarde = document.getElementById('popupAguarde');
+        if(aguarde) aguarde.classList.remove('show');
+
+        // Volta para o modal de lista recarregando-o
+        abrirModalAdicionarServico();
+
+    } catch (e) {
+        alert("Erro ao criar: " + e.message);
+    }
+}
+
+// 4. Executa a adição ao agendamento
+async function confirmarAdicaoServico(nomeServico, valorServico, duracao) {
+    const agendamentoId = window.agendamentoAtualId;
+    if (!agendamentoId) return;
+
+    exibirAguarde("Atualizando agendamento...");
+
+    try {
+        const docRef = db.collection('agendamentos').doc(agendamentoId);
+        const doc = await docRef.get();
+        if (!doc.exists) throw new Error("Agendamento não existe mais.");
+
+        const dadosAtuais = doc.data();
+        
+        // Lógica de Soma
+        const novoValor = (parseFloat(dadosAtuais.valor) || 0) + valorServico;
+        // Concatena o nome: "Corte" -> "Corte + Barba"
+        const novoNomeServico = `${dadosAtuais.servico} + ${nomeServico}`;
+
+        await docRef.update({
+            valor: novoValor,
+            servico: novoNomeServico,
+            // Atualiza valorOriginal também para manter coerência nas métricas
+            valorOriginal: (parseFloat(dadosAtuais.valorOriginal) || 0) + valorServico 
+        });
+
+        // Atualiza as variáveis globais para refletir na tela
+        window.agendamentoAtualDados.valor = novoValor;
+        window.agendamentoAtualDados.servico = novoNomeServico;
+
+        // Atualiza a UI do modal de detalhes (que está embaixo) em tempo real
+        document.getElementById('detalheServico').textContent = novoNomeServico;
+        document.getElementById('detalheValor').textContent = `R$ ${novoValor.toFixed(2)}`;
+
+        // Fecha os modais sobrepostos
+        fecharModalAdicional('modalAddServicoLista');
+        fecharTodosOsModais(true); // Fecha o aguarde
+
+        // Mostra confirmação
+        if(typeof tocarSom === 'function') tocarSom('sucesso');
+        
+        // Opcional: Feedback visual rápido
+        const btn = document.getElementById('btnServicoAdicional');
+        if(btn) {
+            btn.textContent = "✅ Adicionado!";
+            setTimeout(() => btn.textContent = "➕ Serviço Adicional", 2000);
+        }
+
+    } catch (e) {
+        fecharTodosOsModais(true);
+        exibirPopup("Erro", "Falha ao adicionar: " + e.message);
+    }
+}
+
+// Helper para fechar apenas o modal específico sem fechar tudo
+function fecharModalAdicional(id) {
+    const m = document.getElementById(id);
+    if (m) {
+        m.classList.remove('show');
+        setTimeout(() => m.style.display = 'none', 300);
     }
 }
 
@@ -22103,13 +22469,15 @@ async function salvarFachada() {
     exibirPopup("Fachada salva!");
 }
 
-// 1. ABRIR MODAL (HTML com altura forçada)
-// 1. ABRIR MODAL (HTML com altura forçada e IDs Verificados)
+// Variáveis globais
+let chartDespesasInstance = null;
+let cacheTransacoesFinanceiras = []; // <--- NOVA VARIÁVEL PARA GUARDAR OS DADOS
+
 async function abrirModalFinanceiroProprietario() {
     abrirModal('modalFinanceiroProprietario');
     const modalContent = document.querySelector('#modalFinanceiroProprietario .modal-content');
     
-    // Garante layout flexível, fundo escuro e scroll interno
+    // MANTIDO (Estilo base)
     modalContent.style.cssText = "display: flex !important; flex-direction: column !important; max-height: 90vh !important; height: 90vh !important; padding: 0 !important; overflow: hidden !important; background: #000;";
     
     const hoje = new Date();
@@ -22128,7 +22496,7 @@ async function abrirModalFinanceiroProprietario() {
                 <button onclick="abrirModalLancamentoManual('entrada')" style="flex:1; background: linear-gradient(145deg, #1a1a1a, #0f0f0f); border:1px solid #2ecc71; color:#2ecc71; padding:15px; font-weight:bold;">
                     📈 REGISTRAR<br>ENTRADA
                 </button>
-                <button onclick="abrirModalLancamentoManual('saida')" style="flex:1; background: linear-gradient(145deg, #1a1a1a, #0f0f0f); border:1px solid #e74c3c; color:#e74c3c; padding:15px; font-weight:bold;">
+                <button onclick="abrirModalRegistrarDespesa()" style="flex:1; background: linear-gradient(145deg, #1a1a1a, #0f0f0f); border:1px solid #e74c3c; color:#e74c3c; padding:15px; font-weight:bold;">
                     📉 REGISTRAR<br>SAÍDA
                 </button>
             </div>
@@ -22168,6 +22536,16 @@ async function abrirModalFinanceiroProprietario() {
                 </div>
             </div>
 
+            <h4 style="font-size:12px; color:#888; margin-bottom:5px; text-transform:uppercase;">📉 Distribuição de Despesas</h4>
+            <div style="background: #1a1a1a; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #333;">
+                <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:center;">
+                    <div style="width: 140px; height: 140px; position: relative;">
+                        <canvas id="chartDespesasCategoria"></canvas>
+                    </div>
+                    <div id="legendaDespesas" style="flex:1; margin-left:15px; display:flex; flex-direction:column; gap:5px; min-width:120px; font-size:11px;"></div>
+                </div>
+            </div>
+
             <h4 style="font-size:12px; color:#888; margin-bottom:5px; text-transform:uppercase;">💳 Métodos de Pagamento</h4>
             <div style="background: #1a1a1a; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #333;">
                 <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:center;">
@@ -22178,7 +22556,50 @@ async function abrirModalFinanceiroProprietario() {
                 </div>
             </div>
 
-            <h4 style="font-size:14px; margin-bottom:10px; border-left:3px solid var(--cor-destaque); padding-left:10px;">Movimentações Recentes</h4>
+            <div style="margin-bottom: 15px;">
+                <h4 style="font-size:14px; margin-bottom:10px; border-left:3px solid var(--cor-destaque); padding-left:10px;">Movimentações Recentes</h4>
+                
+                <div id="filtrosFinanceirosContainer" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; align-items: flex-start;">
+                    
+                    <button onclick="filtrarListaFinanceira('todas')" class="btn-filtro-cat ativo" 
+                        style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-width: 50px; height: 50px; padding: 0; border-radius: 10px; border: 1px solid #333; background: #222; color: #fff;">
+                        <span style="font-size: 16px; line-height:1;">🔁</span>
+                        <span style="font-size: 9px; margin-top:3px; font-weight:bold;">Todos</span>
+                    </button>
+
+                    <button onclick="filtrarListaFinanceira('servico')" class="btn-filtro-cat" 
+                        style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-width: 50px; height: 50px; padding: 0; border-radius: 10px; border: 1px solid #333; background: #222; color: #fff;">
+                        <span style="font-size: 16px; line-height:1;">✂️</span>
+                        <span style="font-size: 9px; margin-top:3px; font-weight:bold;">Serv.</span>
+                    </button>
+
+                    <button onclick="filtrarListaFinanceira('fixa')" class="btn-filtro-cat" 
+                        style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-width: 50px; height: 50px; padding: 0; border-radius: 10px; border: 1px solid #333; background: #222; color: #fff;">
+                        <span style="font-size: 16px; line-height:1;">🔒</span>
+                        <span style="font-size: 9px; margin-top:3px; font-weight:bold;">Fixas</span>
+                    </button>
+
+                    <button onclick="filtrarListaFinanceira('variavel')" class="btn-filtro-cat" 
+                        style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-width: 50px; height: 50px; padding: 0; border-radius: 10px; border: 1px solid #333; background: #222; color: #fff;">
+                        <span style="font-size: 16px; line-height:1;">📉</span>
+                        <span style="font-size: 9px; margin-top:3px; font-weight:bold;">Var.</span>
+                    </button>
+
+                    <button onclick="filtrarListaFinanceira('investimento')" class="btn-filtro-cat" 
+                        style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-width: 50px; height: 50px; padding: 0; border-radius: 10px; border: 1px solid #333; background: #222; color: #fff;">
+                        <span style="font-size: 16px; line-height:1;">🚀</span>
+                        <span style="font-size: 9px; margin-top:3px; font-weight:bold;">Inv.</span>
+                    </button>
+
+                    <button onclick="filtrarListaFinanceira('imposto')" class="btn-filtro-cat" 
+                        style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-width: 50px; height: 50px; padding: 0; border-radius: 10px; border: 1px solid #333; background: #222; color: #fff;">
+                        <span style="font-size: 16px; line-height:1;">🏛️</span>
+                        <span style="font-size: 9px; margin-top:3px; font-weight:bold;">Imp.</span>
+                    </button>
+
+                </div>
+            </div>
+
             <div id="listaGanhosEquipe"></div>
             
             <div style="height: 50px;"></div> 
@@ -22189,7 +22610,6 @@ async function abrirModalFinanceiroProprietario() {
         </div>
     `;
     
-    // Pequeno delay para garantir que o DOM renderizou
     setTimeout(() => {
         carregarFinanceiro('mes'); 
     }, 100);
@@ -22207,7 +22627,7 @@ async function carregarFinanceiro(periodo = 'mes') {
     const agora = new Date();
     let dataInicio, dataFim;
 
-    // --- LÓGICA DE DATAS ---
+    // --- LÓGICA DE DATAS (INTACTA) ---
     if (periodo === 'custom') {
         const inpInicio = document.getElementById('finDataInicio').value;
         const inpFim = document.getElementById('finDataFim').value;
@@ -22232,7 +22652,8 @@ async function carregarFinanceiro(periodo = 'mes') {
 
     try {
         const uidDono = auth.currentUser.uid;
-        // Buscamos as duas coleções
+        
+        // --- BUSCA NO BANCO (INTACTA) ---
         const [snapExtrato, snapAgendamentos] = await Promise.all([
             db.collection('extrato_financeiro').where('donoUid', '==', uidDono)
                 .where('dataEvento', '>=', firebase.firestore.Timestamp.fromDate(dataInicio))
@@ -22244,22 +22665,21 @@ async function carregarFinanceiro(periodo = 'mes') {
 
         let totalEntradas = 0, totalSaidas = 0;
         let mPix = 0, mDinheiro = 0, mDebito = 0, mCredito = 0;
+        const despesasCategorias = { 'fixa': 0, 'variavel': 0, 'investimento': 0, 'imposto': 0 };
+
         const itens = [];
-        const idsAgendamentosJaProcessados = new Set(); // TRAVA REAL POR ID
+        const idsAgendamentosJaProcessados = new Set(); 
         const uidsParaBuscarFoto = new Set();
         const mapaResultados = {};
 
-        // 1. PROCESSAMOS PRIMEIRO O EXTRATO (Fonte da verdade financeira)
+        // 1. PROCESSAMOS EXTRATO
         snapExtrato.forEach(doc => {
             const d = doc.data();
             const val = Number(d.valor) || 0;
             const data = d.dataEvento.toDate();
             const diaStr = data.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
             
-            // Se este extrato estiver vinculado a um agendamento, guardamos o ID dele
-            if (d.agendamentoId) {
-                idsAgendamentosJaProcessados.add(d.agendamentoId);
-            }
+            if (d.agendamentoId) idsAgendamentosJaProcessados.add(d.agendamentoId);
 
             const ehEntrada = d.tipo.includes('entrada') || d.tipo.includes('receita');
             if (ehEntrada) {
@@ -22272,16 +22692,20 @@ async function carregarFinanceiro(periodo = 'mes') {
             } else {
                 totalSaidas += val;
                 mapaResultados[diaStr] = (mapaResultados[diaStr] || 0) - val;
+                
+                if (d.categoria && despesasCategorias[d.categoria] !== undefined) {
+                    despesasCategorias[d.categoria] += val;
+                } else {
+                    despesasCategorias['variavel'] += val;
+                }
             }
             if (d.usuarioUid) uidsParaBuscarFoto.add(d.usuarioUid);
             itens.push({ ...d, id: doc.id, valor: val, data, ehEntrada, uidProfissional: d.usuarioUid });
         });
 
-        // 2. PROCESSAMOS AGENDAMENTOS (Apenas os que NÃO estão no extrato)
+        // 2. PROCESSAMOS AGENDAMENTOS
         snapAgendamentos.forEach(doc => {
-            // Se o ID deste agendamento já foi processado no passo anterior (Extrato), ignoramos
             if (idsAgendamentosJaProcessados.has(doc.id)) return;
-
             const ag = doc.data();
             const val = parseFloat(ag.valor) || 0;
             const dataAg = ag.ts?.toDate() || new Date();
@@ -22299,7 +22723,7 @@ async function carregarFinanceiro(periodo = 'mes') {
             itens.push({ id: doc.id, descricao: `Serviço: ${ag.servico}`, valor: val, data: dataAg, ehEntrada: true, uidProfissional: ag.barbeiroUid });
         });
 
-        // --- BUSCA FOTOS DE PERFIL (MANTIDO) ---
+        // --- BUSCA FOTOS ---
         const mapaFotos = {};
         await Promise.all(Array.from(uidsParaBuscarFoto).map(async uid => {
             if(!uid) return;
@@ -22307,16 +22731,15 @@ async function carregarFinanceiro(periodo = 'mes') {
             mapaFotos[uid] = u?.fotoPerfil || u?.logo_url || '/icone.png';
         }));
 
+        // Ordena
         itens.sort((a, b) => b.data - a.data);
-        
-        let html = '';
-        itens.forEach(item => {
-            const cor = item.ehEntrada ? '#2ecc71' : '#e74c3c';
-            const foto = mapaFotos[item.uidProfissional] || '/icone.png';
-            html += renderizarCardFinanceiro3D(item, cor, foto);
-        });
 
-        lista.innerHTML = html || '<p style="text-align:center; opacity:0.5; padding:20px;">Nenhuma movimentação.</p>';
+        // --- SALVA NO CACHE GLOBAL E INJETA FOTOS ---
+        cacheTransacoesFinanceiras = itens.map(item => {
+             // Injeta a URL da foto direto no objeto pra não precisar buscar de novo depois
+             item.fotoUrlCache = mapaFotos[item.uidProfissional] || '/icone.png';
+             return item;
+        });
         
         // --- ATUALIZA TOTAIS E GRÁFICOS ---
         elEntradas.textContent = `R$ ${totalEntradas.toFixed(2)}`;
@@ -22325,25 +22748,348 @@ async function carregarFinanceiro(periodo = 'mes') {
         elSaldo.textContent = `R$ ${saldoFinal.toFixed(2)}`;
         elSaldo.style.color = saldoFinal >= 0 ? '#2ecc71' : '#e74c3c';
 
-        renderizarGraficoResultados(mapaResultados);
-        if (window.renderizarGraficoMetodos) renderizarGraficoMetodos(mPix, mDinheiro, mDebito, mCredito);
-        
-        // === GSAP: ANIMAÇÃO (MANTIDO) ===
-        if (typeof gsap !== "undefined" && typeof ScrollTrigger !== "undefined" && itens.length > 0) {
-            gsap.registerPlugin(ScrollTrigger);
-            ScrollTrigger.getAll().forEach(t => t.kill());
-            const cards = gsap.utils.toArray(".gsap-feed-item");
-            cards.forEach((card) => {
-                gsap.fromTo(card, { opacity: 0, y: 80, scale: 0.85 }, {
-                    opacity: 1, y: 0, scale: 1, duration: 0.8, ease: "back.out(1.7)",
-                    scrollTrigger: { trigger: card, scroller: "#gestaoBodyScroll", start: "top 95%", toggleActions: "play none none none" }
-                });
-            });
-        }
+        if (typeof renderizarGraficoResultados === 'function') renderizarGraficoResultados(mapaResultados);
+        if (typeof renderizarGraficoMetodos === 'function') renderizarGraficoMetodos(mPix, mDinheiro, mDebito, mCredito);
+        renderizarGraficoDespesasDetalhado(despesasCategorias);
+
+        // --- RENDERIZA A LISTA (Começa exibindo TODOS) ---
+        filtrarListaFinanceira('todas');
 
     } catch (e) { 
         console.error(e);
         lista.innerHTML = `<p style="color:red; text-align:center;">Erro: ${e.message}</p>`;
+    }
+}
+
+// ======================================================
+// 🎯 FUNÇÃO DE FILTRO DA LISTA FINANCEIRA
+// ======================================================
+function filtrarListaFinanceira(filtro) {
+    const lista = document.getElementById('listaGanhosEquipe');
+    if(!lista) return;
+
+    lista.innerHTML = '';
+
+    // 1. Atualiza visual dos botões (Mantendo o layout flex)
+    document.querySelectorAll('.btn-filtro-cat').forEach(btn => {
+        // Verifica se o texto do onclick bate com o filtro
+        if(btn.getAttribute('onclick').includes(`'${filtro}'`)) {
+            // ATIVO
+            btn.style.background = '#e74c3c'; 
+            btn.style.borderColor = '#e74c3c';
+            btn.style.transform = 'scale(1.05)'; // Leve destaque de tamanho
+        } else {
+            // INATIVO
+            btn.style.background = '#222'; 
+            btn.style.borderColor = '#333';
+            btn.style.transform = 'scale(1)';
+        }
+        btn.style.transition = 'all 0.2s ease';
+    });
+
+    // 2. Filtra o Array Global (Cache)
+    let itensFiltrados = [];
+
+    if (filtro === 'todas') {
+        itensFiltrados = cacheTransacoesFinanceiras;
+    } 
+    else if (filtro === 'servico') {
+        itensFiltrados = cacheTransacoesFinanceiras.filter(i => i.ehEntrada === true);
+    } 
+    else {
+        // Saídas (fixa, variavel, investimento, imposto)
+        itensFiltrados = cacheTransacoesFinanceiras.filter(i => i.ehEntrada === false && i.categoria === filtro);
+    }
+
+    // 3. Renderiza
+    if (itensFiltrados.length === 0) {
+        lista.innerHTML = '<p style="text-align:center; opacity:0.5; padding:20px;">Nenhuma movimentação nesta categoria.</p>';
+        return;
+    }
+
+    let html = '';
+    itensFiltrados.forEach(item => {
+        const cor = item.ehEntrada ? '#2ecc71' : '#e74c3c';
+        
+        let descFinal = item.descricao;
+        if(!item.ehEntrada && item.categoria) {
+            const icones = { 'fixa':'🔒', 'variavel':'📉', 'investimento':'🚀', 'imposto':'🏛️' };
+            descFinal = `${icones[item.categoria] || ''} ${item.descricao}`;
+        }
+
+        // Usa a foto do cache
+        html += renderizarCardFinanceiro3D({ ...item, descricao: descFinal }, cor, item.fotoUrlCache);
+    });
+
+    lista.innerHTML = html;
+
+    // 4. Animação GSAP
+    if (typeof gsap !== "undefined" && typeof ScrollTrigger !== "undefined") {
+        gsap.registerPlugin(ScrollTrigger);
+        ScrollTrigger.getAll().forEach(t => t.kill()); 
+        
+        const cards = gsap.utils.toArray(".gsap-feed-item");
+        cards.forEach((card) => {
+            gsap.fromTo(card, { opacity: 0, y: 20 }, {
+                opacity: 1, y: 0, duration: 0.3, ease: "power2.out",
+                scrollTrigger: { trigger: card, scroller: "#gestaoBodyScroll", start: "top 100%" }
+            });
+        });
+    }
+}
+
+// ======================================================
+// 📊 NOVO GRÁFICO: DISTRIBUIÇÃO DE DESPESAS (COM VALOR R$)
+// ======================================================
+function renderizarGraficoDespesasDetalhado(dados) {
+    const canvas = document.getElementById('chartDespesasCategoria');
+    const containerLegenda = document.getElementById('legendaDespesas');
+    
+    if(!canvas || !containerLegenda) return;
+
+    // Destroi gráfico anterior se existir
+    if (chartDespesasInstance) {
+        chartDespesasInstance.destroy();
+        chartDespesasInstance = null;
+    }
+
+    const labels = ['Fixas', 'Variáveis', 'Investimento', 'Impostos'];
+    const valores = [dados.fixa, dados.variavel, dados.investimento, dados.imposto];
+    // Cores: Azul, Amarelo, Verde Neon, Roxo
+    const cores = ['#3498db', '#f1c40f', '#2ecc71', '#9b59b6'];
+
+    // Se não tiver despesa nenhuma, limpa
+    if(valores.every(v => v === 0)) {
+        containerLegenda.innerHTML = "<span style='color:#555; font-style:italic;'>Sem despesas no período.</span>";
+        // Limpa visualmente o canvas
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+    }
+
+    // Cria o gráfico Doughnut
+    const ctx = canvas.getContext('2d');
+    chartDespesasInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: valores,
+                backgroundColor: cores,
+                borderWidth: 0,
+                hoverOffset: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%', // Espessura da rosca
+            plugins: {
+                legend: { display: false }, // Esconde legenda padrão do Chart.js
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            let value = context.raw || 0;
+                            return `${label}: R$ ${value.toFixed(2)}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Gera a Legenda Customizada (HTML) ao lado
+    containerLegenda.innerHTML = '';
+    const total = valores.reduce((a,b) => a+b, 0);
+    
+    labels.forEach((label, i) => {
+        if(valores[i] > 0) {
+            const perc = ((valores[i] / total) * 100).toFixed(0);
+            const valorReais = valores[i].toFixed(2); // Valor formatado
+
+            containerLegenda.innerHTML += `
+                <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom:6px; color:#ccc;">
+                    
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <div style="width:10px; height:10px; border-radius:50%; background:${cores[i]}"></div>
+                        <span style="font-size:11px;">${label}</span>
+                    </div>
+                    
+                    <div style="text-align:right;">
+                        <span style="font-size:11px; font-weight:bold; color:#fff;">${perc}%</span>
+                        <span style="font-size:10px; color:#888; margin-left:3px;">(R$ ${valorReais})</span>
+                    </div>
+
+                </div>
+            `;
+        }
+    });
+}
+
+// ======================================================
+// 💸 LÓGICA DE REGISTRO DE DESPESAS (COLE NO FINAL DO ARQUIVO)
+// ======================================================
+
+// 1. Configuração das categorias e sugestões
+const CATEGORIAS_DESPESAS = {
+    'fixa': {
+        label: '🔒 Contas Fixas',
+        sugestoes: ['Aluguel', 'Energia', 'Água', 'Internet', 'Sistema', 'Salário Fixo', 'Contabilidade']
+    },
+    'variavel': {
+        label: '📉 Variáveis/Insumos',
+        sugestoes: ['Comissão Funcionário', 'Produtos', 'Descartáveis', 'Lanche', 'Manutenção', 'Combustível']
+    },
+    'investimento': {
+        label: '🚀 Investimentos',
+        sugestoes: ['Móveis', 'Reforma', 'Equipamentos', 'Cursos', 'Marketing', 'Computador']
+    },
+    'imposto': {
+        label: '🏛️ Impostos/Taxas',
+        sugestoes: ['MEI (DAS)', 'INSS', 'Taxa Maquininha', 'Alvará', 'IPTU', 'Tarifa Bancária']
+    }
+};
+
+// 2. Abre o Modal de Registro (O botão chama ISSO aqui)
+function abrirModalRegistrarDespesa() {
+    const modalId = 'modalRegistrarDespesaDetalhada';
+    
+    // Remove anterior se existir para limpar memória e evitar duplicação
+    if(document.getElementById(modalId)) document.getElementById(modalId).remove();
+
+    const hoje = new Date().toISOString().split('T')[0];
+
+    const modal = document.createElement('div');
+    modal.id = modalId;
+    modal.className = 'modal show';
+    modal.style.cssText = "z-index: 20000; display: flex;";
+
+    modal.innerHTML = `
+        <div class="modal-content" style="border: 2px solid #e74c3c;">
+            <h3 style="color: #e74c3c; margin-top:0;">💸 Registrar Saída</h3>
+            <p style="font-size:12px; color:#aaa; margin-bottom:15px;">Classifique a despesa para gerar gráficos.</p>
+
+            <div class="form-despesa-container">
+                
+                <div class="form-group-despesa">
+                    <label>Valor (R$)</label>
+                    <input type="number" id="inputDespesaValor" class="form-input-despesa" placeholder="0.00" inputmode="decimal">
+                </div>
+
+                <div class="form-group-despesa">
+                    <label>Categoria</label>
+                    <select id="selectDespesaCategoria" class="form-select-despesa" onchange="atualizarChipsDespesa()">
+                        <option value="" disabled selected>Selecione o tipo...</option>
+                        <option value="fixa">🔒 Fixa (Mensal)</option>
+                        <option value="variavel">📉 Variável (Esporádica)</option>
+                        <option value="investimento">🚀 Investimento (Crescimento)</option>
+                        <option value="imposto">🏛️ Impostos e Taxas</option>
+                    </select>
+                </div>
+
+                <div class="form-group-despesa">
+                    <label>Descrição / Item</label>
+                    <div id="containerChipsDespesa" class="chip-container" style="margin-bottom:8px;"></div>
+                    <input type="text" id="inputDespesaDescricao" class="form-input-despesa" placeholder="Ex: Conta de Luz">
+                </div>
+
+                <div class="form-group-despesa">
+                    <label>Data</label>
+                    <input type="date" id="inputDespesaData" class="form-input-despesa" value="${hoje}">
+                </div>
+
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button onclick="document.getElementById('${modalId}').remove()" style="flex:1; background:#333; color:#fff;">Cancelar</button>
+                <button onclick="salvarDespesaDetalhada()" style="flex:1; background:#e74c3c; color:#fff; font-weight:bold;">Confirmar</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+}
+
+// 3. Atualiza as sugestões (chips) quando troca o select
+function atualizarChipsDespesa() {
+    const categoria = document.getElementById('selectDespesaCategoria').value;
+    const container = document.getElementById('containerChipsDespesa');
+    const inputDesc = document.getElementById('inputDespesaDescricao');
+    
+    container.innerHTML = '';
+    
+    if (CATEGORIAS_DESPESAS[categoria]) {
+        CATEGORIAS_DESPESAS[categoria].sugestoes.forEach(texto => {
+            const chip = document.createElement('div');
+            chip.className = 'chip-opcao';
+            chip.textContent = texto;
+            // Estilo inline básico para o chip, caso não tenha CSS
+            chip.style.cssText = "display:inline-block; padding:4px 8px; margin:2px; background:#333; border-radius:12px; font-size:10px; cursor:pointer; border:1px solid #444;";
+            
+            chip.onclick = () => {
+                inputDesc.value = texto;
+                // Efeito visual de seleção
+                Array.from(container.children).forEach(c => c.style.background = '#333');
+                chip.style.background = '#e74c3c';
+            };
+            container.appendChild(chip);
+        });
+    }
+}
+
+// 4. Salva no Banco de Dados
+async function salvarDespesaDetalhada() {
+    const valor = parseFloat(document.getElementById('inputDespesaValor').value);
+    const categoria = document.getElementById('selectDespesaCategoria').value;
+    const descricao = document.getElementById('inputDespesaDescricao').value.trim();
+    const dataInput = document.getElementById('inputDespesaData').value;
+
+    if (isNaN(valor) || valor <= 0) return exibirPopup("Erro", "Valor inválido.");
+    if (!categoria) return exibirPopup("Erro", "Selecione a categoria.");
+    if (!descricao) return exibirPopup("Erro", "Digite uma descrição.");
+
+    exibirAguarde("Salvando...");
+
+    try {
+        // Cria data corrigindo fuso horário (meio-dia para evitar pular dia)
+        const dataObj = new Date(dataInput + 'T12:00:00');
+
+        await db.collection('extrato_financeiro').add({
+            usuarioUid: auth.currentUser.uid,
+            donoUid: auth.currentUser.uid, 
+            tipo: 'saida',                 
+            subtipo: 'despesa_detalhada',
+            
+            // Novos campos vitais para o gráfico
+            categoria: categoria,          // fixa, variavel, investimento, imposto
+            descricao: descricao,
+            
+            valor: valor,
+            dataEvento: firebase.firestore.Timestamp.fromDate(dataObj),
+            ts: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Opcional: Atualizar saldo atual do usuário (se seu app usa esse campo)
+        await db.collection('usuarios').doc(auth.currentUser.uid).update({
+            saldo: firebase.firestore.FieldValue.increment(-valor)
+        });
+
+        // Remove o modal de registro
+        const modalReg = document.getElementById('modalRegistrarDespesaDetalhada');
+        if(modalReg) modalReg.remove();
+        
+        fecharTodosOsModais(); // Fecha aguarde
+        exibirPopup("Sucesso", "Saída registrada!");
+        
+        // Recarrega o painel financeiro para atualizar o gráfico e a lista
+        if(typeof abrirModalFinanceiroProprietario === 'function') {
+            abrirModalFinanceiroProprietario();
+        }
+
+    } catch (e) {
+        fecharTodosOsModais();
+        exibirPopup("Erro", e.message);
     }
 }
 
@@ -24093,6 +24839,7 @@ function iniciarMonitoramentoMapaAtivo(uid) {
 
 // Função do Clique no Botão do Rodapé
 function abrirMapaPrioritario() {
+    fecharModalAtual();
     if (!idAgendamentoPrioritario) return;
     
     const ag = idAgendamentoPrioritario;
@@ -26024,32 +26771,42 @@ function abrirModalUsuarios() {
   });
 }
 
-// Função Auxiliar: Renderiza o HTML
+// Função Auxiliar: Renderiza o HTML (CORRIGIDA)
 function renderizarListaUsuariosAdmin(lista) {
     const container = document.getElementById("listaUsuariosRender");
     if (!container) return;
 
-    if (lista.length === 0) {
+    if (!lista || lista.length === 0) {
         container.innerHTML = "<p style='text-align:center; opacity:0.7;'>Nenhum usuário encontrado.</p>";
         return;
     }
 
     let html = "";
     lista.forEach(u => {
+        // --- BLINDAGEM CONTRA ERROS (FIX) ---
+        // Se não tiver tipo, assume 'desconhecido' para não travar o .toUpperCase()
+        const tipoSafe = u.tipo ? u.tipo : 'desconhecido';
+        const nomeSafe = u.nome || 'Sem Nome';
+        const emailSafe = u.email || 'Sem E-mail';
+        const telefoneSafe = u.telefone || 'N/A';
+        const idSafe = u.id || u.uid; // Garante pegar o ID mesmo se vier como uid
+
         // Define cor baseada no tipo
         let corTipo = "#aaa";
-        if (u.tipo === 'admin') corTipo = "#e74c3c";
-        if (u.tipo === 'barbeiro' || u.tipo === 'manicure_pedicure') corTipo = "var(--cor-destaque)";
+        if (tipoSafe === 'admin') corTipo = "#e74c3c";
+        if (tipoSafe === 'barbeiro' || tipoSafe === 'manicure_pedicure') corTipo = "var(--cor-destaque)";
 
         html += `
         <div class="card" style="margin-bottom: 10px; border-left: 3px solid ${corTipo};">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                ${u.nome || 'Sem Nome'}
-                <span style="font-size:10px; background:#333; padding:2px 6px; border-radius:4px; color:${corTipo}">${u.tipo.toUpperCase()}</span>
+                <span style="font-weight:bold;">${nomeSafe}</span>
+                <span style="font-size:10px; background:#333; padding:2px 6px; border-radius:4px; color:${corTipo}">
+                    ${tipoSafe.toUpperCase()}
+                </span>
             </div>
-            <p style="font-size:12px; margin: 5px 0;">📧 ${u.email}</p>
-            <p style="font-size:12px; margin: 0 0 10px 0;">📞 ${u.telefone || 'N/A'}</p>
-            <button onclick="abrirModalGerenciarUsuario('${u.id}')" style="width:100%; padding:8px; font-size:13px;">⚙️ Gerenciar</button>
+            <p style="font-size:12px; margin: 5px 0; color:#ccc;">📧 ${emailSafe}</p>
+            <p style="font-size:12px; margin: 0 0 10px 0; color:#ccc;">📞 ${telefoneSafe}</p>
+            <button onclick="abrirModalGerenciarUsuario('${idSafe}')" style="width:100%; padding:8px; font-size:13px; cursor:pointer;">⚙️ Gerenciar</button>
         </div>`;
     });
     
@@ -35216,71 +35973,84 @@ function setupConfiguracoes() {
     });
 }
 
+// Gera a lista completa de prêmios dinamicamente
+function gerarListaPremiosRoleta() {
+    let lista = [];
+
+    // 1. Pontos de Fidelidade (1 a 10)
+    for (let i = 1; i <= 10; i++) {
+        lista.push({ tipo: 'ponto', id: `ponto_${i}`, val: i, nome: `${i} Pontos` });
+    }
+
+    // 2. Todas as Molduras (Se existirem)
+    if (typeof MOLDURAS !== 'undefined') {
+        Object.keys(MOLDURAS).forEach(key => {
+            const m = MOLDURAS[key];
+            if (!m.adminOnly) { // Opcional: esconder exclusivas de admin
+                lista.push({ tipo: 'moldura', id: key, val: m.classe, nome: m.nome, imgHtml: `<div class="mini-moldura-preview ${m.classe}"></div>` });
+            }
+        });
+    }
+
+    // 3. Todos os Balões (Se existirem)
+    if (typeof BALOES !== 'undefined') {
+        Object.keys(BALOES).forEach(key => {
+            const b = BALOES[key];
+            if (!b.adminOnly) {
+                lista.push({ tipo: 'balao', id: key, val: b.classe, nome: b.nome, imgHtml: `<div class="mini-balao-preview chat-message ${b.classe}">Chat</div>` });
+            }
+        });
+    }
+
+    // 4. PRÊMIO PRINCIPAL: Caixa Surpresa (Sempre por último ou espalhado)
+    lista.push({ tipo: 'caixa', id: 'caixa_surpresa', val: '🎁', nome: 'Caixa Surpresa' });
+
+    return lista;
+}
+
 function abrirModalPerfil() {
     if (!perfil) return;
 
     const nomeAtual = perfil.nome || "";
     const fotoAtual = perfil.fotoPerfil || 'https://placehold.co/100';
     
-    // === PADRÃO VISUAL DA ROLETA (20 ITENS - AJUSTADO) ===
-    // A sequência foi ajustada para não repetir números na emenda do loop.
-    const padraoItens = [
-        // BLOCO 1
-        { tipo: 'txt', val: '1', cls: 'ponto' },         // 0
-        { tipo: 'html', id: 'bronze', cat: 'moldura', html: '<div class="mini-moldura-preview avatar-frame-bronze"></div>', cls: 'premio-top' }, // 1
-        { tipo: 'txt', val: '2', cls: 'ponto' },         // 2
-        { tipo: 'html', id: 'bronze', cat: 'balao', html: '<div class="mini-balao-preview chat-message bubble-bronze">Chat</div>', cls: 'premio-top' }, // 3
-        
-        // BLOCO 2
-        { tipo: 'txt', val: '3', cls: 'ponto' },         // 4
-        { tipo: 'html', id: 'prata', cat: 'moldura', html: '<div class="mini-moldura-preview avatar-frame-prata"></div>', cls: 'premio-top' }, // 5
-        { tipo: 'txt', val: '4', cls: 'ponto' },         // 6
-        { tipo: 'html', id: 'prata', cat: 'balao', html: '<div class="mini-balao-preview chat-message bubble-prata">Chat</div>', cls: 'premio-top' }, // 7
-        
-        // BLOCO 3 (MEIO)
-        { tipo: 'txt', val: '5', cls: 'ponto' },         // 8
-        { tipo: 'txt', val: '🎁', cls: 'caixa' },        // 9 (Caixa Surpresa)
-        { tipo: 'txt', val: '6', cls: 'ponto' },         // 10
-        
-        // BLOCO 4
-        { tipo: 'html', id: 'ouro', cat: 'moldura', html: '<div class="mini-moldura-preview avatar-frame-ouro"><div class="coroa-topo" style="top:-10px; width:20px;"></div></div>', cls: 'premio-top' }, // 11
-        { tipo: 'txt', val: '7', cls: 'ponto' },         // 12
-        { tipo: 'html', id: 'ouro', cat: 'balao', html: '<div class="mini-balao-preview chat-message bubble-ouro">Chat</div>', cls: 'premio-top' }, // 13
-        
-        // BLOCO 5
-        { tipo: 'txt', val: '8', cls: 'ponto' },         // 14
-        { tipo: 'html', id: 'diamante', cat: 'moldura', html: '<div class="mini-moldura-preview avatar-frame-diamante"><div class="coroa-topo" style="top:-10px; width:20px;"></div></div>', cls: 'premio-top' }, // 15
-        { tipo: 'txt', val: '9', cls: 'ponto' },         // 16
-        { tipo: 'html', id: 'diamante', cat: 'balao', html: '<div class="mini-balao-preview chat-message bubble-diamante">Chat</div>', cls: 'premio-top' }, // 17
-        
-        // FINAL (Conexão do Loop)
-        { tipo: 'txt', val: '10', cls: 'ponto' },        // 18
-        { tipo: 'txt', val: '4', cls: 'ponto' }          // 19 (Valor '4' para não repetir '1' na emenda com o índice 0)
-    ];
+    // 1. Gera e EMBARALHA a lista
+    let listaCrua = gerarListaPremiosRaw();
+    window.itensRoletaAtual = shuffleArray(listaCrua); // Salva na global embaralhado!
 
+    // 2. Cria o HTML da faixa visual
     let faixaHtml = '';
-    // Gera 40 repetições para criar a faixa de rolagem contínua
-    for(let i=0; i<40; i++) {
-        padraoItens.forEach(item => {
+    // Repete 50 vezes para dar efeito infinito
+    for(let i=0; i<50; i++) {
+        window.itensRoletaAtual.forEach(item => {
             let conteudo = '';
-            if (item.tipo === 'txt') {
+            let classeExtra = '';
+
+            if (item.tipo === 'ponto') {
                 conteudo = `<span>${item.val}</span>`;
+                classeExtra = 'ponto';
+            } else if (item.tipo === 'caixa') {
+                conteudo = `<span>${item.val}</span>`;
+                classeExtra = 'caixa';
             } else {
-                conteudo = item.html;
+                conteudo = item.imgHtml;
+                classeExtra = 'premio-top';
             }
-            faixaHtml += `<div class="roleta-item ${item.cls}">${conteudo}</div>`;
+            faixaHtml += `<div class="roleta-item ${classeExtra}">${conteudo}</div>`;
         });
     }
 
-    // --- TEXTOS DINÂMICOS E EXPLICATIVOS ---
-    const premioCaixa = perfil.tipo === 'cliente' 
-        ? 'VIP (5 Dias)' 
-        : 'Ficar no Topo (24h)';
-        
+    const premioCaixa = perfil.tipo === 'cliente' ? '💎 VIP (3 Dias)' : '🚀 Destaque Topo (24h)';
     const infoTexto = `🎁 Caixa Surpresa: ${premioCaixa}`;
-    const infoPremios = `Prêmios Possíveis: Pontos (1-10), Molduras, Balões de Chat e Caixa Surpresa.`;
+    const infoPremios = `Sorteio entre ${window.itensRoletaAtual.length} itens embaralhados!`;
 
     const modal = document.getElementById('modalMeuPerfil');
+    
+    // --- TRUQUE PARA OS POPUPS ABRIREM POR CIMA ---
+    // Definimos o z-index deste modal como 10000. 
+    // Os modais de checkin/resgate devem ter z-index maior (ex: 15000) no CSS.
+    modal.style.zIndex = '10000'; 
+
     const content = modal.querySelector('.modal-content');
 
     content.innerHTML = `
@@ -35299,7 +36069,6 @@ function abrirModalPerfil() {
 
         <div class="popup-section">
             <h4>🎰 Roleta Diária</h4>
-            
             <div style="background: #222; padding: 8px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #444;">
                 <p id="roletaInfoPremios" style="font-size: 12px; color: #ffcc00; margin: 0 0 5px 0;">${infoTexto}</p>
                 <p style="font-size: 10px; color: #ccc; margin: 0; line-height: 1.3;">${infoPremios}</p>
@@ -35312,7 +36081,6 @@ function abrirModalPerfil() {
                  </div>
                  <div class="seta-externa baixo"></div>
             </div>
-            
             <button id="btnGirarRoleta" onclick="girarRoleta()" style="width: 100%; font-weight: bold; font-size: 16px; margin-top:10px;">Carregando...</button>
         </div>
 
@@ -35333,6 +36101,21 @@ function abrirModalPerfil() {
             </div>
         </div>
 
+        <div class="perfil-acoes-container">
+            <div class="btn-perfil-acao" onclick="verificarCheckInDiario(perfil)">
+                <div class="icone-perfil fogo">🔥</div>
+                <span>Check-in</span>
+            </div>
+            <div class="btn-perfil-acao" onclick="abrirPortaSecreta()">
+                <div class="icone-perfil presente">🎁</div>
+                <span>Resgatar</span>
+            </div>
+            <div class="btn-perfil-acao" onclick="abrirMapaPrioritario()">
+                <div class="icone-perfil mapa">🗺️</div>
+                <span>Rota Atual</span>
+            </div>
+        </div>
+
         <div class="popup-section">
             <h4>🏅 Exibir Conquistas (Máx 3)</h4>
             <div id="listaSelecaoConquistas" class="scrollable-list" style="max-height: 120px;"></div>
@@ -35350,16 +36133,8 @@ function abrirModalPerfil() {
         renderizarMolduras();
         renderizarBaloes();
         renderizarSelecaoConquistas();
-        iniciarRelogiosPerfil();
-        
-        verificarMissoesDiarias();
-        
-        // --- CÓDIGO DO REI AQUI ---
-        // Verifica se a função existe antes de chamar para evitar erros
-        if (typeof verificarSeSouRei === 'function') {
-            verificarSeSouRei(); 
-        }
-        // --------------------------
+        if(typeof iniciarRelogiosPerfil === 'function') iniciarRelogiosPerfil();
+        if(typeof verificarMissoesDiarias === 'function') verificarMissoesDiarias();
     });
 
     abrirModal('modalMeuPerfil');
@@ -35441,112 +36216,164 @@ async function salvarNomePerfil() {
         exibirPopup("Erro ao salvar: " + e.message);
     }
 }
+// Variável Global para garantir que o giro matemático bata com o visual embaralhado
+window.itensRoletaAtual = [];
+
+// Função para embaralhar array (Fisher-Yates)
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+// Gera a lista crua (sem embaralhar ainda)
+function gerarListaPremiosRaw() {
+    let lista = [];
+    // 1. Pontos (1 a 10)
+    for (let i = 1; i <= 10; i++) {
+        lista.push({ tipo: 'ponto', id: `ponto_${i}`, val: i, nome: `${i} Pontos` });
+    }
+    // 2. Molduras
+    if (typeof MOLDURAS !== 'undefined') {
+        Object.keys(MOLDURAS).forEach(key => {
+            const m = MOLDURAS[key];
+            if (!m.adminOnly) {
+                lista.push({ tipo: 'moldura', id: key, val: m.classe, nome: m.nome, imgHtml: `<div class="mini-moldura-preview ${m.classe}"></div>` });
+            }
+        });
+    }
+    // 3. Balões
+    if (typeof BALOES !== 'undefined') {
+        Object.keys(BALOES).forEach(key => {
+            const b = BALOES[key];
+            if (!b.adminOnly) {
+                lista.push({ tipo: 'balao', id: key, val: b.classe, nome: b.nome, imgHtml: `<div class="mini-balao-preview chat-message ${b.classe}">Chat</div>` });
+            }
+        });
+    }
+    // 4. Caixa Surpresa
+    lista.push({ tipo: 'caixa', id: 'caixa_surpresa', val: '🎁', nome: 'Caixa Surpresa' });
+    
+    return lista;
+}
 
 async function girarRoleta() {
     if (!auth.currentUser) return;
-
     const btnGirar = document.getElementById('btnGirarRoleta');
     if (!btnGirar) return;
     
-    // 1. Trava o botão imediatamente
+    // Validações de limite (Mantido igual)
+    const hoje = new Date().toDateString();
+    let girosTotais = isVipAtivo(perfil) ? 4 : 1;
+    if (isProAtivo(perfil) && perfil.proTier && typeof PRECOS_PRO !== 'undefined') {
+        girosTotais = PRECOS_PRO[perfil.proTier].giros;
+    }
+    const jaGirouHoje = perfil.ultimoGiroRoleta === hoje;
+    let realizados = jaGirouHoje ? (perfil.girosRealizadosHoje || 0) : 0;
+    
+    if (realizados >= girosTotais) {
+        exibirPopup("Sem giros", "Você já usou seus giros de hoje. Volte amanhã!");
+        return;
+    }
+
+    // --- A MÁGICA: Sorteio baseado na lista EMBARALHADA global ---
+    // Se por algum motivo a global estiver vazia, gera uma nova (fallback)
+    if (!window.itensRoletaAtual || window.itensRoletaAtual.length === 0) {
+        window.itensRoletaAtual = shuffleArray(gerarListaPremiosRaw());
+    }
+
+    const listaUsada = window.itensRoletaAtual;
+    const totalItens = listaUsada.length;
+    // Sorteia um índice (0 até total-1)
+    const targetIndex = Math.floor(Math.random() * totalItens);
+    const premioSorteado = listaUsada[targetIndex]; // Pega o objeto do prêmio
+
     btnGirar.disabled = true;
     btnGirar.textContent = "Sorteando..."; 
 
-    const API_URL = 'https://navalhabackend.onrender.com/api/girar-roleta'; 
+    perfil.girosRealizadosHoje = (realizados + 1);
+    perfil.ultimoGiroRoleta = hoje;
 
+    // --- ANIMAÇÃO VISUAL ---
+    const ITEM_WIDTH = 90; 
+    const LOOPS = 35; // Voltas completas
+    const finalIndex = (LOOPS * totalItens) + targetIndex; // Onde parar
+    
+    const containerWidth = 320; 
+    const targetCenterPixel = (finalIndex * ITEM_WIDTH) + (ITEM_WIDTH / 2);
+    const viewCenterPixel = containerWidth / 2;
+    const jitter = Math.floor(Math.random() * 40) - 20; 
+    const moveX = targetCenterPixel - viewCenterPixel + jitter;
+
+    const faixa = document.getElementById('roletaFaixa');
+    if (faixa) {
+        faixa.style.transition = `transform 6s cubic-bezier(0.1, 0, 0.1, 1)`;
+        faixa.style.transform = `translateX(-${moveX}px)`;
+    }
+
+    // --- LÓGICA DE RECOMPENSA E SALVAMENTO ---
     try {
-        // 2. Chama o servidor para validar o giro e determinar o prêmio
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ uid: auth.currentUser.uid })
-        });
-        const data = await response.json();
+        let updates = {
+            girosRealizadosHoje: perfil.girosRealizadosHoje,
+            ultimoGiroRoleta: perfil.ultimoGiroRoleta
+        };
+        let msgRetorno = "";
+        const agora = new Date();
+        const validade24h = new Date(agora.getTime() + (24 * 60 * 60 * 1000));
+        const validade3dias = new Date(agora.getTime() + (3 * 24 * 60 * 60 * 1000));
 
-        if (!data.success) {
-            throw new Error(data.message || "Erro ao processar roleta.");
+        if (premioSorteado.tipo === 'ponto') {
+            updates.pontosFidelidade = firebase.firestore.FieldValue.increment(premioSorteado.val);
+            msgRetorno = `Você ganhou ${premioSorteado.val} pontos de fidelidade!`;
+        } 
+        else if (premioSorteado.tipo === 'moldura') {
+            updates[`premiosTemporarios.moldura_${premioSorteado.id}`] = firebase.firestore.Timestamp.fromDate(validade24h);
+            msgRetorno = `Você desbloqueou a moldura "${premioSorteado.nome}" por 24 horas!`;
         }
-        
-        // --- CORREÇÃO: Atualiza a contagem localmente IMEDIATAMENTE para o botão não bugar ---
-        if (perfil) {
-            // Incrementa o contador local para o botão saber que gastou um giro
-            perfil.girosRealizadosHoje = (perfil.girosRealizadosHoje || 0) + 1;
-            perfil.ultimoGiroRoleta = new Date().toDateString();
+        else if (premioSorteado.tipo === 'balao') {
+            updates[`premiosTemporarios.balao_${premioSorteado.id}`] = firebase.firestore.Timestamp.fromDate(validade24h);
+            msgRetorno = `Você desbloqueou o balão "${premioSorteado.nome}" por 24 horas!`;
         }
-
-        // 3. Inicia a Animação Visual
-        const targetIndex = data.targetIndex;
-        btnGirar.textContent = "Girando...";
-
-        const ITEM_WIDTH = 90; 
-        const ITEMS_PER_SET = 20; 
-        const LOOPS = 30;
-        const finalIndex = (LOOPS * ITEMS_PER_SET) + targetIndex;
-        const containerWidth = 320;
-        const targetCenterPixel = (finalIndex * ITEM_WIDTH) + (ITEM_WIDTH / 2);
-        const viewCenterPixel = containerWidth / 2;
-        let moveX = targetCenterPixel - viewCenterPixel;
-        
-        const jitter = Math.floor(Math.random() * 40) - 20; 
-        moveX += jitter;
-
-        const faixa = document.getElementById('roletaFaixa');
-        if (faixa) {
-            faixa.style.transition = `transform 6s cubic-bezier(0.1, 0, 0.1, 1)`;
-            faixa.style.transform = `translateX(-${moveX}px)`;
+        else if (premioSorteado.tipo === 'caixa') {
+            if (perfil.tipo === 'cliente') {
+                updates.vip = true;
+                updates.vipExpirationDate = validade3dias.toISOString();
+                msgRetorno = "🎁 CAIXA SURPRESA: Você ganhou 3 DIAS DE VIP GRÁTIS!";
+            } else {
+                updates[`premiosTemporarios.destaque_topo`] = firebase.firestore.Timestamp.fromDate(validade24h);
+                msgRetorno = "🎁 CAIXA SURPRESA: Destaque no TOPO por 24 horas!";
+            }
         }
 
-        // 4. O que acontece após a roleta parar (6 segundos depois)
         setTimeout(async () => {
-            if (typeof confetti === 'function') {
-                confetti({ 
-                    particleCount: 100, 
-                    spread: 70, 
-                    origin: { y: 0.6 }, 
-                    zIndex: 99999 
-                });
-            }
-
-            // --- ATUALIZAÇÃO DE DADOS SEM FECHAR O PERFIL ---
+            await db.collection('usuarios').doc(auth.currentUser.uid).update(updates);
+            
             const userDoc = await db.collection('usuarios').doc(auth.currentUser.uid).get();
-            if (userDoc.exists) {
-                perfil = userDoc.data(); 
-                perfil.uid = auth.currentUser.uid;
+            perfil = userDoc.data();
+            perfil.uid = auth.currentUser.uid;
 
-                const saldoDigital = (perfil.saldoDigital || 0).toFixed(2);
-                const elSaldo = document.getElementById("saldoHeader");
-                if (elSaldo) elSaldo.textContent = saldoDigital;
-            }
+            if (typeof confetti === 'function') confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, zIndex: 99999 });
+            if (typeof tocarSom === 'function') tocarSom('sucesso');
 
-            // Atualiza o botão para mostrar os giros restantes corretamente
-            atualizarBotaoRoleta(); 
-
-            let tituloPopup = "🎉 Parabéns!";
-            if (data.tipoPr === 'item') tituloPopup = "🎁 Item Temporário!";
-            else if (data.tipoPr === 'caixa') tituloPopup = "🎁 CAIXA MISTERIOSA!";
-
-            exibirPopupBloqueante(tituloPopup, data.msgRetorno, () => {
-                const modalPerfil = document.getElementById('modalMeuPerfil');
-                if (modalPerfil && modalPerfil.style.display === 'flex') {
-                    if (typeof renderizarMolduras === 'function') renderizarMolduras();
-                    if (typeof renderizarBaloes === 'function') renderizarBaloes();
-                }
+            // Exibe popup bloqueante
+            exibirPopupBloqueante("🎉 Parabéns!", msgRetorno, () => {
+                atualizarBotaoRoleta();
+                if (typeof renderizarMolduras === 'function') renderizarMolduras();
+                if (typeof renderizarBaloes === 'function') renderizarBaloes();
             });
 
-            notifyUser(auth.currentUser.uid, "🎰 Prêmio da Roleta", data.msgRetorno);
+            if (typeof notifyUser === 'function') notifyUser(auth.currentUser.uid, "🎰 Roleta", msgRetorno);
 
-        }, 6000); 
+        }, 6000);
 
     } catch (e) {
-        console.error("Erro na Roleta:", e);
-        exibirPopup("Erro", e.message);
-        
-        // Em caso de erro, recarrega o perfil para garantir integridade
-        const userDoc = await db.collection('usuarios').doc(auth.currentUser.uid).get();
-        if (userDoc.exists) {
-            perfil = userDoc.data();
-            atualizarBotaoRoleta(); 
-        }
+        console.error("Erro roleta:", e);
+        setTimeout(() => {
+            exibirPopup("Erro", "Falha ao salvar prêmio. Verifique conexão.");
+            atualizarBotaoRoleta();
+        }, 6000);
     }
 }
 
