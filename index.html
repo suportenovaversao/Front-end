@@ -10105,26 +10105,95 @@ input:checked + .slider:before { transform: translateX(24px); }
     </div>
 </div>
 
-<div id="modalEditarAgendamento" class="modal">
-    <div class="modal-content">
-        <h3>✏️ Editar Agendamento</h3>
+<div id="modalEditarAgendamento" class="modal" style="z-index: 10000;">
+    <div class="modal-content" style="
+        max-width: 500px; 
+        width: 95%; 
+        height: 85vh; /* Altura fixa de 85% da tela */
+        display: flex; 
+        flex-direction: column; 
+        overflow: hidden; /* Remove rolagem dupla */
+        border-radius: 12px;
+        background: #181818;
+    ">
         
-        <label>Nome do Cliente:</label>
-        <input type="text" id="editNomeCliente" class="input-padrao">
-        
-        <label>Telefone:</label>
-        <input type="tel" id="editTelefoneCliente" class="input-padrao">
-        
-        <label>Valor (R$):</label>
-        <input type="number" id="editValorServico" class="input-padrao">
-        
-        <label>Observação / Serviço:</label>
-        <input type="text" id="editNomeServico" class="input-padrao">
-
-        <div class="modal-buttons">
-            <button onclick="fecharModalAtual()" class="btn-cancelar">Cancelar</button>
-            <button onclick="salvarEdicaoAgendamento()" class="btn-confirmar">💾 Salvar Alterações</button>
+        <div class="modal-header-premium" style="flex-shrink: 0; padding: 15px; border-bottom: 1px solid #333;">
+            <h3 style="margin:0; color:var(--cor-destaque);">✏️ Editar Agendamento</h3>
+            <button onclick="fecharModalAtual()" style="background:transparent; border:none; color:#fff; font-size:20px; cursor:pointer;">✕</button>
         </div>
+
+        <div style="
+            flex-grow: 1; 
+            overflow-y: auto; /* AQUI ESTÁ A MÁGICA DO SCROLL VERTICAL */
+            padding: 15px;
+            background: #121212;
+        ">
+            
+            <label style="color:#aaa; font-size:12px;">Nome do Cliente:</label>
+            <input type="text" id="editNomeCliente" class="input-padrao" style="margin-bottom:10px; width:100%; box-sizing:border-box;">
+            
+            <label style="color:#aaa; font-size:12px;">Telefone:</label>
+            <input type="tel" id="editTelefoneCliente" class="input-padrao" style="margin-bottom:10px; width:100%; box-sizing:border-box;">
+            
+            <label style="color:#aaa; font-size:12px;">Serviço:</label>
+            <select id="editSelectServico" onchange="atualizarPrecoEdicao()" 
+                    class="input-padrao" 
+                    style="margin-bottom:10px; background:#222; color:white; border:1px solid #444; width:100%; box-sizing:border-box;">
+                <option value="">Carregando serviços...</option>
+            </select>
+
+            <label style="color:#aaa; font-size:12px;">Valor (R$):</label>
+            <input type="number" id="editValorServico" class="input-padrao" style="margin-bottom:20px; width:100%; box-sizing:border-box;">
+
+            <hr style="border:0; border-top:1px dashed #333; margin: 10px 0 20px 0;">
+
+            <h4 style="color:#fff; margin-bottom:10px; margin-top:0;">📅 Selecione a Data</h4>
+            
+            <input type="hidden" id="editDataAgendamento">
+
+            <div id="containerDatasEdicao" style="
+                display: flex; 
+                gap: 10px; 
+                overflow-x: auto; /* Scroll Horizontal */
+                padding-bottom: 10px; 
+                margin-bottom: 15px;
+                scroll-behavior: smooth;
+            ">
+                </div>
+
+            <div style="text-align:center; margin-bottom:10px;">
+                <span id="txtHorarioSelecionado" style="color:var(--cor-destaque); font-weight:bold; font-size:24px;">--:--</span>
+                <input type="hidden" id="editNovoHorario">
+            </div>
+
+            <div id="containerGradeEdicao" style="
+                background: #1a1a1a; 
+                padding: 15px; 
+                border-radius: 8px; 
+                min-height: 100px;
+                border: 1px solid #333;
+            ">
+                <p style="text-align:center; color:#555; font-size:12px;">Carregando horários...</p>
+            </div>
+            
+            <div style="height: 20px;"></div>
+
+        </div>
+
+        <div class="modal-buttons" style="
+            flex-shrink: 0; 
+            padding: 15px; 
+            border-top: 1px solid #333; 
+            background: #181818; 
+            display: flex; 
+            gap: 10px;
+        ">
+            <button onclick="fecharModalAtual()" class="btn-cancelar" style="padding:12px; flex:1; cursor:pointer;">Cancelar</button>
+            <button onclick="salvarEdicaoAgendamento()" class="btn-confirmar" style="padding:12px; background:var(--cor-destaque); color:#000; font-weight:bold; flex:1; cursor:pointer;">
+                💾 Salvar
+            </button>
+        </div>
+
     </div>
 </div>
 
@@ -10242,23 +10311,46 @@ var IMG_ONBOARD_5 = "https://images.unsplash.com/photo-1560066984-138dadb4c035?q
     }
 })();
 
-// Variável global para armazenar o almoço atual
-let horarioAlmocoGlobal = null; 
-
 async function definirHorarioAlmoco() {
-    // Pergunta simples ou input time
-    const novoHorario = prompt("Digite a hora de início do almoço (ex: 12:00):");
-    
-    if (novoHorario && novoHorario.includes(':')) {
+    // 1. Pergunta a hora de INÍCIO
+    const inicio = prompt("Digite a hora de INÍCIO do almoço (ex: 12:00):", "12:00");
+    if (!inicio) return; // Se cancelar, para tudo
+
+    // 2. Pergunta a hora de FIM
+    const fim = prompt("Digite a hora de TÉRMINO do almoço (ex: 13:00):", "13:00");
+    if (!fim) return; // Se cancelar, para tudo
+
+    // Validação simples pra ver se tem dois pontos (:)
+    if (inicio.includes(':') && fim.includes(':')) {
         const user = firebase.auth().currentUser;
-        if(user) {
-            // Salva no perfil do usuário no Firestore
-            await db.collection('usuarios').doc(user.uid).update({
-                horarioAlmoco: novoHorario
-            });
-            alert("Horário de almoço definido para: " + novoHorario);
-            verificarStatusAlmoco(novoHorario);
+        
+        if (user) {
+            exibirAguarde("Salvando horário de almoço...");
+
+            try {
+                // 3. Salva EXATAMENTE nos campos que o banco pede
+                await db.collection('usuarios').doc(user.uid).update({
+                    almocoInicio: inicio, // Salva "13:00" (exemplo)
+                    almocoFim: fim        // Salva "15:00" (exemplo)
+                });
+
+                // Atualiza a variável global (opcional, para uso imediato no front)
+                horarioAlmocoGlobal = { inicio: inicio, fim: fim };
+
+                fecharTodosOsModais(); // Fecha o "Aguarde"
+                alert(`Almoço definido: ${inicio} às ${fim}`);
+
+                // Se você tiver uma função que atualiza a visualização, chame aqui
+                // verificarStatusAlmoco(inicio, fim); 
+
+            } catch (error) {
+                fecharTodosOsModais();
+                console.error(error);
+                alert("Erro ao salvar: " + error.message);
+            }
         }
+    } else {
+        alert("Horários inválidos! Use o formato HH:MM (ex: 12:00).");
     }
 }
 
@@ -11193,7 +11285,8 @@ let localizacaoCliente = null;
 let cadastroCoords = null;
 let dadosVagaImediataAtiva = null;
 let vendaListener = null;
-let produtoEmEdicaoId = null; 
+let produtoEmEdicaoId = null;
+let horarioAlmocoGlobal = null;
 let produtoParaCompra = null;
 let pixTimerInterval = null; 
 let pendenciasInterval = null; 
@@ -18643,100 +18736,71 @@ async function editarComissaoMembro(uidTarget, nomeMembro, comissaoAtual) {
     }
 }
 
-// =========================================================
-// === NOVA AGENDA INTERATIVA (PROFISSIONAL & DONO) ===
-// =========================================================
-
-async function carregarMinhaAgendaInterativa() {
+// =============================================================================
+// 📅 MINHA AGENDA (CONEXÃO COM TEMPO REAL)
+// =============================================================================
+function carregarMinhaAgendaInterativa() {
     const container = document.getElementById('containerMinhaAgendaGrid');
     const contadorLivres = document.getElementById('contadorLivres');
     const contadorOcupados = document.getElementById('contadorOcupados');
     
-    container.innerHTML = '<div class="spinner" style="margin: 30px auto;"></div>';
-
-    try {
-        const meusAgendamentos = await db.collection('agendamentos')
-            .where('barbeiroUid', '==', auth.currentUser.uid)
-            .where('status', 'in', ['confirmado', 'conclusão pendente', 'pendente']) 
-            .get();
-
-        const mapaOcupacao = {};
-        let totalOcupados = 0;
-
-        meusAgendamentos.forEach(doc => {
-            const ag = doc.data();
-            if (ag.horario) {
-                mapaOcupacao[ag.horario] = { id: doc.id, ...ag };
-                totalOcupados++;
-            }
-        });
-
-        let html = '';
-        let totalLivres = 0;
-        let listaHorarios = [];
-
-        if (perfil.usaAgendaManual && perfil.agenda) {
-            listaHorarios = Object.keys(perfil.agenda).filter(h => perfil.agenda[h] === true).sort();
-        } else {
-            for(let i=8; i<=20; i++) {
-                listaHorarios.push(`${i.toString().padStart(2,'0')}:00`);
-                if(i < 20) listaHorarios.push(`${i.toString().padStart(2,'0')}:30`);
-            }
-        }
-
-        listaHorarios.forEach(hora => {
-            const agendamento = mapaOcupacao[hora];
-
-            if (agendamento) {
-                // CORREÇÃO AQUI: Verifica se valor existe, senão usa 0
-                const valorFormatado = (agendamento.valor || 0).toFixed(2);
-
-                const dadosJson = JSON.stringify({
-                    id: agendamento.id,
-                    clienteUid: agendamento.clienteUid,
-                    clienteNome: agendamento.clienteNome || 'Cliente',
-                    barbeiroNome: agendamento.barbeiroNome,
-                    servico: agendamento.servico,
-                    valor: agendamento.valor || 0,
-                    status: agendamento.status,
-                    telefone: agendamento.clienteTelefone,
-                    horario: hora
-                }).replace(/"/g, '&quot;'); // Usa escape HTML para evitar quebra no onclick
-
-                html += `
-                <div class="agenda-slot-card ocupado" onclick='abrirDetalhesDoAgendamento(${dadosJson})'>
-                    <div>
-                        <div class="hora">${hora}</div>
-                        <div class="servico">${agendamento.servico}</div>
-                    </div>
-                    <div style="text-align:right;">
-                        <div class="cliente">${(agendamento.clienteNome || 'Cliente').split(' ')[0]}</div>
-                        <div style="font-size:10px; color:#fff;">R$ ${valorFormatado}</div>
-                    </div>
-                </div>`;
-            } else {
-                totalLivres++;
-                html += `
-                <div class="agenda-slot-card livre" onclick="prepararAgendamentoProprio('${hora}')">
-                    <div>
-                        <div class="hora">${hora}</div>
-                        <div class="info">Disponível</div>
-                    </div>
-                    <div style="text-align:right;">
-                        <span style="font-size:20px;">➕</span>
-                    </div>
-                </div>`;
-            }
-        });
-
-        container.innerHTML = html;
-        if(contadorLivres) contadorLivres.textContent = totalLivres;
-        if(contadorOcupados) contadorOcupados.textContent = totalOcupados;
-
-    } catch (e) {
-        console.error(e);
-        container.innerHTML = '<p style="text-align:center;">Erro ao carregar agenda.</p>';
+    // Trava de segurança para não estourar a tela
+    if(container) {
+        container.style.width = "100%";
+        container.style.maxWidth = "100%";
+        container.style.boxSizing = "border-box";
     }
+
+    // 1. Seletor de Datas
+    if (typeof renderizarSeletorDatasGenerico === 'function') {
+        renderizarSeletorDatasGenerico(auth.currentUser.uid, 'containerMinhaAgendaGrid', 'minhaAgenda');
+    }
+
+    // 2. Define Data
+    if (!window.dataSelecionadaMinhaAgenda) {
+        window.dataSelecionadaMinhaAgenda = new Date();
+    }
+    const dataObj = window.dataSelecionadaMinhaAgenda;
+    const ano = dataObj.getFullYear();
+    const mes = (dataObj.getMonth() + 1).toString().padStart(2, '0');
+    const dia = dataObj.getDate().toString().padStart(2, '0');
+    const dataIso = `${ano}-${mes}-${dia}`;
+
+    container.innerHTML = `
+        <div style="font-size:12px; color:#aaa; text-align:center; margin-bottom:10px;">
+            Visualizando: <b>${dia}/${mes}</b>
+        </div>
+        <div class="spinner" style="margin: 20px auto; width: 30px; height: 30px;"></div>
+    `;
+
+    // 3. Listener Real-Time
+    const uid = auth.currentUser.uid;
+    const query = db.collection('agendamentos')
+        .where('barbeiroUid', '==', uid)
+        .where('data', '==', dataIso)
+        .where('status', 'in', ['confirmado', 'conclusão pendente', 'pendente']);
+
+    if (window.unsubscribeMinhaAgenda) window.unsubscribeMinhaAgenda();
+
+    window.unsubscribeMinhaAgenda = query.onSnapshot(async (snapshot) => {
+        try {
+            const htmlGrid = await gerarGradeVisualProfissional(uid, dataIso);
+            container.innerHTML = htmlGrid;
+
+            // Seus contadores originais
+            if (contadorLivres) {
+                contadorLivres.textContent = container.querySelectorAll('.slot-livre').length;
+            }
+            if (contadorOcupados) {
+                const ocupados = container.querySelectorAll('.slot-ocupado').length;
+                const pendentes = container.querySelectorAll('.slot-pendente').length;
+                contadorOcupados.textContent = ocupados + pendentes;
+            }
+
+        } catch (e) {
+            console.error("Erro no reload real-time:", e);
+        }
+    });
 }
 
 // 1. CLIQUE NO SLOT VERDE (Adicionar Manualmente)
@@ -19151,18 +19215,112 @@ function fecharModalAdicional(id) {
     }
 }
 
-async function gerarSlotsHorarios(uidProfissional, dadosUsuario = null) {
+// =============================================================================
+// GERADOR VISUAL (LÓGICA SEQUENCIAL: 1º EXCEÇÃO -> 2º PADRÃO)
+// =============================================================================
+async function gerarGradeVisualProfissional(uidProfissional, dataIso, dadosUsuario = null) {
+    
+    // --- 1. PREPARAÇÃO (GARANTE DADOS DO PERFIL) ---
     if (!dadosUsuario) {
         const doc = await db.collection('usuarios').doc(uidProfissional).get();
         if (doc.exists) dadosUsuario = doc.data();
     }
 
     if (!dadosUsuario || !dadosUsuario.usaAgendaManual) {
-        return '<div style="text-align:center; padding:10px; color:#555; font-size:10px; font-style:italic;">🚫 Agenda Programada Fechada</div>';
+        return '<div style="text-align:center; padding:10px;">🚫 Agenda Fechada</div>';
     }
 
+    // LISTA MESTRA (Aqui ficarão os horários finais, venham de onde vierem)
+    let listaHorariosFinal = []; 
+    let diaBloqueado = false;
+    let usouPersonalizado = false;
+
+    // =========================================================================
+    // 🛑 ETAPA 1: VERIFICAÇÃO RIGOROSA DO BANCO (AGENDA_DIARIA)
+    // =========================================================================
+    try {
+        console.log(`🕵️ Verificando exceção no servidor para: ${dataIso}`);
+        
+        // OBRIGA O FIREBASE A LER DA NUVEM (IGNORA O CACHE VELHO)
+        const docExcecao = await db.collection('usuarios').doc(uidProfissional)
+                                   .collection('agenda_diaria').doc(dataIso)
+                                   .get({ source: 'server' }); 
+
+        if (docExcecao.exists) {
+            console.log("✅ EXCEÇÃO ENCONTRADA! IGNORANDO PADRÃO.");
+            usouPersonalizado = true;
+            const dadosDia = docExcecao.data();
+
+            if (dadosDia.fechado === true) {
+                diaBloqueado = true;
+            } else {
+                // Se existe exceção, a lista é ESSA e ponto final.
+                // O Firebase retorna array direto aqui.
+                listaHorariosFinal = dadosDia.horariosDisponiveis || [];
+            }
+        } 
+        else {
+            console.log("☁️ Nenhuma exceção encontrada. Liberado para usar padrão.");
+        }
+
+    } catch (err) {
+        console.error("Erro ao buscar exceção (usando fallback de cache se possível):", err);
+        // Fallback silencioso: se cair a net, tenta ler do cache
+        try {
+            const docCache = await db.collection('usuarios').doc(uidProfissional)
+                                     .collection('agenda_diaria').doc(dataIso).get();
+            if (docCache.exists) {
+                usouPersonalizado = true;
+                const d = docCache.data();
+                if(d.fechado) diaBloqueado = true;
+                else listaHorariosFinal = d.horariosDisponiveis || [];
+            }
+        } catch(e){}
+    }
+
+    // =========================================================================
+    // 🔄 ETAPA 2: CARREGA PADRÃO (SÓ SE NÃO USOU PERSONALIZADO!!!)
+    // =========================================================================
+    if (!usouPersonalizado && !diaBloqueado) {
+        // Se chegou aqui, é porque NÃO tinha nada no agenda_diaria.
+        // Agora sim temos permissão para ler o 'agenda' do perfil.
+        
+        if (dadosUsuario.agenda) {
+            // Converte Map {'08:00': true} para Array ['08:00']
+            listaHorariosFinal = Object.keys(dadosUsuario.agenda)
+                                       .filter(h => dadosUsuario.agenda[h] === true)
+                                       .sort();
+        }
+
+        // --- FILTRO DE ALMOÇO (SÓ APLICA AQUI NO PADRÃO) ---
+        const almocoInicio = dadosUsuario.almocoInicio;
+        const almocoFim = dadosUsuario.almocoFim;
+        if (almocoInicio && almocoFim) {
+            listaHorariosFinal = listaHorariosFinal.filter(hora => !(hora >= almocoInicio && hora < almocoFim));
+        }
+    }
+
+    // =========================================================================
+    // 🎨 ETAPA 3: RENDERIZAÇÃO (SEU VISUAL PERFEITO)
+    // =========================================================================
+
+    // Validações de Bloqueio/Vazio
+    if (diaBloqueado) {
+        return `<div style="text-align:center; padding:30px; width:100%;">
+                   <div style="font-size:20px; margin-bottom:5px;">⛔</div>
+                   <div style="color:#e74c3c; font-weight:bold;">DIA FECHADO</div>
+                   <div style="font-size:11px; color:#777;">Expediente suspenso nesta data.</div>
+                </div>`;
+    }
+
+    if (listaHorariosFinal.length === 0) {
+        return `<div style="text-align:center; padding:20px; width:100%; color:#555;">Nenhum horário disponível.</div>`;
+    }
+
+    // Busca Agendamentos (Para pintar de vermelho)
     const snap = await db.collection('agendamentos')
         .where('barbeiroUid', '==', uidProfissional)
+        .where('data', '==', dataIso) 
         .where('status', 'in', ['confirmado', 'conclusão pendente', 'pendente']) 
         .get();
 
@@ -19172,36 +19330,15 @@ async function gerarSlotsHorarios(uidProfissional, dadosUsuario = null) {
         if(ag.horario) ocupados[ag.horario] = { id: doc.id, ...ag };
     });
 
-    let html = '<div class="grid-horarios-mini">';
-    
-    let listaHorarios = [];
-    if (dadosUsuario.agenda) {
-        listaHorarios = Object.keys(dadosUsuario.agenda).filter(h => dadosUsuario.agenda[h] === true).sort();
-    }
-    
-    if (listaHorarios.length === 0) {
-         return '<div style="text-align:center; padding:10px; color:#555; font-size:10px;">Nenhum horário definido.</div>';
-    }
+    // Monta HTML (2 Colunas, Responsivo)
+    let html = '<div class="grid-horarios-mini" style="display: flex; flex-wrap: wrap; gap: 8px; width: 100%; box-sizing: border-box; justify-content: center;">';
+    const estiloItem = 'width: 48%; flex-grow: 1; min-width: 130px; margin: 0; text-align: center;';
 
-    // PEGA CONFIG DE ALMOÇO
-    const almocoInicio = dadosUsuario.horaAlmocoInicio;
-    const almocoFim = dadosUsuario.horaAlmocoFim;
-
-    listaHorarios.forEach(hora => {
-        // VERIFICA SE É ALMOÇO
-        let isAlmoco = false;
-        if (almocoInicio && almocoFim) {
-            if (hora >= almocoInicio && hora < almocoFim) isAlmoco = true;
-        }
-
+    listaHorariosFinal.forEach(hora => {
         const agendamento = ocupados[hora];
         
-        if (isAlmoco) {
-            // MOSTRA BLOQUEADO DE ALMOÇO
-            html += `<div class="slot-time" style="background:#444; color:#aaa; border:1px dashed #777; cursor:not-allowed; opacity:0.7;">🍽️ Almoço</div>`;
-        }
-        else if (agendamento) {
-            // OCUPADO POR CLIENTE
+        if (agendamento) {
+            // CARD OCUPADO
             const dadosJson = JSON.stringify({
                 id: agendamento.id,
                 clienteUid: agendamento.clienteUid,
@@ -19212,16 +19349,494 @@ async function gerarSlotsHorarios(uidProfissional, dadosUsuario = null) {
                 status: agendamento.status,
                 telefone: agendamento.clienteTelefone,
                 horario: hora
-            }).replace(/"/g, '"');
-            html += `<div class="slot-time slot-ocupado" onclick='abrirDetalhesDoAgendamento(${dadosJson})'>${hora}</div>`;
+            }).replace(/"/g, '&quot;');
+
+            let classeCor = agendamento.status === 'pendente' ? 'slot-pendente' : 'slot-ocupado';
+            html += `<div class="slot-time ${classeCor}" style="${estiloItem}" onclick='abrirDetalhesDoAgendamento(${dadosJson})'>${hora}</div>`;
         } else {
-            // LIVRE
-            html += `<div class="slot-time slot-livre" onclick="prepararAgendamentoManual('${uidProfissional}', '${hora}')">${hora}</div>`;
+            // CARD LIVRE
+            html += `<div class="slot-time slot-livre" style="${estiloItem}" onclick="prepararAgendamentoManual('${uidProfissional}', '${hora}', '${dataIso}')">${hora}</div>`;
         }
     });
 
     html += '</div>';
+
+    // Feedback visual (Debug útil)
+    if(usouPersonalizado) {
+        html += `<div style="width:100%; text-align:center; font-size:10px; color:#f39c12; margin-top:8px; opacity:0.8;">⚡ Horário Modificado pelo Profissional</div>`;
+    }
+
     return html;
+}
+
+// Variáveis Globais de Controle
+window.uidEditandoExpediente = null;
+window.dataEditandoExpediente = null;
+
+// Função auxiliar para pegar a data correta (Brasil) e não UTC
+function obterDataLocalIso() {
+    const hoje = new Date();
+    const ano = hoje.getFullYear();
+    const mes = (hoje.getMonth() + 1).toString().padStart(2, '0');
+    const dia = hoje.getDate().toString().padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
+}
+
+async function abrirModalGestaoHorarios() {
+    // 1. DEFINE A DATA INICIAL COMO LOCAL (A CORREÇÃO ESTÁ AQUI 🚨)
+    window.dataEditandoExpediente = obterDataLocalIso(); 
+    window.uidEditandoExpediente = auth.currentUser.uid;
+
+    // Remove modal anterior se existir
+    const antigo = document.getElementById('modalConfigHorariosPremium');
+    if (antigo) antigo.remove();
+
+    // 2. Cria o Modal (Visual Premium)
+    const modal = document.createElement('div');
+    modal.id = 'modalConfigHorariosPremium';
+    modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.85); backdrop-filter: blur(5px);
+        z-index: 99999; display: flex; justify-content: center; align-items: center;
+        padding: 10px; box-sizing: border-box;
+    `;
+
+    modal.innerHTML = `
+        <div style="
+            background: #121212; width: 100%; max-width: 500px; 
+            border-radius: 16px; border: 1px solid #333; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            display: flex; flex-direction: column; max-height: 95vh;
+            overflow: hidden; animation: slideUp 0.3s ease;">
+            
+            <div style="padding: 20px; border-bottom: 1px solid #222; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <h3 style="margin:0; color:white; font-size:18px;">⚙️ Ajustar Expediente</h3>
+                    <p style="margin:0; color:#aaa; font-size:11px;">Defina horários específicos para um dia.</p>
+                </div>
+                <button onclick="document.getElementById('modalConfigHorariosPremium').remove()" 
+                    style="background:none; border:none; color:#fff; font-size:24px; cursor:pointer;">&times;</button>
+            </div>
+
+            <div style="padding: 20px; overflow-y: auto; flex-grow: 1;">
+                
+                <div id="wrapperSelectEquipe" style="margin-bottom: 20px; display:none;">
+                    <label style="color:#aaa; font-size:12px; font-weight:bold; display:block; margin-bottom:8px;">EDITAR HORÁRIO DE QUEM?</label>
+                    <div style="position:relative;">
+                        <select id="selectMembroEquipe" onchange="mudarMembroEdicao(this.value)" 
+                            style="width:100%; padding:15px; background:#1e1e1e; border:1px solid #333; color:white; border-radius:10px; font-size:15px; appearance:none; outline:none; cursor:pointer;">
+                            <option value="${auth.currentUser.uid}">👤 Eu mesmo</option>
+                        </select>
+                        <span style="position:absolute; right:15px; top:15px; color:#aaa; pointer-events:none;">▼</span>
+                    </div>
+                </div>
+
+                <label style="color:#aaa; font-size:12px; font-weight:bold; display:block; margin-bottom:8px;">SELECIONE O DIA:</label>
+                <div id="containerDatasConfig" style="margin-bottom: 20px;"></div>
+
+                <div id="areaEdicaoHorarios" style="background:#1a1a1a; padding:15px; border-radius:12px; border:1px solid #333; min-height:200px;">
+                    <div class="spinner" style="margin:50px auto;"></div>
+                </div>
+            </div>
+
+            <div style="padding: 20px; border-top: 1px solid #222; background:#121212;">
+                <button onclick="salvarExcecaoDia()" 
+                    style="width:100%; padding:16px; background: linear-gradient(90deg, #2ecc71, #27ae60); border:none; border-radius:10px; font-weight:bold; font-size:16px; color:white; cursor:pointer; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);">
+                    💾 Salvar Alterações
+                </button>
+            </div>
+        </div>
+        <style>
+            @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+            .grid-expediente {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr); 
+                gap: 8px;
+            }
+            @media (min-width: 600px) {
+                .grid-expediente { grid-template-columns: repeat(6, 1fr); }
+            }
+            .chk-btn input { display: none; }
+            .chk-btn div {
+                padding: 10px 5px; background: #333; border-radius: 8px; 
+                text-align: center; font-size: 13px; color: #ccc; cursor: pointer; transition: 0.2s; border: 1px solid transparent;
+            }
+            .chk-btn input:checked + div {
+                background: var(--cor-destaque, #f1c40f); color: black; font-weight: bold; border-color: white;
+            }
+        </style>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Inicializa lógica
+    await carregarOpcoesEquipeSelect();
+    renderizarDatasEdicao('containerDatasConfig');
+    carregarDadosDoDiaParaEdicao();
+}
+
+// =============================================================================
+// CARREGA EQUIPE (SUPORTA ARRAY E MAP)
+// =============================================================================
+async function carregarOpcoesEquipeSelect() {
+    const select = document.getElementById('selectMembroEquipe');
+    const divWrapper = document.getElementById('wrapperSelectEquipe');
+    
+    if (divWrapper) divWrapper.style.display = 'none';
+    if (!select) return;
+
+    try {
+        const uidLogado = auth.currentUser.uid;
+        
+        // 1. Busca dados do Dono
+        const docUser = await db.collection('usuarios').doc(uidLogado).get();
+        const dadosDono = docUser.data();
+        
+        // Verifica se é dono
+        const idBarbearia = (dadosDono.pertenceABarbearia && dadosDono.pertenceABarbearia.uid) 
+                            ? dadosDono.pertenceABarbearia.uid 
+                            : uidLogado;
+
+        const souDono = (uidLogado === idBarbearia) || (dadosDono.tipo === 'dono');
+        if (!souDono) return; // Se não for dono, tchau.
+
+        // 2. LISTA MESTRA DE UIDs (Para não duplicar)
+        let membrosMap = new Map();
+        
+        // Adiciona o Dono (Eu)
+        membrosMap.set(uidLogado, { id: uidLogado, nome: "Eu mesmo (Dono)" });
+
+        // --- ESTRATÉGIA A: Busca pelo campo 'equipe' do documento do dono (Array ou Map) ---
+        if (dadosDono.equipe) {
+            const rawEquipe = dadosDono.equipe;
+
+            if (Array.isArray(rawEquipe)) {
+                // É UM ARRAY (Pode ser array de strings ['uid'] ou objetos [{uid:...}])
+                rawEquipe.forEach(item => {
+                    const idMembro = (typeof item === 'object' && item.uid) ? item.uid : item;
+                    if (typeof idMembro === 'string') membrosMap.set(idMembro, { id: idMembro, nome: "Carregando..." });
+                });
+            } 
+            else if (typeof rawEquipe === 'object') {
+                // É UM MAP (Objeto) { 'uid': true } ou { 'uid': { dados... } }
+                Object.keys(rawEquipe).forEach(key => {
+                    membrosMap.set(key, { id: key, nome: "Carregando..." });
+                });
+            }
+        }
+
+        // --- ESTRATÉGIA B: Busca no banco quem tem o ID da barbearia ---
+        // (Isso garante que ache até quem não estava na lista 'equipe' manual)
+        const snap = await db.collection('usuarios')
+            .where('pertenceABarbearia.uid', '==', idBarbearia)
+            .get();
+
+        snap.forEach(doc => {
+            const d = doc.data();
+            // Atualiza ou insere com o nome correto vindo do banco
+            membrosMap.set(doc.id, { id: doc.id, nome: d.nome || 'Sem Nome' });
+        });
+
+        // --- ESTRATÉGIA C: Resolve nomes de quem veio só pelo campo 'equipe' e não veio na query ---
+        // Se pegamos UIDs da lista 'equipe' que não vieram na query, precisamos buscar o nome deles
+        const promessas = [];
+        membrosMap.forEach((val, key) => {
+            if (val.nome === "Carregando...") {
+                promessas.push(
+                    db.collection('usuarios').doc(key).get().then(d => {
+                        if (d.exists) membrosMap.set(key, { id: key, nome: d.data().nome });
+                    })
+                );
+            }
+        });
+        await Promise.all(promessas);
+
+        // 3. RENDERIZA O SELECT
+        if (membrosMap.size > 0) {
+            divWrapper.style.display = 'block';
+            let htmlOptions = '';
+            
+            // Garante que o Dono seja o primeiro
+            if(membrosMap.has(uidLogado)) {
+                htmlOptions += `<option value="${uidLogado}">👤 Eu mesmo</option>`;
+            }
+
+            membrosMap.forEach((membro, id) => {
+                if (id !== uidLogado) {
+                    htmlOptions += `<option value="${id}">✂️ ${membro.nome}</option>`;
+                }
+            });
+            select.innerHTML = htmlOptions;
+        }
+
+    } catch (e) {
+        console.error("Erro ao carregar equipe:", e);
+    }
+}
+
+// --- CARREGA O DIA SELECIONADO NA TELA ---
+async function carregarDadosDoDiaParaEdicao() {
+    const container = document.getElementById('areaEdicaoHorarios');
+    container.innerHTML = '<div class="spinner" style="margin:30px auto;"></div>';
+    
+    const uid = window.uidEditandoExpediente;
+    const dataIso = window.dataEditandoExpediente;
+    
+    try {
+        // 1. Busca perfil (para saber horario padrao)
+        const docUser = await db.collection('usuarios').doc(uid).get();
+        const dadosUser = docUser.data();
+        let horariosAtivos = [];
+        
+        // Pega padrão
+        if (dadosUser.agenda) {
+            horariosAtivos = Object.keys(dadosUser.agenda).filter(h => dadosUser.agenda[h] === true);
+        }
+
+        // 2. Busca Exceção do dia
+        const docExcecao = await db.collection('usuarios').doc(uid)
+                                   .collection('agenda_diaria').doc(dataIso).get();
+        
+        let isPersonalizado = false;
+        let diaFechado = false;
+
+        if (docExcecao.exists) {
+            isPersonalizado = true;
+            const d = docExcecao.data();
+            if (d.fechado) diaFechado = true;
+            if (d.horariosDisponiveis) horariosAtivos = d.horariosDisponiveis;
+        }
+
+        // 3. Monta HTML Bonito
+        // Função para formatar data (Ex: 04/02)
+        const partes = dataIso.split('-');
+        const dataFormatada = `${partes[2]}/${partes[1]}`;
+
+        let html = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <div>
+                    <span style="color:white; font-size:16px; font-weight:bold;">${dataFormatada}</span>
+                    <br>
+                    <span style="font-size:11px; color:${isPersonalizado ? '#f39c12' : '#777'};">
+                        ${isPersonalizado ? '⚡ Horário Modificado' : '• Seguindo Padrão'}
+                    </span>
+                </div>
+                
+                <label style="cursor:pointer; display:flex; align-items:center; gap:8px; background:#301111; padding:8px 12px; border:1px solid #e74c3c; border-radius:8px;">
+                    <input type="checkbox" id="checkDiaFechado" onchange="toggleDiaFechado()" ${diaFechado ? 'checked' : ''} style="accent-color:#e74c3c;">
+                    <span style="color:#e74c3c; font-size:12px; font-weight:bold;">FECHAR DIA</span>
+                </label>
+            </div>
+
+            <div id="wrapperGridHorarios" style="transition:0.3s; opacity: ${diaFechado ? '0.2' : '1'}; pointer-events: ${diaFechado ? 'none' : 'auto'};">
+                <div class="grid-expediente">
+        `;
+
+        // Gera lista de 08:00 as 22:00
+        const todosHorarios = [];
+        for(let i=7; i<=22; i++) {
+            todosHorarios.push(`${i < 10 ? '0'+i : i}:00`);
+            todosHorarios.push(`${i < 10 ? '0'+i : i}:30`);
+        }
+        
+        todosHorarios.forEach(hora => {
+            const isChecked = horariosAtivos.includes(hora) ? 'checked' : '';
+            html += `
+                <label class="chk-btn">
+                    <input type="checkbox" value="${hora}" ${isChecked} class="chk-horario-edicao">
+                    <div>${hora}</div>
+                </label>
+            `;
+        });
+
+        html += `   </div>
+                </div>`; // fecha wrapper e grid
+
+        // Botão Restaurar
+        if (isPersonalizado) {
+            html += `
+                <div style="margin-top:20px; text-align:center;">
+                    <button onclick="restaurarPadraoDia()" style="background:transparent; border:1px dashed #555; color:#888; padding:8px 15px; border-radius:6px; font-size:12px; cursor:pointer;">
+                        ↺ Apagar personalização deste dia
+                    </button>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+
+    } catch (e) {
+        container.innerHTML = '<p style="color:red; text-align:center">Erro ao carregar dados.</p>';
+        console.error(e);
+    }
+}
+
+// =============================================================================
+// SALVAR NO BANCO (CRIA AUTOMATICAMENTE A COLEÇÃO SE NÃO EXISTIR)
+// =============================================================================
+async function salvarExcecaoDia() {
+    console.log("🚀 TENTANDO SALVAR EXCEÇÃO...");
+
+    // 1. EFEITO VISUAL NO BOTÃO
+    const btn = document.querySelector('button[onclick="salvarExcecaoDia()"]');
+    const textoOriginal = btn ? btn.innerHTML : "Salvar";
+    if(btn) { 
+        btn.innerHTML = "Criando registro..."; 
+        btn.disabled = true; 
+    }
+
+    try {
+        // 2. RECUPERA AS VARIÁVEIS GLOBAIS
+        let uid = window.uidEditandoExpediente;
+        let dataIso = window.dataEditandoExpediente;
+
+        // --- SEGURANÇA EXTRA: CORRIGE SE ESTIVEREM VAZIOS ---
+        if (!uid) {
+            console.warn("⚠️ UID estava vazio, usando UID do usuário logado.");
+            uid = auth.currentUser.uid;
+        }
+        if (!dataIso) {
+            console.warn("⚠️ Data estava vazia, usando data de hoje.");
+            const hoje = new Date();
+            const ano = hoje.getFullYear();
+            const mes = (hoje.getMonth() + 1).toString().padStart(2, '0');
+            const dia = hoje.getDate().toString().padStart(2, '0');
+            dataIso = `${ano}-${mes}-${dia}`;
+        }
+
+        const fechado = document.getElementById('checkDiaFechado').checked;
+        
+        // 3. CAPTURA OS CHECKBOXES MARCADOS
+        const checkboxes = document.querySelectorAll('.chk-horario-edicao:checked');
+        const horariosSelecionados = Array.from(checkboxes).map(c => c.value);
+
+        console.log(`📂 Caminho: usuarios/${uid}/agenda_diaria/${dataIso}`);
+        console.log("📝 Dados sendo gravados:", { horariosDisponiveis: horariosSelecionados, fechado });
+
+        // 4. O COMANDO MÁGICO (.set cria se não existir)
+        await db.collection('usuarios').doc(uid)
+                .collection('agenda_diaria').doc(dataIso).set({
+            horariosDisponiveis: horariosSelecionados,
+            fechado: fechado,
+            criadoEm: firebase.firestore.FieldValue.serverTimestamp(), // Marca quando foi criado
+            atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        console.log("✅ SUCESSO! Documento criado/atualizado no banco.");
+        exibirPopup("Sucesso", "Horário personalizado salvo!");
+        
+        // 5. ATUALIZA A TELA ATRÁS DO MODAL
+        if(typeof carregarMinhaAgendaInterativa === 'function') {
+            carregarMinhaAgendaInterativa();
+        }
+        
+        // 6. ATUALIZA O PRÓPRIO MODAL (Para mostrar que salvou)
+        carregarDadosDoDiaParaEdicao();
+
+    } catch(e) {
+        console.error("❌ ERRO GRAVE AO SALVAR:", e);
+        alert("Erro ao criar registro: " + e.message);
+    } finally {
+        if(btn) { 
+            btn.innerHTML = textoOriginal; 
+            btn.disabled = false; 
+        }
+    }
+}
+
+// --- RESTAURAR PADRÃO ---
+async function restaurarPadraoDia() {
+    if(!confirm("Voltar ao horário padrão para este dia?")) return;
+    
+    try {
+        await db.collection('usuarios').doc(window.uidEditandoExpediente)
+                .collection('agenda_diaria').doc(window.dataEditandoExpediente).delete();
+        
+        carregarDadosDoDiaParaEdicao();
+        if(typeof carregarMinhaAgendaInterativa === 'function') carregarMinhaAgendaInterativa();
+        
+    } catch(e) { console.error(e); }
+}
+
+// --- INTERATIVIDADE DO MODAL ---
+function mudarMembroEdicao(novoUid) {
+    window.uidEditandoExpediente = novoUid;
+    carregarDadosDoDiaParaEdicao();
+}
+
+function toggleDiaFechado() {
+    const fechado = document.getElementById('checkDiaFechado').checked;
+    const wrapper = document.getElementById('wrapperGridHorarios');
+    if(fechado) {
+        wrapper.style.opacity = '0.2';
+        wrapper.style.pointerEvents = 'none';
+    } else {
+        wrapper.style.opacity = '1';
+        wrapper.style.pointerEvents = 'auto';
+    }
+}
+
+function renderizarDatasEdicao(containerId) {
+    const container = document.getElementById(containerId);
+    if(!container) return;
+    
+    container.style.cssText = "display:flex; gap:10px; overflow-x:auto; padding-bottom:5px; white-space: nowrap; -webkit-overflow-scrolling: touch;";
+    container.innerHTML = '';
+    
+    const hoje = new Date();
+    const diasSemana = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
+    
+    for(let i=0; i<30; i++) {
+        const d = new Date();
+        d.setDate(hoje.getDate() + i);
+        
+        // GERA DATA LOCAL CORRETA
+        const ano = d.getFullYear();
+        const mes = (d.getMonth()+1).toString().padStart(2,'0');
+        const dia = d.getDate().toString().padStart(2,'0');
+        const dataIso = `${ano}-${mes}-${dia}`;
+        
+        const isSelected = (dataIso === window.dataEditandoExpediente);
+        
+        const btn = document.createElement('div');
+        btn.style.cssText = `
+            min-width: 55px; height: 60px; 
+            background: ${isSelected ? 'var(--cor-destaque)' : '#222'}; 
+            color: ${isSelected ? 'black' : '#888'}; 
+            border: 1px solid ${isSelected ? 'var(--cor-destaque)' : '#333'};
+            border-radius: 10px; cursor: pointer; flex-shrink: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        `;
+        
+        btn.innerHTML = `
+            <span style="font-size:10px; font-weight:bold; text-transform:uppercase;">${i===0 ? 'HOJE' : diasSemana[d.getDay()]}</span>
+            <span style="font-size:18px; font-weight:900;">${dia}</span>
+        `;
+        
+        btn.onclick = function() {
+            window.dataEditandoExpediente = dataIso;
+            renderizarDatasEdicao(containerId); // Atualiza cor
+            carregarDadosDoDiaParaEdicao();     // Carrega dados
+        };
+        
+        container.appendChild(btn);
+    }
+}
+
+// Cria o modal se não existir no HTML
+function criarModalConfigHorarios() {
+    const div = document.createElement('div');
+    div.id = 'modalConfigHorarios';
+    div.className = 'modal'; // Sua classe de modal padrão
+    div.innerHTML = `
+        <div class="modal-content">
+            <span class="close-btn" onclick="fecharModal('modalConfigHorarios')">&times;</span>
+            <div class="modal-content-body"></div>
+        </div>
+    `;
+    document.body.appendChild(div);
+    return div;
 }
 
 async function toggleVagaImediataEquipe(uidTarget, estadoAtual) {
@@ -19244,21 +19859,35 @@ async function toggleVagaImediataEquipe(uidTarget, estadoAtual) {
     }
 }
 
-async function prepararAgendamentoManual(uidProf, horario, dataIsoRecebida) {
-    console.log("--- INICIANDO AGENDAMENTO MANUAL ---");
-    console.log("Horário clicado:", horario);
-    console.log("Data vinda do botão:", dataIsoRecebida);
+// =============================================================================
+// 1. VARIÁVEL GLOBAL (Coloque isso no topo do arquivo ou fora das funções)
+// =============================================================================
+window.tempAgendamentoManual = {
+    uid: null,
+    horario: null,
+    dataIso: null
+};
 
-    // 1. LÓGICA DE SEGURANÇA DA DATA
-    // Se a data veio undefined ou vazia, pega a data que está visualmente selecionada no painel
+// =============================================================================
+// 2. FUNÇÃO PREPARAR (CORRIGIDA PARA ACEITAR A DATA)
+// =============================================================================
+async function prepararAgendamentoManual(uidProf, horario, dataIsoRecebida) {
+    console.log("--- NOVO AGENDAMENTO MANUAL ---");
+    console.log("Horario:", horario);
+    console.log("Data recebida:", dataIsoRecebida);
+
+    // 1. LÓGICA DE DATA (Se vier vazia, usa Hoje como segurança)
     if (!dataIsoRecebida || dataIsoRecebida === 'undefined') {
-        const dataRef = (typeof dataSelecionadaEquipe !== 'undefined') ? dataSelecionadaEquipe : new Date();
-        dataIsoRecebida = formatarDataIso(dataRef);
-        console.log("⚠️ Data corrigida pelo fallback:", dataIsoRecebida);
+        const hoje = new Date();
+        const ano = hoje.getFullYear();
+        const mes = (hoje.getMonth() + 1).toString().padStart(2, '0');
+        const dia = hoje.getDate().toString().padStart(2, '0');
+        dataIsoRecebida = `${ano}-${mes}-${dia}`;
     }
 
-    // 2. GRAVA NA VARIÁVEL GLOBAL (CRUCIAL!)
-    tempAgendamentoManual = {
+    // 2. GRAVA NA GLOBAL (O PULO DO GATO 🐱)
+    // É daqui que o botão "Confirmar" vai ler a data certa!
+    window.tempAgendamentoManual = {
         uid: uidProf,
         horario: horario,
         dataIso: dataIsoRecebida
@@ -19267,39 +19896,40 @@ async function prepararAgendamentoManual(uidProf, horario, dataIsoRecebida) {
     // 3. ABRE O MODAL
     abrirModal('modalCriarAgendamentoManual');
     
-    // 4. ATUALIZA TÍTULO DO MODAL (Para você conferir visualmente)
+    // 4. ATUALIZA TÍTULO DO MODAL (Feedback Visual)
     const tituloModal = document.querySelector('#modalCriarAgendamentoManual h3');
     if (tituloModal) {
-        const partes = dataIsoRecebida.split('-'); // 2026-01-25
+        const partes = dataIsoRecebida.split('-'); // 2026-02-04
         const dataBr = `${partes[2]}/${partes[1]}`;
         tituloModal.innerHTML = `Agendar: <b>${horario}</b> - Dia <b>${dataBr}</b>`;
     }
 
-    // 5. PREENCHE OS CAMPOS (Seu código padrão)
+    // 5. PREENCHE OS CAMPOS
     const selectProf = document.getElementById('manualProfissionalUid');
     const inputCliente = document.getElementById('manualClienteNome');
     if(inputCliente) inputCliente.value = '';
-    const selectServico = document.getElementById('manualServico');
-    if(selectServico) selectServico.innerHTML = '<option>Carregando serviços...</option>';
-    
-    // Atualiza Select de Profissional
+
+    // Configura Select de Profissional
     if(selectProf) {
         selectProf.innerHTML = '<option selected>Carregando...</option>';
         try {
-            let nomeProf = "Profissional";
+            // Verifica se é o próprio usuário ou outro membro
             if (uidProf === auth.currentUser.uid) {
-                nomeProf = (perfil && perfil.nome) ? perfil.nome : "Eu";
+                // Pega nome do perfil local se possível
+                const nomeDisplay = (typeof perfil !== 'undefined' && perfil.nome) ? perfil.nome : "Mim (Eu)";
+                selectProf.innerHTML = `<option value="${uidProf}" selected>${nomeDisplay}</option>`;
             } else {
+                // Busca nome no banco
                 const doc = await db.collection('usuarios').doc(uidProf).get();
-                if(doc.exists) nomeProf = doc.data().nome;
+                const nomeMembro = doc.exists ? doc.data().nome : "Profissional";
+                selectProf.innerHTML = `<option value="${uidProf}" selected>${nomeMembro}</option>`;
             }
-            selectProf.innerHTML = `<option value="${uidProf}" selected>${nomeProf}</option>`;
         } catch (e) {
-            console.error("Erro nome:", e);
+            selectProf.innerHTML = `<option value="${uidProf}" selected>Profissional</option>`;
         }
     }
     
-    // Carrega serviços
+    // 6. CARREGA SERVIÇOS
     if (typeof atualizarOpcoesAgendamentoManual === 'function') {
         await atualizarOpcoesAgendamentoManual(uidProf);
     }
@@ -19349,10 +19979,9 @@ async function confirmarCriacaoAgendamentoManual() {
         btnSalvar.innerText = "Salvando...";
         btnSalvar.disabled = true;
         
-        // 🔥 TIMER DE SEGURANÇA (SUA IDEIA):
-        // Se por qualquer motivo travar, em 4 segundos ele destrava sozinho.
+        // 🔥 TIMER DE SEGURANÇA:
         setTimeout(() => {
-            window.resetarBotaoManual();
+            if(window.resetarBotaoManual) window.resetarBotaoManual();
         }, 4000);
     }
 
@@ -19360,6 +19989,17 @@ async function confirmarCriacaoAgendamentoManual() {
     let comissaoCalculada = 0;
     let observacaoPlano = "";
     let donoUid = auth.currentUser.uid; 
+
+    // --- 🚨 A CORREÇÃO ESTÁ AQUI 🚨 ---
+    // Tenta pegar a data da variável global (que salvamos no clique).
+    // Se não tiver (fallback), usa a data de hoje.
+    let dataParaSalvar;
+    if (window.tempAgendamentoManual && window.tempAgendamentoManual.dataIso) {
+        dataParaSalvar = window.tempAgendamentoManual.dataIso;
+    } else {
+        dataParaSalvar = new Date().toISOString().split('T')[0];
+    }
+    // -----------------------------------
 
     try {
         const docProf = await db.collection('usuarios').doc(uidProf).get();
@@ -19405,7 +20045,7 @@ async function confirmarCriacaoAgendamentoManual() {
             comissaoCalculada: comissaoCalculada,
             percentualComissao: percentualComissao,
             horario: horario,
-            data: new Date().toISOString().split('T')[0],
+            data: dataParaSalvar, // <--- USANDO A DATA CORRIGIDA AQUI
             status: 'confirmado',
             origem: 'balcao_painel',
             observacao: observacaoPlano,
@@ -19417,18 +20057,21 @@ async function confirmarCriacaoAgendamentoManual() {
         exibirPopup("Sucesso", "Agendamento criado!");
         
         // Destrava imediatamente após sucesso
-        window.resetarBotaoManual();
+        if(window.resetarBotaoManual) window.resetarBotaoManual();
 
-        if (typeof carregarVisaoGeralEquipe === "function") {
-            setTimeout(() => carregarVisaoGeralEquipe(), 500);
+        // Recarrega a tela correta dependendo de onde estiver
+        if (typeof carregarMinhaAgendaInterativa === "function" && document.getElementById('containerMinhaAgendaGrid')) {
+             carregarMinhaAgendaInterativa(); // Atualiza a Minha Agenda se estiver nela
+        } else if (typeof carregarVisaoGeralEquipe === "function") {
+             carregarVisaoGeralEquipe();
         } else {
-            window.location.reload();
+             window.location.reload();
         }
 
     } catch (e) {
         console.error(e);
         // Destrava imediatamente após erro
-        window.resetarBotaoManual();
+        if(window.resetarBotaoManual) window.resetarBotaoManual();
         alert("Erro ao salvar: " + e.message);
     }
 }
@@ -19485,56 +20128,6 @@ function exibirAnimacaoRecompensaFinal(totalPontos) {
     setTimeout(() => {
         if (overlay) overlay.classList.remove('show');
     }, 3500);
-}
-
-// Abre o modal já preenchido
-async function prepararAgendamentoManual(uidProf, horario) {
-    // 1. Abre o modal primeiro para dar feedback visual
-    abrirModal('modalCriarAgendamentoManual');
-    
-    // Referências aos campos
-    const selectProf = document.getElementById('manualProfissionalUid');
-    const inputHorarioVis = document.getElementById('manualHorarioVisual');
-    const inputHorarioHid = document.getElementById('manualHorarioHidden');
-    const displayHorario = document.getElementById('displayHorarioSelecionado');
-    
-    // Limpa campos anteriores
-    document.getElementById('manualClienteNome').value = '';
-    document.getElementById('manualServico').innerHTML = '<option>Carregando serviços...</option>';
-    
-    // --- LÓGICA DE SELEÇÃO DO PROFISSIONAL ---
-    
-    // Verifica se cliquei em MIM MESMO ou em OUTRO
-    if (uidProf === auth.currentUser.uid) {
-        // Sou eu
-        selectProf.innerHTML = `<option value="${uidProf}" selected>${perfil.nome} (Eu)</option>`;
-    } else {
-        // É um membro da equipe: Busca o nome dele no banco para exibir corretamente
-        try {
-            const doc = await db.collection('usuarios').doc(uidProf).get();
-            if (doc.exists) {
-                const nomeMembro = doc.data().nome;
-                selectProf.innerHTML = `<option value="${uidProf}" selected>${nomeMembro}</option>`;
-            } else {
-                selectProf.innerHTML = `<option value="${uidProf}" selected>Profissional</option>`;
-            }
-        } catch (e) {
-            console.error("Erro ao buscar nome:", e);
-            selectProf.innerHTML = `<option value="${uidProf}" selected>Membro da Equipe</option>`;
-        }
-    }
-    
-    // Trava o select para não mudar sem querer (já que você clicou na grade DELE)
-    // Se quiser permitir mudar, remova a linha abaixo, mas pode causar confusão visual
-    selectProf.disabled = false; 
-    
-    // 2. Define o Horário visual e oculto
-    inputHorarioVis.value = horario; 
-    inputHorarioHid.value = horario;
-    if(displayHorario) displayHorario.textContent = `🕒 ${horario}`;
-    
-    // 3. Carrega os serviços daquele profissional específico
-    await atualizarOpcoesAgendamentoManual(uidProf);
 }
 
 async function atualizarServicosManual(uid) {
@@ -23902,40 +24495,52 @@ async function abrirModalFinanceiroProprietario() {
 }
 
 function renderizarSeletorDatasEquipe(uidProfissional) {
-    // 1. Procura o container específico da equipe
     let containerDatas = document.getElementById('datePickerContainerEquipe');
     
-    // Se não existir, tenta criar dinamicamente no topo da lista de horários
+    // Cria container se não existir (Lógica mantida)
     if (!containerDatas) {
-        // Tenta achar o container onde os horários (bolinhas vermelhas/verdes) ficam
-        // Geralmente é uma div com classe 'grid-horarios-mini' ou o próprio container passado
         const gridHorarios = document.querySelector('.grid-horarios-mini');
-        
         if (gridHorarios && gridHorarios.parentNode) {
             containerDatas = document.createElement('div');
             containerDatas.id = 'datePickerContainerEquipe';
             containerDatas.className = 'scrollable-list';
             containerDatas.style.cssText = "display:flex; gap:8px; overflow-x:auto; padding:10px 5px; margin-bottom:15px; border-bottom:1px solid #333; white-space: nowrap;";
-            
-            // Insere ANTES do grid de horários
             gridHorarios.parentNode.insertBefore(containerDatas, gridHorarios);
         } else {
-            // Se não achar o grid, tenta inserir no container principal passado na função monitorar
-            // (Isso é um fallback de segurança)
             return; 
         }
     }
     
-    // Limpa e redesenha
     containerDatas.innerHTML = '';
+    
     const hoje = new Date();
+    const diaHojeNumero = hoje.getDate(); // Guarda o número de hoje (ex: 2)
+    const diasSemanaNomeCurto = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
 
-    for (let i = 0; i < 30; i++) {
+    // Loop estendido (coloquei 45 só pra garantir que cubra o mês, mas o break vai cortar antes)
+    for (let i = 0; i < 45; i++) {
         const dataDia = new Date();
         dataDia.setDate(hoje.getDate() + i);
+
+        // --- 🛑 A LÓGICA QUE VOCÊ PEDIU ---
+        // Se não for o primeiro dia (i > 0) E o número do dia for igual ao de hoje...
+        // CHEGAMOS NO MÊS QUE VEM NO MESMO DIA -> PARA TUDO!
+        if (i > 0 && dataDia.getDate() === diaHojeNumero) {
+            break; 
+        }
+        // ---------------------------------
         
         // Compara com a data DA EQUIPE
-        const isSelected = isMesmoDia(dataDia, dataSelecionadaEquipe);
+        // (Use isMesmoDia se tiver, ou comparação simples de string pra garantir)
+        let isSelected = false;
+        if (window.dataSelecionadaEquipe) {
+             const d1 = dataDia.getDate();
+             const m1 = dataDia.getMonth();
+             const d2 = new Date(window.dataSelecionadaEquipe).getDate();
+             const m2 = new Date(window.dataSelecionadaEquipe).getMonth();
+             isSelected = (d1 === d2 && m1 === m2);
+        }
+
         let diaSemana = diasSemanaNomeCurto[dataDia.getDay()];
         if (i === 0) diaSemana = "HOJE";
         if (i === 1) diaSemana = "AMANHÃ";
@@ -23959,18 +24564,16 @@ function renderizarSeletorDatasEquipe(uidProfissional) {
         `;
 
         btn.onclick = () => {
-            // Atualiza a data da equipe
-            dataSelecionadaEquipe = dataDia;
+            window.dataSelecionadaEquipe = dataDia;
             
-            // Redesenha visualmente
+            // Redesenha para atualizar visual
             renderizarSeletorDatasEquipe(uidProfissional); 
             
-            // Recarrega os horários (Força o refresh da função principal)
-            // Aqui usamos um "truque": chamamos monitorarHorariosRealTime novamente
-            // mas passando 'equipe' para ela saber que deve usar a data da equipe
-            // Nota: Você precisa garantir que sua função monitorarHorariosRealTime chame essa função aqui dentro
+            // Recarrega horários
             const containerId = document.querySelector('.grid-horarios-mini')?.parentNode?.id || 'container_temporario';
-            monitorarHorariosRealTime(uidProfissional, containerId, 'equipe');
+            if(typeof monitorarHorariosRealTime === 'function') {
+                monitorarHorariosRealTime(uidProfissional, containerId, 'equipe');
+            }
         };
 
         containerDatas.appendChild(btn);
@@ -25306,11 +25909,18 @@ async function salvarAgendamentoManual() {
     const selectServico = document.getElementById('manualServico');
     const nomeServico = selectServico.value;
     const valorServico = parseFloat(selectServico.options[selectServico.selectedIndex].dataset.valor || 0);
+    
+    // --- 🔍 CORREÇÃO: PEGANDO A DATA CORRETA ---
+    // Adicionei a busca pelo campo de Data. 
+    // OBS: Como você usa 'manualHorarioHidden', assumi que o ID da data é 'manualDataHidden'.
+    // Se no seu HTML estiver apenas 'manualData', mude o ID abaixo.
+    const dataAgendamento = document.getElementById('manualDataHidden').value; 
     const horario = document.getElementById('manualHorarioHidden').value;
 
     // --- VALIDAÇÃO ---
-    if (!uidProf || !nomeCliente || !selectServico.value || !horario) {
-        return exibirPopup("Dados Incompletos", "Por favor, preencha profissional, cliente, serviço e horário.");
+    // Adicionei !dataAgendamento na verificação
+    if (!uidProf || !nomeCliente || !selectServico.value || !horario || !dataAgendamento) {
+        return exibirPopup("Dados Incompletos", "Por favor, preencha profissional, cliente, serviço, data e horário.");
     }
     if (!telefoneCliente || telefoneCliente.length < 8) {
         return exibirPopup("Telefone Obrigatório", "Por favor, informe o telefone do cliente de balcão para contato.");
@@ -25325,7 +25935,6 @@ async function salvarAgendamentoManual() {
             if (docProf.exists) {
                 const dadosProf = docProf.data();
                 comissaoProf = dadosProf.taxaComissao || dadosProf.comissao || 50; 
-                // Nota: Se for o proprietário agendando para si mesmo, a comissão é irrelevante (100%), mas mantemos a lógica.
             }
         }
         
@@ -25333,7 +25942,6 @@ async function salvarAgendamentoManual() {
         const valorComissao = (valorServico * comissaoProf) / 100;
 
         // --- MÁSCARA DE ID PERFEITA ---
-        // Criamos um ID que parece um UID real, mas com prefixo manual para controle
         const clienteUidMascara = `manual_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
         await db.collection('agendamentos').add({
@@ -25342,22 +25950,26 @@ async function salvarAgendamentoManual() {
             
             // Dados do Cliente "Mascarado"
             clienteUid: clienteUidMascara, 
-            clienteNome: nomeCliente, // Removemos o "(Manual)" visual para ficar mais bonito, controlamos pelo UID
+            clienteNome: nomeCliente,
             clienteTelefone: telefoneCliente,
             
             servico: nomeServico,
             valor: valorServico,
             valorOriginal: valorServico,
+            
+            // --- 🔍 AQUI ESTÁ A CORREÇÃO NO BANCO ---
+            data: dataAgendamento, // Agora salva a data selecionada (ex: "2026-02-04")
             horario: horario,
-            status: 'confirmado', // Balcão já entra confirmado
+            
+            status: 'confirmado',
             ts: firebase.firestore.FieldValue.serverTimestamp(),
-            origem: 'balcao_painel', // Identificador interno
+            origem: 'balcao_painel',
             avaliado: false,
             
-            // Dados Financeiros para o Futuro
+            // Dados Financeiros
             comissaoCalculada: valorComissao,
             percentualComissao: comissaoProf,
-            donoUid: auth.currentUser.uid, // Quem criou (O Dono)
+            donoUid: auth.currentUser.uid,
             
             lembreteConcluirEnviado: false
         });
@@ -27025,17 +27637,31 @@ function isMesmoDia(d1, d2) {
     return d1.getDate() === d2.getDate() && d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear();
 }
 
-function timeToMin(t) { if(!t) return 0; const [h,m]=t.split(':').map(Number); return h*60+m; }
-function minToTime(m) { const h=Math.floor(m/60); const mm=m%60; return `${(''+h).padStart(2,'0')}:${(''+mm).padStart(2,'0')}`; }
-
+// =============================================================================
+// 2. FUNÇÃO MATEMÁTICA (MANTIDA ORIGINAL PARA NÃO QUEBRAR O RESTO DO APP)
+// =============================================================================
 function gerarSlotsHorarios(ini, fim, int, p1, p2) {
-    let s=[]; let cur=timeToMin(ini); let end=timeToMin(fim); let pi=timeToMin(p1); let pf=timeToMin(p2);
-    while(cur<end){
-        if(pi && pf && cur>=pi && cur<pf) { cur+=int; continue; }
-        s.push(minToTime(cur)); cur+=int;
+    let s = []; 
+    let cur = timeToMin(ini); 
+    let end = timeToMin(fim); 
+    let pi = timeToMin(p1); 
+    let pf = timeToMin(p2);
+    
+    while(cur < end){
+        // Lógica que pula o horário se estiver dentro da pausa (p1 até p2)
+        if(pi && pf && cur >= pi && cur < pf) { 
+            cur += int; 
+            continue; 
+        }
+        s.push(minToTime(cur)); 
+        cur += int;
     }
     return s;
 }
+
+// Auxiliares (Mantenha elas também)
+function timeToMin(t) { if(!t) return 0; const [h,m]=t.split(':').map(Number); return h*60+m; }
+function minToTime(m) { const h=Math.floor(m/60); const mm=m%60; return `${(''+h).padStart(2,'0')}:${(''+mm).padStart(2,'0')}`; }
 
 function monitorarHorariosRealTime(uidProfissional, containerId, modoVisualizacao) {
     const container = document.getElementById(containerId);
@@ -27065,10 +27691,10 @@ function monitorarHorariosRealTime(uidProfissional, containerId, modoVisualizaca
     `;
 
     // ============================================================
-    // 🔍 CORREÇÃO: BUSCA ESTRITAMENTE PELO UID DO PROFISSIONAL
+    // 🔍 BUSCA DE AGENDAMENTOS
     // ============================================================
     const queryAgendamentos = db.collection('agendamentos')
-        .where('barbeiroUid', '==', uidProfissional) // <--- VOLTOU AO ORIGINAL (CORRETO)
+        .where('barbeiroUid', '==', uidProfissional)
         .where('data', '==', dataBusca)
         .where('status', 'in', ['pendente', 'confirmado', 'imediato', 'conclusão pendente']);
 
@@ -27078,19 +27704,17 @@ function monitorarHorariosRealTime(uidProfissional, containerId, modoVisualizaca
         if (!userSnap.exists) { container.innerHTML = "Erro: Profissional não achado."; return; }
         const u = userSnap.data();
 
-        // Configuração do dia
+        // Configuração do dia (Padrão)
         const diaKey = diasSemanaMap[dataAtiva.getDay()];
         const configDia = u.configuracaoHorario ? u.configuracaoHorario[diaKey] : null;
 
-        if (configDia && configDia.ativo === false) {
-             container.innerHTML = `<div style="text-align:center; padding:20px; color:#e74c3c; border:1px dashed #e74c3c; border-radius:10px; margin-top:10px;"><h3>😴 Dia de Folga</h3></div>`;
-             return;
-        }
+        // --- AQUI VAI MUDAR: SE FOR PERSONALIZADO, IGNORA O configDia.ativo ---
+        // (Vamos verificar isso dentro do próximo snapshot)
 
-        const unsubAgendamentos = queryAgendamentos.onSnapshot(agendSnap => {
+        // Tornamos o callback ASYNC para poder buscar no banco
+        const unsubAgendamentos = queryAgendamentos.onSnapshot(async (agendSnap) => {
             const ocupados = {};
-            console.log(`[AGENDA ${uidProfissional}] Resultados: ${agendSnap.size}`);
-
+            
             agendSnap.forEach(doc => {
                 const ag = doc.data();
                 if (ag.horario) {
@@ -27098,16 +27722,70 @@ function monitorarHorariosRealTime(uidProfissional, containerId, modoVisualizaca
                 }
             });
 
-            // Geração de Slots
+            // =========================================================
+            // 🚀 PRIORIDADE MÁXIMA: AGENDA DIÁRIA (NOVA LÓGICA)
+            // =========================================================
             let listaHorarios = [];
-            if (configDia && configDia.inicio && configDia.fim) {
-                listaHorarios = gerarSlotsHorarios(configDia.inicio, configDia.fim, 30, configDia.almocoInicio, configDia.almocoFim);
-            } else if (u.usaAgendaManual && u.agenda) {
-                listaHorarios = Object.keys(u.agenda).filter(h => u.agenda[h] === true).sort();
-            } else {
-                listaHorarios = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"];
+            let diaBloqueado = false; // Se o dia estiver fechado
+            let usouPersonalizado = false;
+
+            try {
+                // Busca no servidor para garantir dado fresco (anti-cache)
+                const docExcecao = await db.collection('usuarios').doc(uidProfissional)
+                                           .collection('agenda_diaria').doc(dataBusca)
+                                           .get({ source: 'server' });
+
+                if (docExcecao.exists) {
+                    const dadosDia = docExcecao.data();
+                    if (dadosDia.fechado === true) {
+                        diaBloqueado = true;
+                    } else {
+                        listaHorarios = dadosDia.horariosDisponiveis || [];
+                    }
+                    usouPersonalizado = true;
+                }
+            } catch (e) {
+                // Fallback silencioso (Cache)
+                try {
+                    const docCache = await db.collection('usuarios').doc(uidProfissional)
+                                            .collection('agenda_diaria').doc(dataBusca).get();
+                    if(docCache.exists) {
+                        const d = docCache.data();
+                        if(d.fechado) diaBloqueado = true;
+                        else listaHorarios = d.horariosDisponiveis || [];
+                        usouPersonalizado = true;
+                    }
+                } catch(z){}
             }
 
+            // =========================================================
+            // 🛡️ LÓGICA PADRÃO (SÓ SE NÃO USOU PERSONALIZADO)
+            // =========================================================
+            if (!usouPersonalizado) {
+                // Verifica bloqueio padrão do perfil
+                if (configDia && configDia.ativo === false) {
+                    diaBloqueado = true;
+                } else {
+                    // Gera slots padrão
+                    if (configDia && configDia.inicio && configDia.fim) {
+                        listaHorarios = gerarSlotsHorarios(configDia.inicio, configDia.fim, 30, configDia.almocoInicio, configDia.almocoFim);
+                    } else if (u.usaAgendaManual && u.agenda) {
+                        listaHorarios = Object.keys(u.agenda).filter(h => u.agenda[h] === true).sort();
+                    } else {
+                        listaHorarios = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"];
+                    }
+                }
+            }
+
+            // SE ESTIVER BLOQUEADO (Seja pelo perfil ou pelo personalizado)
+            if (diaBloqueado) {
+                 container.innerHTML = `<div style="text-align:center; padding:20px; color:#e74c3c; border:1px dashed #e74c3c; border-radius:10px; margin-top:10px;"><h3>😴 Dia de Folga / Fechado</h3></div>`;
+                 return;
+            }
+
+            // =========================================================
+            // RENDERIZAÇÃO (INTACTA)
+            // =========================================================
             let html = '';
             if (modoVisualizacao === 'equipe') html = '<div class="grid-horarios-mini">';
 
@@ -27115,17 +27793,25 @@ function monitorarHorariosRealTime(uidProfissional, containerId, modoVisualizaca
             const horaAtual = new Date().getHours();
             const minAtual = new Date().getMinutes();
 
+            // SÓ USA ALMOÇO DO PERFIL SE **NÃO** FOR PERSONALIZADO
+            // Se for personalizado, a lista já veio sem o almoço (ou com ele, se o usuário quis).
+            const usarFiltroAlmoco = !usouPersonalizado;
+            const almocoInicio = u.almocoInicio;
+            const almocoFim = u.almocoFim;
+
             listaHorarios.forEach(hora => {
-                // 1. PRIMEIRO VERIFICAMOS SE ESTÁ OCUPADO (Deste barbeiro específico)
+                
+                // BLOQUEIO DE ALMOÇO (Só aplica se estiver usando o padrão)
+                if (usarFiltroAlmoco && almocoInicio && almocoFim) {
+                    if (hora >= almocoInicio && hora < almocoFim) return;
+                }
+
                 const dadosOcupado = ocupados[hora];
 
-                // 2. FILTRO DE TEMPO (Mantendo ocupados visíveis)
+                // FILTRO DE TEMPO
                 if (isHoje) {
                     const [h, m] = hora.split(':').map(Number);
                     const jaPassou = (h < horaAtual || (h === horaAtual && m <= minAtual));
-
-                    // SÓ ESCONDE SE ESTIVER LIVRE E NO PASSADO
-                    // Se estiver ocupado, mostra mesmo que seja passado
                     if (jaPassou && !dadosOcupado) return;
                 }
 
@@ -27154,8 +27840,8 @@ function monitorarHorariosRealTime(uidProfissional, containerId, modoVisualizaca
                         }).replace(/"/g, '&quot;');
                         
                         html += `<div class="slot-time ${classeCor}" style="background:#e74c3c; color:white;" onclick='abrirDetalhesDoAgendamento(${dadosJson})'>
-                                    ${hora} <br><small>${dadosOcupado.clienteNome.split(' ')[0]}</small>
-                                 </div>`;
+                                             ${hora} <br><small>${dadosOcupado.clienteNome.split(' ')[0]}</small>
+                                     </div>`;
                     } else {
                         // Livre
                         html += `<div class="slot-time slot-livre" onclick="prepararAgendamentoManual('${uidProfissional}', '${hora}', '${dataBusca}')">${hora}</div>`;
@@ -27165,6 +27851,11 @@ function monitorarHorariosRealTime(uidProfissional, containerId, modoVisualizaca
 
             if (modoVisualizacao === 'equipe') html += '</div>';
             
+            // Mensagem extra se for personalizado (Debug útil)
+            if (usouPersonalizado) {
+                html += `<div style="text-align:center; font-size:9px; color:#f39c12; margin-top:5px; width:100%;">⚡ Horário Ajustado</div>`;
+            }
+
             if (html === '<div class="grid-horarios-mini"></div>' || html === '') {
                 html = '<div style="text-align:center; padding:20px; opacity:0.7;">Sem horários disponíveis.</div>';
             }
@@ -27181,22 +27872,182 @@ function monitorarHorariosRealTime(uidProfissional, containerId, modoVisualizaca
     });
 }
 
+async function processarAlmocoNoBanco(uid, dataIso, inicioAlmoco, fimAlmoco, vaiTrabalhar) {
+    // vaiTrabalhar = true  -> "Desativar Almoço" (Quero atender)
+    // vaiTrabalhar = false -> "Ativar Almoço" (Quero folga/pausa)
+
+    try {
+        console.log(`🔄 Processando Almoço: ${inicioAlmoco} até ${fimAlmoco} | Trabalhar: ${vaiTrabalhar}`);
+
+        // 1. Busca dados do usuário para conferir o expediente
+        const userRef = db.collection('usuarios').doc(uid);
+        const userDoc = await userRef.get();
+        const userData = userDoc.data();
+
+        const inicioExpediente = userData.horarioInicio || "08:00";
+        const fimExpediente = userData.horarioFim || "19:00";
+
+        // 2. Gera os slots de horário dentro do intervalo do almoço (ex: ['12:00', '12:30'])
+        const slotsAlmoco = [];
+        let [h, m] = inicioAlmoco.split(':').map(Number);
+        const [hFim, mFim] = fimAlmoco.split(':').map(Number);
+        
+        // Loop simples para gerar horários de 30 em 30 min
+        while ( (h < hFim) || (h === hFim && m < mFim) ) {
+            const horaFormatada = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+            
+            // LÓGICA DE OURO: Só adiciona se estiver DENTRO do expediente
+            if (horaFormatada >= inicioExpediente && horaFormatada < fimExpediente) {
+                slotsAlmoco.push(horaFormatada);
+            }
+
+            // Incrementa 30 min
+            m += 30;
+            if (m >= 60) { h++; m = 0; }
+        }
+
+        if (slotsAlmoco.length === 0) {
+            console.warn("Nenhum horário de almoço válido dentro do expediente.");
+            return;
+        }
+
+        // 3. VERIFICA SE EXISTE AGENDA_DIARIA (Prioridade)
+        const diarioRef = userRef.collection('agenda_diaria').doc(dataIso);
+        const diarioDoc = await diarioRef.get();
+
+        if (diarioDoc.exists) {
+            // === CENÁRIO A: Agenda Diária Existe (Array) ===
+            console.log("📂 Alterando Agenda Diária (Array)...");
+            let horariosAtuais = diarioDoc.data().horariosDisponiveis || [];
+
+            if (vaiTrabalhar) {
+                // ADICIONAR: Insere os slots de almoço se não existirem
+                slotsAlmoco.forEach(slot => {
+                    if (!horariosAtuais.includes(slot)) {
+                        horariosAtuais.push(slot);
+                    }
+                });
+                horariosAtuais.sort(); // Mantém organizado
+            } else {
+                // REMOVER: Tira os slots de almoço da lista
+                horariosAtuais = horariosAtuais.filter(h => !slotsAlmoco.includes(h));
+            }
+
+            await diarioRef.update({ 
+                horariosDisponiveis: horariosAtuais,
+                atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+        } else {
+            // === CENÁRIO B: Agenda Diária NÃO Existe (Map 'agenda' no Perfil) ===
+            console.log("👤 Alterando Perfil Global (Map Agenda)...");
+            
+            // Prepara o objeto de atualização
+            const updates = {};
+            
+            slotsAlmoco.forEach(slot => {
+                // Se vai trabalhar = true. Se vai descansar = false (ou delete).
+                updates[`agenda.${slot}`] = vaiTrabalhar;
+            });
+
+            // Se for para trabalhar (desativar almoço), limpamos as strings de almoço também
+            // para o sistema não bloquear visualmente depois.
+            if (vaiTrabalhar) {
+                updates['almocoInicio'] = "";
+                updates['almocoFim'] = "";
+            } else {
+                // Se for ativar almoço, garantimos que as strings estão salvas
+                updates['almocoInicio'] = inicioAlmoco;
+                updates['almocoFim'] = fimAlmoco;
+            }
+
+            await userRef.update(updates);
+        }
+
+        console.log("✅ Sucesso! Banco atualizado.");
+        exibirPopup("Sucesso", `Horário de almoço ${vaiTrabalhar ? 'LIBERADO' : 'BLOQUEADO'}!`);
+
+        // Recarrega a tela se necessário
+        if(typeof carregarDadosDoDiaParaEdicao === 'function') carregarDadosDoDiaParaEdicao();
+
+    } catch (e) {
+        console.error("Erro ao processar almoço:", e);
+        alert("Erro: " + e.message);
+    }
+}
+
+function alternarTrabalhoAlmocoBotao(inicio, fim) {
+    const uid = auth.currentUser.uid;
+    
+    // Se estiver no modal de dia, usa a data do dia. Se for config geral, usa hoje ou null.
+    const dataIso = window.dataEditandoExpediente || new Date().toISOString().split('T')[0];
+
+    // Lógica visual simples para decidir se vai ativar ou desativar
+    // (Aqui estou supondo que você quer alternar. Você pode criar lógica mais complexa se quiser)
+    const btn = document.getElementById('btnAlmocoToggle'); // Dê um ID ao seu botão
+    let vaiTrabalhar = true; 
+    
+    if (btn && btn.innerText.includes("Ativar")) {
+        vaiTrabalhar = false; // Se diz "Ativar Almoço", é pq quero descansar
+    } else {
+        vaiTrabalhar = true; // Se diz "Desativar Almoço", é pq quero trabalhar
+    }
+
+    // CHAMA A FUNÇÃO NOVA
+    processarAlmocoNoBanco(uid, dataIso, inicio, fim, vaiTrabalhar);
+}
+
+function alternarAlmocoNaTela(horarioPadraoInicio, horarioPadraoFim) {
+    const inputInicio = document.getElementById('inputAlmocoInicio');
+    const inputFim = document.getElementById('inputAlmocoFim');
+    const btn = document.getElementById('btnAlmocoToggle'); // Vamos dar um ID pro botão
+
+    if (!inputInicio || !inputFim) return;
+
+    // LÓGICA:
+    // Se tiver valor nos campos, a gente LIMPA (Desativa almoço / Vai trabalhar)
+    // Se estiver vazio, a gente PREENCHE (Ativa almoço / Pausa)
+    
+    if (inputInicio.value !== "" && inputFim.value !== "") {
+        // --- DESATIVAR (TRABALHAR) ---
+        inputInicio.value = "";
+        inputFim.value = "";
+        
+        if(btn) {
+            btn.innerHTML = "💼 Almoço DESATIVADO (Trabalhar)";
+            btn.style.background = "#27ae60"; // Verde
+        }
+    } else {
+        // --- ATIVAR (PAUSA) ---
+        inputInicio.value = horarioPadraoInicio;
+        inputFim.value = horarioPadraoFim;
+        
+        if(btn) {
+            btn.innerHTML = "🍛 Almoço ATIVADO (Pausa)";
+            btn.style.background = "#e67e22"; // Laranja
+        }
+    }
+}
+
 if (!window.dataSelecionadaCliente) window.dataSelecionadaCliente = new Date();
 if (!window.dataSelecionadaEquipe) window.dataSelecionadaEquipe = new Date();
 
 async function renderizarSeletorDatasGenerico(uidProfissional, containerId, modoVisualizacao) {
     const containerHorarios = document.getElementById(containerId);
-    if (!containerHorarios && modoVisualizacao !== 'equipe') return;
+    if (!containerHorarios && modoVisualizacao !== 'equipe' && modoVisualizacao !== 'minhaAgenda') return;
 
-    const idPicker = (modoVisualizacao === 'equipe') ? 'datePickerContainerEquipe' : 'datePickerContainer';
+    let idPicker = 'datePickerContainer';
+    if (modoVisualizacao === 'equipe') idPicker = 'datePickerContainerEquipe';
+    if (modoVisualizacao === 'minhaAgenda') idPicker = 'datePickerContainerMinhaAgenda';
+
     let containerDatas = document.getElementById(idPicker);
     
-    // Cria o container se não existir
     if (!containerDatas) {
         containerDatas = document.createElement('div');
         containerDatas.id = idPicker;
         containerDatas.className = 'scrollable-list'; 
-        containerDatas.style.cssText = "display:flex; gap:8px; overflow-x:auto; padding:15px 5px; margin-bottom:15px; border-bottom:1px solid #333; white-space: nowrap; -webkit-overflow-scrolling: touch; background:#121212; position:relative; z-index:99; width:100%;";
+        // Trava para não estourar a tela no seletor tbm
+        containerDatas.style.cssText = "display:flex; gap:8px; overflow-x:auto; padding:15px 5px; margin-bottom:15px; border-bottom:1px solid #333; white-space: nowrap; -webkit-overflow-scrolling: touch; background:#121212; position:relative; z-index:99; width:100%; max-width: 100vw; box-sizing: border-box;";
         
         if (modoVisualizacao === 'equipe') {
             const btnCriar = document.querySelector('.btn-criar-agendamento-top');
@@ -27206,53 +28057,58 @@ async function renderizarSeletorDatasGenerico(uidProfissional, containerId, modo
                 const painelGeral = document.getElementById('profissionaisView');
                 if (painelGeral) painelGeral.insertBefore(containerDatas, painelGeral.firstChild);
             }
-        } else {
+        } 
+        else if (modoVisualizacao === 'minhaAgenda') {
+             if (containerHorarios) {
+                 containerHorarios.parentNode.insertBefore(containerDatas, containerHorarios);
+             }
+        }
+        else {
             containerHorarios.parentNode.insertBefore(containerDatas, containerHorarios);
         }
     }
 
-    containerDatas.innerHTML = '<div class="spinner" style="width:20px; height:20px; margin:0 auto;"></div>';
+    if(containerDatas.innerHTML === '') containerDatas.innerHTML = '<div class="spinner" style="width:20px; height:20px; margin:0 auto;"></div>';
     
-    // --- LÓGICA NOVA: BUSCA CONFIGURAÇÃO DO DOMINGO ---
-    let trabalhaDomingo = true; // Padrão é trabalhar
+    let trabalhaDomingo = true; 
     try {
-        // Se for modo equipe, o "uidProfissional" pode variar, mas geralmente usamos o usuario logado
-        // Se for modo cliente, "uidProfissional" é o barbeiro que o cliente está vendo
-        const uidAlvo = (modoVisualizacao === 'equipe') ? auth.currentUser.uid : uidProfissional;
-        
+        const uidAlvo = (modoVisualizacao === 'equipe' || modoVisualizacao === 'minhaAgenda') ? auth.currentUser.uid : uidProfissional;
         const docPro = await db.collection('usuarios').doc(uidAlvo).get();
         if (docPro.exists) {
             const d = docPro.data();
             if (d.trabalhaDomingos === false) trabalhaDomingo = false;
         }
-    } catch(err) {
-        console.log("Erro ao checar domingo, assumindo true", err);
-    }
-    // ----------------------------------------------------
+    } catch(err) {}
 
     containerDatas.innerHTML = '';
-    const hoje = new Date();
     
-    let dataAlvo = (modoVisualizacao === 'equipe') ? window.dataSelecionadaEquipe : window.dataSelecionadaCliente;
+    const hoje = new Date();
+    const diaHojeNumero = hoje.getDate();
 
-    // Loop de 30 dias
-    for (let i = 0; i < 30; i++) {
+    let dataAlvo;
+    if (modoVisualizacao === 'equipe') dataAlvo = window.dataSelecionadaEquipe;
+    else if (modoVisualizacao === 'minhaAgenda') dataAlvo = window.dataSelecionadaMinhaAgenda;
+    else dataAlvo = window.dataSelecionadaCliente;
+
+    const diasSemanaNomeCurto = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
+
+    for (let i = 0; i < 45; i++) {
         const dataDia = new Date();
         dataDia.setDate(hoje.getDate() + i);
         
-        // --- BLOQUEIO DE DOMINGO ---
-        // Se for Domingo (0) E a configuração diz que NÃO trabalha
-        if (dataDia.getDay() === 0 && !trabalhaDomingo) {
-            continue; // Pula esse dia, não cria o card
+        if (i > 0 && dataDia.getDate() === diaHojeNumero) break;
+        if (dataDia.getDay() === 0 && !trabalhaDomingo) continue; 
+        
+        let isSelected = false;
+        if (dataAlvo) {
+             const d1 = dataDia.getDate();
+             const m1 = dataDia.getMonth();
+             const d2 = new Date(dataAlvo).getDate();
+             const m2 = new Date(dataAlvo).getMonth();
+             isSelected = (d1 === d2 && m1 === m2);
         }
-        // ---------------------------
         
-        const isSelected = isMesmoDia(dataDia, dataAlvo);
-        
-        // Nomes dos dias (certifique-se que essa array existe globalmente, senão defina aqui)
-        const diasSemanaNomeCurto = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
         let diaSemana = diasSemanaNomeCurto[dataDia.getDay()];
-        
         if (i === 0) diaSemana = "HOJE";
         if (i === 1) diaSemana = "AMANHÃ";
 
@@ -27267,20 +28123,28 @@ async function renderizarSeletorDatasGenerico(uidProfissional, containerId, modo
 
         btn.onclick = () => {
             if (modoVisualizacao === 'equipe') {
-                window.dataSelecionadaEquipe = dataDia; 
-                console.log("Data Equipe Alterada para:", window.dataSelecionadaEquipe);
-
+                window.dataSelecionadaEquipe = dataDia;
                 if(typeof carregarVisaoGeralEquipe === 'function') {
                     containerDatas.style.opacity = '0.5';
                     carregarVisaoGeralEquipe(); 
                 }
-            } else {
-                window.dataSelecionadaCliente = dataDia;
-                // Recursividade aqui pode ser perigosa se não tratar o loop, 
-                // melhor apenas atualizar visualmente os botões
+            } 
+            else if (modoVisualizacao === 'minhaAgenda') {
+                window.dataSelecionadaMinhaAgenda = new Date(dataDia);
                 renderizarSeletorDatasGenerico(uidProfissional, containerId, modoVisualizacao);
-                monitorarHorariosRealTime(uidProfissional, containerId, modoVisualizacao);
-                if(typeof carregarBotaoVagaImediata === 'function') carregarBotaoVagaImediata(uidProfissional);
+                if(typeof carregarMinhaAgendaInterativa === 'function') {
+                    carregarMinhaAgendaInterativa();
+                }
+            }
+            else {
+                window.dataSelecionadaCliente = dataDia;
+                renderizarSeletorDatasGenerico(uidProfissional, containerId, modoVisualizacao);
+                if(typeof monitorarHorariosRealTime === 'function') {
+                    monitorarHorariosRealTime(uidProfissional, containerId, modoVisualizacao);
+                }
+                if(typeof carregarBotaoVagaImediata === 'function') {
+                    carregarBotaoVagaImediata(uidProfissional);
+                }
             }
         };
         
@@ -31693,6 +32557,8 @@ async function abrirConfiguracaoHorario() {
                 <p style="color:#888; font-size:12px; margin:5px 0 0 0;">Configure sua disponibilidade diária</p>
             </div>
 
+<button onclick="abrirModalGestaoHorarios()">⚙️ Configurar Dias/Horas</button>
+
             <div style="padding:25px;">
                 
                 <div style="margin-bottom:25px;">
@@ -31716,6 +32582,12 @@ async function abrirConfiguracaoHorario() {
 
                 <div style="margin-bottom:25px;">
                     <label style="color:#fff; font-weight:bold; font-size:14px; display:block; margin-bottom:10px;">🍽️ Pausa para Almoço</label>
+                    <button type="button" 
+            id="btnAlmocoToggle"
+            onclick="alternarAlmocoNaTela('12:00', '13:00')" 
+            style="padding: 10px; background: #e67e22; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-bottom: 10px;">
+        🍛 Ativar/Desativar Almoço
+    </button>
                     <div style="display:flex; gap:10px; align-items:center;">
                         <div style="flex:1;">
                             <span style="color:#aaa; font-size:11px;">Saída</span>
@@ -31762,38 +32634,134 @@ async function abrirConfiguracaoHorario() {
     }
 }
 
-async function salvarConfiguracaoHorario() {
-    const inicio = document.getElementById('inputInicio').value;
-    const fim = document.getElementById('inputFim').value;
-    const almocoIni = document.getElementById('inputAlmocoInicio').value;
-    const almocoFim = document.getElementById('inputAlmocoFim').value;
-    
-    // Pega o valor do checkbox (true ou false)
-    const trabalhaDom = document.getElementById('checkTrabalhaDomingos').checked;
+function alternarAlmocoNosInputs(horarioPadraoInicio, horarioPadraoFim) {
+    const elInicio = document.getElementById('inputAlmocoInicio');
+    const elFim = document.getElementById('inputAlmocoFim');
 
-    exibirAguarde("Salvando horários...");
+    if (!elInicio || !elFim) return;
+
+    // LÓGICA:
+    // Se os campos tiverem valores diferentes (ex: 12:00 e 13:00), entendemos que tem almoço -> AÇÃO: ZERAR.
+    // Se os campos estiverem vazios ou iguais, entendemos que não tem almoço -> AÇÃO: PREENCHER.
+
+    if (elInicio.value && elFim.value && elInicio.value !== elFim.value) {
+        // DESATIVAR ALMOÇO (Zera os campos ou deixa iguais)
+        elInicio.value = "";
+        elFim.value = "";
+        exibirPopup("Almoço Desativado", "Horário de almoço removido.");
+    } else {
+        // ATIVAR ALMOÇO
+        elInicio.value = horarioPadraoInicio;
+        elFim.value = horarioPadraoFim;
+        exibirPopup("Almoço Ativado", `Definido para ${horarioPadraoInicio} - ${horarioPadraoFim}`);
+    }
+}
+
+async function salvarConfiguracaoHorario() {
+    const btnSalvar = document.querySelector('button[onclick="salvarConfiguracaoHorario()"]');
+    if(btnSalvar) { btnSalvar.innerHTML = "Salvando..."; btnSalvar.disabled = true; }
 
     try {
-        await db.collection('usuarios').doc(auth.currentUser.uid).update({
-            horarioInicio: inicio,
-            horarioFim: fim,
-            almocoInicio: almocoIni,
-            almocoFim: almocoFim,
-            trabalhaDomingos: trabalhaDom // <--- SALVA AQUI
-        });
+        const uid = auth.currentUser.uid;
+        
+        // 1. PEGA OS VALORES QUE ESTÃO NA TELA AGORA
+        const hInicio = document.getElementById('inputInicio').value; // Ex: "09:00"
+        const hFim = document.getElementById('inputFim').value;       // Ex: "19:00"
+        
+        // Se estiver vazio, é porque o almoço foi DESATIVADO
+        const aInicio = document.getElementById('inputAlmocoInicio').value; // Ex: "" ou "12:00"
+        const aFim = document.getElementById('inputAlmocoFim').value;       // Ex: "" ou "13:00"
+        
+        const trabalhaDom = document.getElementById('checkTrabalhaDomingos').checked;
 
-        // Fecha e avisa
-        const modal = document.getElementById('modalConfigHorario');
-        if(modal) modal.remove();
+        // 2. RECONSTRÓI O MAPA "AGENDA" (AQUI ESTÁ A MÁGICA)
+        // Vamos gerar todos os horários entre Inicio e Fim e decidir se é TRUE ou FALSE agora.
+        let novaAgenda = {};
         
-        fecharTodosOsModais();
-        exibirPopup("Sucesso", "Horários de expediente atualizados!");
+        let [h, m] = hInicio.split(':').map(Number);
+        const [hFinal, mFinal] = hFim.split(':').map(Number);
+
+        while ( (h < hFinal) || (h === hFinal && m < mFinal) ) {
+            const horaAtual = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+            
+            // LÓGICA DE OURO:
+            // Se existir horário de almoço E a hora atual estiver dentro dele -> FALSE
+            // Caso contrário (se almoço for vazio "" ou fora do horário) -> TRUE
+            let disponivel = true;
+
+            if (aInicio && aFim) {
+                if (horaAtual >= aInicio && horaAtual < aFim) {
+                    disponivel = false; // Tá no almoço
+                }
+            }
+
+            // Grava no mapa
+            novaAgenda[horaAtual] = disponivel;
+
+            // Avança 30 min
+            m += 30;
+            if (m >= 60) { h++; m = 0; }
+        }
+
+        // 3. PREPARA O UPDATE DO PERFIL (GERAL)
+        const updates = {
+            horarioInicio: hInicio,
+            horarioFim: hFim,
+            almocoInicio: aInicio, // Se estiver vazio, salva vazio
+            almocoFim: aFim,       // Se estiver vazio, salva vazio
+            agenda: novaAgenda,    // <--- AQUI VAI O MAPA CORRIGIDO (TRUE/FALSE)
+            trabalhaDomingos: trabalhaDom,
+            usaAgendaManual: true
+        };
+
+        await db.collection('usuarios').doc(uid).update(updates);
+
+        // =====================================================================
+        // 4. BÔNUS: ATUALIZA A "AGENDA_DIARIA" (SE EXISTIR PARA HOJE)
+        // =====================================================================
+        // Se o usuário já abriu o app hoje, ele pode ter uma exceção criada. 
+        // Vamos atualizar ela também para refletir a mudança do almoço IMEDIATAMENTE.
         
-        // Atualiza a tela se necessário
-        setTimeout(() => location.reload(), 1000); // Recarrega para aplicar as mudanças
+        const hojeIso = new Date().toISOString().split('T')[0];
+        const diarioRef = db.collection('usuarios').doc(uid).collection('agenda_diaria').doc(hojeIso);
+        const docDiario = await diarioRef.get();
+
+        if (docDiario.exists) {
+            console.log("🔄 Atualizando também a Agenda Diária de hoje...");
+            
+            // Pega os horários atuais da exceção
+            let arrayHorarios = docDiario.data().horariosDisponiveis || [];
+            
+            // Se o almoço foi DESATIVADO (aInicio vazio), precisamos ADICIONAR os horários que faltam
+            if (aInicio === "" || aFim === "") {
+                // Percorre a novaAgenda que acabamos de criar (onde tudo é true)
+                Object.keys(novaAgenda).forEach(hora => {
+                    if (novaAgenda[hora] === true && !arrayHorarios.includes(hora)) {
+                        arrayHorarios.push(hora); // Adiciona na lista do dia
+                    }
+                });
+                arrayHorarios.sort();
+            } 
+            // Se o almoço foi ATIVADO, precisamos REMOVER os horários do almoço
+            else {
+                arrayHorarios = arrayHorarios.filter(h => !(h >= aInicio && h < aFim));
+            }
+
+            await diarioRef.update({ horariosDisponiveis: arrayHorarios });
+        }
+        // =====================================================================
+
+        exibirPopup("Sucesso", "Horários atualizados!");
+        
+        // Fecha e recarrega
+        document.getElementById('modalConfigHorario').remove();
+        if(typeof carregarMinhaAgendaInterativa === 'function') carregarMinhaAgendaInterativa();
+
     } catch (e) {
-        fecharTodosOsModais();
+        console.error(e);
         alert("Erro ao salvar: " + e.message);
+    } finally {
+        if(btnSalvar) { btnSalvar.innerHTML = "Salvar"; btnSalvar.disabled = false; }
     }
 }
 
@@ -39744,91 +40712,17 @@ window.resetarBotaoManual = function() {
     }
 }
 
-window.abrirModalEditarAgendamento = function() {
-    // Pega os dados que já estão na memória
-    const dados = window.agendamentoAtualDados;
-    if (!dados) return alert("Erro: Agendamento não carregado na memória.");
-
-    // Preenche os campos
-    const campoNome = document.getElementById('editNomeCliente');
-    const campoTel = document.getElementById('editTelefoneCliente');
-    const campoValor = document.getElementById('editValorServico');
-    const campoServico = document.getElementById('editNomeServico');
-
-    if(campoNome) campoNome.value = dados.clienteNome || dados.nome || '';
-    if(campoTel) campoTel.value = dados.clienteTelefone || dados.telefone || '';
-    if(campoValor) campoValor.value = dados.valor || 0;
-    if(campoServico) campoServico.value = dados.servico || '';
-
-    // --- CORREÇÃO DO ERRO DE FECHAMENTO ---
-    const modalDetalhes = document.getElementById('modalDetalhesAgendamento');
-    if (modalDetalhes) {
-        // Tenta fechar do jeito certo, se falhar, fecha na força bruta
-        try {
-            if(typeof fecharModal === 'function') {
-                fecharModal('modalDetalhesAgendamento');
-            } else {
-                modalDetalhes.style.display = 'none';
-                modalDetalhes.classList.remove('show');
-            }
-        } catch(e) {
-            console.warn("Erro ao fechar modal via função, forçando CSS:", e);
-            modalDetalhes.style.display = 'none';
-            modalDetalhes.classList.remove('show');
-        }
-    }
-
-    // Abre o novo modal
-    abrirModal('modalEditarAgendamento');
-}
-
-// 2. Salva no banco e atualiza a tela
-window.salvarEdicaoAgendamento = async function() {
-    const novoNome = document.getElementById('editNomeCliente').value.trim();
-    const novoTel = document.getElementById('editTelefoneCliente').value.trim();
-    const novoValor = parseFloat(document.getElementById('editValorServico').value);
-    const novoServico = document.getElementById('editNomeServico').value.trim();
-    const id = window.agendamentoAtualId;
-
-    if(!novoNome) return alert("Nome é obrigatório.");
-
-    exibirAguarde("Atualizando...");
-
-    try {
-        await db.collection('agendamentos').doc(id).update({
-            clienteNome: novoNome,
-            clienteTelefone: novoTel,
-            valor: novoValor,
-            valorOriginal: novoValor, // Atualiza original também
-            servico: novoServico
-        });
-
-        // Atualiza o objeto global em memória para refletir a mudança imediata
-        if(window.agendamentoAtualDados) {
-            window.agendamentoAtualDados.clienteNome = novoNome;
-            window.agendamentoAtualDados.clienteTelefone = novoTel;
-            window.agendamentoAtualDados.valor = novoValor;
-            window.agendamentoAtualDados.servico = novoServico;
-        }
-
-        fecharTodosOsModais();
-        exibirPopup("Sucesso", "Dados atualizados!");
-
-        // Reabre os detalhes já atualizados
-        setTimeout(() => {
-            abrirDetalhesDoAgendamento(window.agendamentoAtualDados);
-            // Atualiza o fundo também
-            if(typeof carregarVisaoGeralEquipe === 'function') carregarVisaoGeralEquipe();
-        }, 500);
-
-    } catch(e) {
-        fecharTodosOsModais();
-        alert("Erro ao editar: " + e.message);
-    }
-}
-
 function isEventoCarnavalAtivo() {
-    return true; // (Mantenha true para testar, depois coloque a data real)
+    const hoje = new Date();
+    const dia = hoje.getDate();
+    const mes = hoje.getMonth(); // No Javascript: 0 = Jan, 1 = Fev
+
+    // Verifica se é Fevereiro (1) E se o dia está entre 10 e 18
+    if (mes === 1 && dia >= 10 && dia <= 18) {
+        return true;
+    }
+    
+    return false;
 }
 
 // 2. FUNÇÃO VISUAL (MÁSCARAS)
@@ -40386,6 +41280,458 @@ function ehHorarioPassado(dataIso, horario) {
 
 // Pequena correção: variável 'interval' na função carregarHorariosReagendamento
 // Substituir 'interval' por 'intervaloMinutos' no código acima.
+
+function funcaoAtivarDesativarAlmoco(inicio, fim) {
+    // 1. Pega todos os checkboxes de horário que estão na tela
+    const checkboxes = document.querySelectorAll('.chk-horario-edicao');
+    
+    // 2. Filtra apenas os que são do horário de almoço
+    const slotsAlmoco = [];
+    checkboxes.forEach(chk => {
+        // Verifica se o valor do checkbox está dentro do intervalo
+        if (chk.value >= inicio && chk.value < fim) {
+            slotsAlmoco.push(chk);
+        }
+    });
+
+    if (slotsAlmoco.length === 0) {
+        alert(`Nenhum horário encontrado entre ${inicio} e ${fim}.`);
+        return;
+    }
+
+    // 3. DECIDE A AÇÃO:
+    // Se algum estiver marcado, entendemos que queremos "Desativar" (tirar folga).
+    // Se todos estiverem desmarcados, entendemos que queremos "Ativar" (trabalhar).
+    const temAlgumMarcado = slotsAlmoco.some(chk => chk.checked);
+    const deveMarcar = !temAlgumMarcado; // Inverte a lógica
+
+    // 4. Aplica a mudança visual
+    slotsAlmoco.forEach(chk => {
+        chk.checked = deveMarcar;
+    });
+
+    // Feedback visual rápido
+    if (deveMarcar) {
+        // alert("Horário de almoço ATIVADO para trabalho.");
+        console.log("Almoço marcado como trabalho.");
+    } else {
+        // alert("Horário de almoço DESATIVADO (Pausa).");
+        console.log("Almoço marcado como pausa.");
+    }
+}
+
+// Variável global para cache
+window.cacheServicosEdicao = [];
+
+// 1. ABRIR MODAL (LÓGICA DETETIVE DE SERVIÇOS)
+window.abrirModalEditarAgendamento = async function() {
+    console.log("🚀 Abrindo modal de edição...");
+    
+    const dados = window.agendamentoAtualDados;
+    if (!dados) return alert("Erro: Dados do agendamento não encontrados.");
+
+    const modal = document.getElementById('modalEditarAgendamento');
+    
+    // Se não tiver o HTML novo, avisa
+    if(!document.getElementById('editSelectServico')) {
+        return alert("ERRO CRÍTICO: Você não colou o NOVO HTML do modal no index.html!");
+    }
+
+    const barbeiroUid = dados.barbeiroUid;
+
+    // A. Preenche Textos Básicos
+    document.getElementById('editNomeCliente').value = dados.clienteNome || '';
+document.getElementById('editTelefoneCliente').value = dados.clienteTelefone || dados.telefone || '';    document.getElementById('editValorServico').value = dados.valor || '';
+    document.getElementById('editDataAgendamento').value = dados.data;
+    gerarCardsDatasEdicao(dados.data);
+    
+    document.getElementById('editNovoHorario').value = dados.horario;
+    document.getElementById('txtHorarioSelecionado').innerText = dados.horario;
+
+    // B. BUSCA SERVIÇOS (LÓGICA DETETIVE)
+    const selectServico = document.getElementById('editSelectServico');
+    selectServico.innerHTML = '<option value="">🔍 Buscando lista...</option>';
+
+    try {
+        console.log("--- INICIANDO BUSCA DE SERVIÇOS ---");
+        
+        // 1. Busca perfil do Profissional
+        let docBarbeiro = await db.collection('usuarios').doc(barbeiroUid).get();
+        if (!docBarbeiro.exists) throw new Error("Usuário barbeiro não encontrado.");
+        
+        let dataBarbeiro = docBarbeiro.data();
+        let listaFinal = [];
+
+        // 2. Verifica se a lista está no próprio barbeiro
+        if (dataBarbeiro.listaServicos && Array.isArray(dataBarbeiro.listaServicos) && dataBarbeiro.listaServicos.length > 0) {
+            console.log("✅ Lista encontrada no próprio perfil.");
+            listaFinal = dataBarbeiro.listaServicos;
+        } 
+        else {
+            // 3. PROCURA O ID DO DONO (Prioridade)
+            let idDono = null;
+
+            if (dataBarbeiro.vinculoSalao) {
+                console.log("👉 Achei vinculoSalao:", dataBarbeiro.vinculoSalao);
+                idDono = dataBarbeiro.vinculoSalao;
+            } 
+            else if (dataBarbeiro.donoUid) {
+                console.log("👉 Achei donoUid:", dataBarbeiro.donoUid);
+                idDono = dataBarbeiro.donoUid;
+            } else if (dataBarbeiro.pertenceABarbearia && dataBarbeiro.pertenceABarbearia.uid) {
+                 console.log("👉 Achei pertenceABarbearia:", dataBarbeiro.pertenceABarbearia.uid);
+                 idDono = dataBarbeiro.pertenceABarbearia.uid;
+            }
+
+            // Tratamento se o ID vier como objeto
+            if (typeof idDono === 'object' && idDono !== null && idDono.uid) {
+                idDono = idDono.uid;
+            }
+
+            if (idDono) {
+                console.log(`🔄 Buscando perfil do Dono/Vínculo: ${idDono}`);
+                let docDono = await db.collection('usuarios').doc(idDono).get();
+                
+                if (docDono.exists) {
+                    let dataDono = docDono.data();
+                    if (dataDono.listaServicos) {
+                        listaFinal = dataDono.listaServicos;
+                        console.log(`✅ Lista recuperada do dono (${listaFinal.length} itens).`);
+                    } else {
+                        console.warn("⚠️ O dono existe, mas NÃO tem listaServicos.");
+                    }
+                }
+            } else {
+                console.warn("⚠️ Nenhum vínculo encontrado.");
+            }
+        }
+
+        window.cacheServicosEdicao = listaFinal;
+
+        // 4. PREENCHE O SELECT
+        if (!listaFinal || listaFinal.length === 0) {
+            selectServico.innerHTML = '<option value="">Nenhum serviço disponível</option>';
+        } else {
+            let htmlOptions = '<option value="">Selecione um serviço...</option>';
+            
+            listaFinal.forEach(serv => {
+                const nome = serv.nome || "Sem Nome"; 
+                const valor = serv.valor || 0;
+                
+                const isSelected = (nome === dados.servico) ? 'selected' : '';
+                htmlOptions += `<option value="${nome}" data-valor="${valor}" ${isSelected}>${nome}</option>`;
+            });
+            
+            selectServico.innerHTML = htmlOptions;
+        }
+
+        // Garante o serviço atual se ele não estiver na lista
+        if (dados.servico && selectServico.selectedIndex <= 0) {
+            const jaTem = Array.from(selectServico.options).some(o => o.value === dados.servico);
+            if (!jaTem) {
+                let opt = document.createElement('option');
+                opt.value = dados.servico;
+                opt.text = `${dados.servico} (Atual)`;
+                opt.selected = true;
+                selectServico.add(opt);
+            }
+        }
+
+    } catch (e) {
+        console.error("❌ ERRO GRAVE:", e);
+        selectServico.innerHTML = `<option value="">Erro: ${e.message}</option>`;
+    }
+
+    // C. Carrega a Grade
+    carregarGradeEdicao();
+
+    // D. Abre o modal (usando fallback se função global faltar)
+    if(typeof abrirModal === 'function') {
+        abrirModal('modalEditarAgendamento');
+    } else {
+        modal.style.display = 'block';
+    }
+};
+
+// 2. ATUALIZA PREÇO AO MUDAR SELECT
+window.atualizarPrecoEdicao = function() {
+    const select = document.getElementById('editSelectServico');
+    const option = select.options[select.selectedIndex];
+    const valor = option.getAttribute('data-valor');
+    
+    if (valor) {
+        document.getElementById('editValorServico').value = valor;
+    }
+}
+
+// 3. CARREGAR GRADE DE HORÁRIOS (COM PRIORIDADE AGENDA DIÁRIA)
+window.carregarGradeEdicao = async function() {
+    const container = document.getElementById('containerGradeEdicao');
+    if(!container) return; // Segurança
+    container.innerHTML = '<div class="spinner"></div>';
+
+    const dados = window.agendamentoAtualDados;
+    const uidProfissional = dados.barbeiroUid;
+    const dataIso = document.getElementById('editDataAgendamento').value;
+
+    if(!dataIso) return;
+
+    try {
+        let listaHorarios = [];
+        let diaBloqueado = false;
+        
+        // A. Tenta buscar exceção (Agenda Diária) no Servidor
+        const docExcecao = await db.collection('usuarios').doc(uidProfissional)
+                                   .collection('agenda_diaria').doc(dataIso)
+                                   .get({ source: 'server' }); 
+
+        if (docExcecao.exists) {
+            const d = docExcecao.data();
+            if (d.fechado) diaBloqueado = true;
+            else listaHorarios = d.horariosDisponiveis || [];
+        } 
+        else {
+            // B. Padrão
+            const docUser = await db.collection('usuarios').doc(uidProfissional).get();
+            const u = docUser.data();
+            
+            const diaSemana = new Date(dataIso + 'T00:00:00').getDay();
+            const diasMap = ['domingo','segunda','terca','quarta','quinta','sexta','sabado'];
+            const configDia = u.configuracaoHorario ? u.configuracaoHorario[diasMap[diaSemana]] : null;
+
+            if (configDia && configDia.ativo === false) {
+                diaBloqueado = true;
+            } else {
+                if (u.agenda) {
+                    listaHorarios = Object.keys(u.agenda).filter(h => u.agenda[h] === true).sort();
+                } else {
+                    listaHorarios = ["09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
+                }
+                // Filtro Almoço (Só no Padrão)
+                if (u.almocoInicio && u.almocoFim) {
+                    listaHorarios = listaHorarios.filter(h => !(h >= u.almocoInicio && h < u.almocoFim));
+                }
+            }
+        }
+
+        // C. Agendamentos Ocupados
+        const snapOcupados = await db.collection('agendamentos')
+            .where('barbeiroUid', '==', uidProfissional)
+            .where('data', '==', dataIso)
+            .where('status', 'in', ['pendente', 'confirmado', 'conclusao pendente', 'imediato'])
+            .get();
+
+        const ocupados = [];
+        snapOcupados.forEach(doc => {
+            if (doc.id !== dados.id) { // Ignora o próprio agendamento sendo editado
+                ocupados.push(doc.data().horario);
+            }
+        });
+
+        // D. Renderiza
+        if (diaBloqueado) {
+            container.innerHTML = '<div style="color:red; text-align:center; padding:10px;">Dia Fechado/Folga</div>';
+            return;
+        }
+        if (listaHorarios.length === 0) {
+            container.innerHTML = '<div style="color:#aaa; text-align:center; padding:10px;">Sem horários configurados.</div>';
+            return;
+        }
+
+        let html = '<div class="grid-horarios-mini" style="justify-content:center;">';
+        const hojeIso = new Date().toISOString().split('T')[0];
+        const isHoje = dataIso === hojeIso;
+        const horaAtual = new Date().getHours();
+        const minAtual = new Date().getMinutes();
+
+        listaHorarios.forEach(hora => {
+            const isOcupado = ocupados.includes(hora);
+            
+            if (isHoje) {
+                const [h, m] = hora.split(':').map(Number);
+                if (h < horaAtual || (h === horaAtual && m < minAtual)) return;
+            }
+
+            if (isOcupado) {
+                html += `<div class="slot-time slot-ocupado" style="opacity:0.5; cursor:not-allowed;">${hora}</div>`;
+            } else {
+                const isSelected = (hora === document.getElementById('editNovoHorario').value) ? 'border:2px solid #fff;' : '';
+                html += `<div class="slot-time slot-livre" style="${isSelected}" onclick="selecionarHorarioEdicao('${hora}')">${hora}</div>`;
+            }
+        });
+        html += '</div>';
+        container.innerHTML = html;
+
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = '<p>Erro ao carregar grade.</p>';
+    }
+}
+
+// 4. SELECIONAR HORÁRIO
+window.selecionarHorarioEdicao = function(hora) {
+    document.getElementById('editNovoHorario').value = hora;
+    document.getElementById('txtHorarioSelecionado').innerText = hora;
+    document.getElementById('txtHorarioSelecionado').style.color = "#2ecc71";
+    
+    // Atualiza visual
+    const slots = document.querySelectorAll('#containerGradeEdicao .slot-livre');
+    slots.forEach(s => {
+        if(s.innerText.includes(hora)) {
+            s.style.background = "#2ecc71";
+            s.style.color = "#fff";
+        } else {
+            s.style.background = ""; 
+            s.style.color = "";
+        }
+    });
+}
+
+// 5. SALVAR EDIÇÃO (AGORA SIM CERTO)
+window.salvarEdicaoAgendamento = async function() {
+    const id = window.agendamentoAtualId;
+    
+    // ATENÇÃO: Pegando do SELECT e não do Input antigo
+    const novoNome = document.getElementById('editNomeCliente').value;
+    const novoTelefone = document.getElementById('editTelefoneCliente').value;
+    const novoServico = document.getElementById('editSelectServico').value; // <--- SELECT
+    const novoValor = parseFloat(document.getElementById('editValorServico').value);
+    
+    const novaData = document.getElementById('editDataAgendamento').value;
+    const novoHorario = document.getElementById('editNovoHorario').value; // <--- HIDDEN INPUT DA GRADE
+
+    if (!novoHorario) return alert("Por favor, selecione um horário na grade.");
+    if (!novoServico) return alert("Selecione um serviço.");
+
+    try {
+        await db.collection('agendamentos').doc(id).update({
+            clienteNome: novoNome,
+            clienteTelefone: novoTelefone,
+            servico: novoServico,
+            valor: novoValor,
+            data: novaData,
+            horario: novoHorario
+        });
+
+        // Atualiza memória local para refletir na hora
+        if(window.agendamentoAtualDados) {
+            window.agendamentoAtualDados.clienteNome = novoNome;
+            window.agendamentoAtualDados.clienteTelefone = novoTelefone;
+            window.agendamentoAtualDados.servico = novoServico;
+            window.agendamentoAtualDados.valor = novoValor;
+            window.agendamentoAtualDados.data = novaData;
+            window.agendamentoAtualDados.horario = novoHorario;
+        }
+
+        alert("Atualizado com sucesso!");
+        
+        if(typeof fecharModalAtual === 'function') fecharModalAtual();
+        if(typeof fecharModal === 'function') fecharModal('modalDetalhesAgendamento');
+        
+        // Recarrega agenda principal
+        if (typeof carregarMinhaAgendaInterativa === 'function') carregarMinhaAgendaInterativa();
+
+    } catch (e) {
+        console.error(e);
+        alert("Erro ao salvar: " + e.message);
+    }
+}
+
+// Gera a lista de dias (Cards)
+window.gerarCardsDatasEdicao = function(dataSelecionada) {
+    const container = document.getElementById('containerDatasEdicao');
+    if(!container) return;
+
+    container.innerHTML = ''; // Limpa
+    
+    const diasSemana = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
+    const hoje = new Date();
+    
+    // Se a data do agendamento for ANTES de hoje (passado), começamos dela para não bugar.
+    // Se for futuro ou hoje, começamos de hoje.
+    let dataInicio = new Date();
+    const dataAgendamentoObj = new Date(dataSelecionada + 'T00:00:00');
+    
+    if(dataAgendamentoObj < hoje && dataSelecionada !== hoje.toISOString().split('T')[0]) {
+        dataInicio = dataAgendamentoObj; // Começa do passado para mostrar a data original
+    }
+
+    // Gera 30 dias a partir da data de inicio
+    for (let i = 0; i < 30; i++) {
+        const d = new Date(dataInicio);
+        d.setDate(dataInicio.getDate() + i);
+
+        const diaSemanaTexto = diasSemana[d.getDay()];
+        const diaMes = d.getDate().toString().padStart(2, '0');
+        
+        // Formato ISO para comparação (YYYY-MM-DD)
+        const ano = d.getFullYear();
+        const mes = (d.getMonth() + 1).toString().padStart(2, '0');
+        const diaIso = `${ano}-${mes}-${diaMes}`;
+
+        // Verifica se é o dia selecionado
+        const isSelected = (diaIso === dataSelecionada);
+
+        // Cria o Card
+        const card = document.createElement('div');
+        card.className = 'card-data-edicao'; // Classe para referência futura se precisar
+        
+        // ESTILO DO CARD (Normal vs Selecionado)
+        const bg = isSelected ? 'var(--cor-destaque)' : '#333';
+        const color = isSelected ? '#000' : '#aaa';
+        const border = isSelected ? 'var(--cor-destaque)' : '#444';
+
+        card.style.cssText = `
+            min-width: 60px; 
+            height: 70px; 
+            background: ${bg}; 
+            color: ${color}; 
+            border: 1px solid ${border};
+            border-radius: 10px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer; 
+            flex-shrink: 0;
+            transition: all 0.2s;
+        `;
+
+        card.innerHTML = `
+            <span style="font-size:10px; font-weight:bold; text-transform:uppercase;">${diaSemanaTexto}</span>
+            <span style="font-size:20px; font-weight:bold;">${diaMes}</span>
+        `;
+
+        // CLIQUE NO CARD
+        card.onclick = function() {
+            // 1. Atualiza visual de todos os cards
+            Array.from(container.children).forEach(c => {
+                c.style.background = '#333';
+                c.style.color = '#aaa';
+                c.style.border = '1px solid #444';
+            });
+            // 2. Ativa este card
+            card.style.background = 'var(--cor-destaque)';
+            card.style.color = '#000';
+            card.style.border = '1px solid var(--cor-destaque)';
+
+            // 3. Salva no input hidden
+            document.getElementById('editDataAgendamento').value = diaIso;
+
+            // 4. Recarrega a grade de horários
+            carregarGradeEdicao();
+        };
+
+        container.appendChild(card);
+        
+        // Scroll automático para o dia selecionado
+        if (isSelected) {
+            setTimeout(() => {
+                container.scrollLeft = card.offsetLeft - container.offsetLeft - 20;
+            }, 100);
+        }
+    }
+}
 
 </script>
 </body>
