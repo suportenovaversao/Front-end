@@ -1005,8 +1005,11 @@ function abrirModalGenericoCheio(htmlContent) {
   <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
   <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
   <script src="https://unpkg.com/@studio-freight/lenis@1.0.33/dist/lenis.min.js"></script>
 
   <style>
@@ -1358,10 +1361,11 @@ input, textarea {
       transition: transform 0.3s ease-in-out;
       border: 1px solid var(--cor-borda);
       position: relative; /* Para popups sobrepostos */
-      will-change: transform, opacity;
-      transform: translateZ(0);
-      backface-visibility: hidden;
     }
+    .modal-overlay-content {
+        position: absolute;
+        top: 0;
+        left: 0;
         width: 100%;
         height: 100%;
         background: rgba(12, 12, 12, 0.9);
@@ -4579,23 +4583,6 @@ body.tema-feminino button:hover {
 .cine-option-card p { margin: 0; color: #ccc; font-size: 0.8em; }
 .cine-option-icon { font-size: 2em; }
 
-.feed-item {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-}
-
-.feed-item.visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-/* Animação de fade-in para cards */
-@keyframes slideUpFade {
-    from { opacity: 0; transform: translateY(40px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
 /* Animação de Entrada */
 @keyframes slideUpFade {
     from { opacity: 0; transform: translateY(40px); }
@@ -5204,7 +5191,7 @@ body.tema-feminino button:hover {
     object-fit: contain;
     opacity: 0;
     transform: scale(0.8) translateY(20px);
-    transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: all 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
     /* Importante: Drop Shadow respeita a transparência do PNG */
     filter: drop-shadow(0 0 0px rgba(255, 215, 0, 0));
     position: relative;
@@ -5216,7 +5203,7 @@ body.tema-feminino button:hover {
     transform: scale(1) translateY(0);
     /* Brilho dourado contornando o desenho da logo */
     filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.8));
-    animation: logoFloat 2s ease-in-out infinite;
+    animation: logoFloat 4s ease-in-out infinite;
 }
 
 /* Animações */
@@ -5256,7 +5243,7 @@ body.tema-feminino button:hover {
     letter-spacing: 5px;
     opacity: 0; 
     transform: translateY(10px);
-    transition: all 0.6s ease;
+    transition: all 1s ease;
     background: linear-gradient(to bottom, #fff 0%, #d4af37 100%); 
     -webkit-background-clip: text; 
     -webkit-text-fill-color: transparent; 
@@ -8176,15 +8163,8 @@ button:active, .card:active {
     }
 
     /* SETUP INICIAL PARA ANIMAÇÕES DE ENTRADA */
-    .reveal {
-        opacity: 0;
-        transform: translateY(30px);
-        transition: all 0.6s ease;
-    }
-    
-    .reveal.visible {
-        opacity: 1;
-        transform: translateY(0);
+    .gsap-reveal {
+        opacity: 0; /* Começa invisível para o GSAP controlar */
     }
 
 /* --- 1. ESTILO PRODUTO PREMIUM (OURO) --- */
@@ -8205,51 +8185,46 @@ button:active, .card:active {
 @keyframes modalEntradaLuxo {
     0% {
         opacity: 0;
-        transform: scale(0.9) translateY(10px);
+        transform: scale(0.8) translateY(20px);
+        filter: blur(10px);
     }
     100% {
         opacity: 1;
         transform: scale(1) translateY(0);
+        filter: blur(0);
     }
 }
 
 .modal {
     /* Garante que o modal use a animação ao abrir */
-    animation: modalEntradaLuxo 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation: modalEntradaLuxo 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     background: rgba(0, 0, 0, 0.85); /* Fundo um pouco mais escuro para o luxo */
     backdrop-filter: blur(8px); /* Efeito de vidro */
 }
 
 /* --- 3. CLASSE BASE PARA O SCROLL DOS EXTRATOS --- */
-.feed-item {
-    opacity: 0;
-    transform: translateY(50px);
-    transition: all 0.4s ease;
-}
-
-.feed-item.visible {
-    opacity: 1;
-    transform: translateY(0);
+.gsap-feed-item {
+    opacity: 0; /* Começa invisível para o GSAP animar */
+    transform: translateY(50px); /* Começa 50px para baixo */
 }
 
 /* --- BRILHO DOURADO ATRÁS DOS POPUPS --- */
 .modal.show .modal-content {
-    animation: modalEntradaLuxo 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation: modalEntradaLuxo 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     box-shadow: 0 0 30px rgba(212, 175, 55, 0.4), 0 0 60px rgba(212, 175, 55, 0.2) !important;
     border: 1px solid rgba(212, 175, 55, 0.5) !important;
 }
 
-
-/* ANIMAÇÃO DE SLIDE UP DOS EXTRATOS */
-.feed-item {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: all 0.3s ease;
+/* Garante que nada bloqueie as faíscas na frente */
+canvas.confetti-canvas {
+    z-index: 999999 !important;
+    position: fixed !important;
 }
 
-.feed-item.visible {
-    opacity: 1;
-    transform: translateY(0);
+/* ANIMAÇÃO DE SLIDE UP DOS EXTRATOS */
+.gsap-feed-item {
+    opacity: 0;
+    transform: translateY(30px);
 }
 
 /* --- ANIMAÇÃO DE SAÍDA LUXUOSA --- */
@@ -8268,15 +8243,20 @@ button:active, .card:active {
 
 /* Classe que aplicaremos via JS na hora de fechar */
 .modal.closing .modal-content {
-    animation: modalSaidaLuxo 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    animation: modalSaidaLuxo 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 /* O fundo (overlay) também faz um fadeout */
 .modal.closing {
-    transition: opacity 0.2s ease;
+    transition: opacity 0.3s ease;
     opacity: 0 !important;
 }
 
+/* Garante que o canvas das faíscas fique na frente de todos os popups */
+.confetti-canvas {
+    z-index: 999999 !important;
+    pointer-events: none; /* Não atrapalha os cliques no app */
+}
 
 /* Brilho dourado discreto atrás do conteúdo do modal */
 .modal.show .modal-content {
@@ -8286,15 +8266,10 @@ button:active, .card:active {
 }
 
 /* Estado inicial bem escondido e mais abaixo para um efeito dramático */
-.feed-item {
+.gsap-feed-item {
     opacity: 0;
-    transform: translateY(80px) scale(0.9);
-    transition: all 0.5s ease;
-}
-
-.feed-item.visible {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(80px) scale(0.9); /* Começa menor e mais baixo */
+    transition: none; /* Garante que o GSAP controle tudo */
 }
 
 .perfil-acoes-container {
@@ -11747,24 +11722,14 @@ input:checked + .slider:before { transform: translateX(24px); }
             <button onclick="salvarEdicaoAgendamento()" class="btn-confirmar" style="padding:12px; background:var(--cor-destaque); color:#000; font-weight:bold; flex:1; cursor:pointer;">
                 💾 Salvar
             </button>
-        </div>
-
     </div>
-</div>
 
-<div id="modalBoasVindasCarnaval" class="modal" style="z-index: 20000;">
-    <div class="modal-content" style="text-align: center; background: linear-gradient(135deg, #4b0082, #8e44ad); border: 2px solid #f1c40f; color: #fff;">
-        <div style="font-size: 60px; margin-bottom: 15px; animation: pular 1s infinite;">🎭</div>
-        <h2 style="color: #f1c40f; font-family: sans-serif; text-transform: uppercase; margin: 0;">É Carnaval 2026!</h2>
-        <p style="margin: 15px 0; font-size: 16px;">O bloco da beleza já começou!</p>
-        <button onclick="fecharModalAtual()" style="background: #f1c40f; color: #000; border: none; padding: 12px 30px; border-radius: 50px; font-weight: bold; cursor: pointer; width: 100%;">APROVEITE OS DESCONTOS DO APP (FECHAR)</button>
-    </div>
-</div>
-
-<div id="modalReagendarCliente" class="modal">
-    <div class="modal-content">
-        <h3>📅 Escolha o Novo Horário</h3>
-        <p style="font-size:12px; color:#666; margin-bottom:15px;">Selecione uma data e um horário disponível:</p>
+    <div id="modalReagendarCliente" class="modal">
+        <div class="modal-content">
+            <h3>📅 Escolha o Novo Horário</h3>
+            <p style="font-size:12px; color:#666; margin-bottom:15px;">Selecione uma data e um horário disponível:</p>
+            
+            <div id="containerDiasReagendar" class="scrollable-list" style="display:flex; gap:8px; overflow-x:auto; padding:10px 0; margin-bottom:15px; border-bottom:1px solid #eee;">
         
         <div id="containerDiasReagendar" class="scrollable-list" style="display:flex; gap:8px; overflow-x:auto; padding:10px 0; margin-bottom:15px; border-bottom:1px solid #eee;">
             </div>
@@ -11819,7 +11784,7 @@ input:checked + .slider:before { transform: translateX(24px); }
 <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-messaging-compat.js"></script> 
 <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-storage-compat.js"></script>
 
- 
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script> 
 
 <script>
 // --- BLOQUEIOS DE INTERFACE ---
@@ -12119,11 +12084,11 @@ window.addEventListener('load', () => {
             setTimeout(() => {
                 const appName = document.getElementById('splashAppName');
                 if(appName) appName.classList.add('show');
-            }, 400); // Reduzido de 1000 para 400ms
+            }, 1000);
             
             // Checklist estilo terminal
             const checks = ['check1', 'check2', 'check3', 'check4', 'check5'];
-            let delay = 200; // Reduzido de 1500 para 200ms
+            let delay = 1500;
             checks.forEach(id => {
                 setTimeout(() => {
                     const el = document.getElementById(id);
@@ -12133,12 +12098,12 @@ window.addEventListener('load', () => {
                         el.querySelector('.status').classList.add('success');
                     }
                 }, delay);
-                delay += 150; // Reduzido de 500 para 150ms
+                delay += 500;
             });
 
             // FINALIZA E ABRE O APP
             setTimeout(() => {
-                splash.style.transition = 'opacity 0.4s';
+                splash.style.transition = 'opacity 0.8s';
                 splash.style.opacity = '0';
                 
                 setTimeout(() => { 
@@ -12151,8 +12116,8 @@ window.addEventListener('load', () => {
                     // ------------------------------
 
                     executarRoteamentoInicial(); 
-                }, 400);
-            }, delay + 100); // Reduzido de 200 para 100ms 
+                }, 800);
+            }, delay + 800); 
 
         } else {
             // Fallback se não tiver splash
@@ -13897,7 +13862,7 @@ function abrirModal(modalId) {
         setTimeout(() => {
             novoModal.classList.add('show');
             modalStack.push(novoModal);
-
+            
             window.history.pushState({ modalOpen: true, modalId: modalId }, "");
         }, 10);
     }
@@ -16030,6 +15995,8 @@ setInterval(async () => {
 
                         // --- LÓGICA GIFT CARD ---
                         if (aviso.tipo === 'gift_received') {
+                            if (typeof confetti === 'function') confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 }, zIndex: 99999 });
+
                             exibirPopup(
                                 "🎁 Presente Recebido!",
                                 `Seu amigo ${aviso.remetenteNome} te enviou ${aviso.moeda} no valor de R$ ${aviso.valor.toFixed(2)}!`,
@@ -17728,34 +17695,54 @@ async function realizarAgendamentoNormalDireto(horario, btnBotao) {
 }
 
 function verificarEstadoBotaoAgendar() {
-    // CORREÇÃO 1: Container Duplo Flutuante (Task 1)
+    console.log("🔍 [DEBUG] verificarEstadoBotaoAgendar() disparada!");
+    
+    // O espião do Estado (Mostra o que está preenchido e o que falta)
+    console.log("📦 [DEBUG] Estado atual do agendamento:", {
+        servico: agendamentoState.servico,
+        data: agendamentoState.data,
+        horario: agendamentoState.horario
+    });
+
     const btn = document.getElementById('btnConfirmarAgendamento');
     const container = document.getElementById('containerBotoesAgendamento');
     
+    if (!container) console.error("❌ [ERRO] A div 'containerBotoesAgendamento' sumiu do HTML!");
+    if (!btn) console.error("❌ [ERRO] O botão 'btnConfirmarAgendamento' sumiu do HTML!");
+
     // Verifica as 3 variáveis cruciais
     if (agendamentoState.servico && agendamentoState.horario && agendamentoState.data) {
+        console.log("✅ [DEBUG] Tudo preenchido! O botão DEVE aparecer agora.");
         
-        // Se tudo estiver preenchido, mostra o container com animação
+        // Se tudo estiver preenchido, mostra o container com animação e FORÇA BRUTA
         if (container) {
-            container.style.display = 'flex'; // Flex para alinhar os botões
-            container.style.position = 'fixed'; 
-            container.style.bottom = '25px';    
-            container.style.left = '50%';       
-            container.style.transform = 'translateX(-50%) scale(1)'; 
-            container.style.zIndex = '999999';  
-            container.style.width = '90%';      
-            container.style.maxWidth = '400px'; 
+            // 🚀 TÁTICA DE FUGA: Move o botão pro final do HTML para escapar de divs com 'overflow: hidden'
+            if (container.parentNode !== document.body) {
+                document.body.appendChild(container);
+                console.log("🚀 [DEBUG] Botão movido para o Body para escapar de armadilhas visuais!");
+            }
+
+            // FORÇA BRUTA CSS: O 'important' ignora qualquer outra regra que esteja atrapalhando
+            container.style.setProperty('display', 'flex', 'important');
+            container.style.setProperty('position', 'fixed', 'important');
+            container.style.setProperty('bottom', '25px', 'important');
+            container.style.setProperty('left', '50%', 'important');
+            container.style.setProperty('z-index', '999999999', 'important'); // Z-index insano
+            container.style.setProperty('width', '90%', 'important');
+            container.style.setProperty('max-width', '400px', 'important');
+            container.style.setProperty('visibility', 'visible', 'important'); 
             
-            // Trigger reflow para reiniciar animação se necessário
-            container.classList.remove('pop-in');
+            // Reflow: Acorda o elemento
             void container.offsetWidth; 
-            container.classList.add('pop-in'); 
+            
+            container.style.setProperty('opacity', '1', 'important');
+            container.style.setProperty('transform', 'translateX(-50%) scale(1)', 'important'); 
         }
         
         if (btn) {
             btn.disabled = false;
-            btn.style.opacity = "1";
-            btn.style.pointerEvents = "auto";
+            btn.style.setProperty('opacity', '1', 'important');
+            btn.style.setProperty('pointer-events', 'auto', 'important');
             
             // Texto do botão dinâmico
             if (agendamentoState.horario === 'imediato') {
@@ -17763,16 +17750,13 @@ function verificarEstadoBotaoAgendar() {
                 btn.style.background = "linear-gradient(45deg, #e74c3c, #c0392b)";
                 btn.style.animation = "pulse-red 1.5s infinite";
             } else {
-                 // CORREÇÃO DATA (FUSO HORÁRIO)
-                 // Usa split para garantir que não haja conversão de timezone
                  let dia = "??", mes = "??";
                  if (agendamentoState.data.includes('-')) {
-                     const parts = agendamentoState.data.split('-'); // YYYY-MM-DD
+                     const parts = agendamentoState.data.split('-');
                      dia = parts[2];
                      mes = parts[1];
                  }
                  
-                 // Verifica se é plano
                  if (agendamentoState.isPeloPlano && agendamentoState.nomePlano) {
                      btn.innerHTML = `💎 CONFIRMAR (Plano: ${agendamentoState.nomePlano})`;
                      btn.style.background = "linear-gradient(45deg, #f1c40f, #d35400)";
@@ -17787,12 +17771,16 @@ function verificarEstadoBotaoAgendar() {
         }
         
     } else {
-        // Se faltar algo, esconde com animação inversa
+        console.warn("⚠️ [DEBUG] O botão está escondido porque falta informação!");
+        
+        // Esconde com animação inversa (Também com Força Bruta)
         if (container) {
-            container.style.transform = 'translateX(-50%) scale(0.8)'; // Encolhe
+            container.style.setProperty('opacity', '0', 'important');
+            container.style.setProperty('transform', 'translateX(-50%) scale(0.8)', 'important'); 
+            
             setTimeout(() => {
-                if(container.style.transform.includes('scale(0.8)')) {
-                    container.style.display = 'none';
+                if(container.style.opacity === '0') {
+                    container.style.setProperty('display', 'none', 'important');
                 }
             }, 300);
         }
@@ -17807,7 +17795,7 @@ function cancelarAgendamentoMagico() {
     
     // Zera variáveis globais auxiliares também, se houver
     window.servicoSelecionado = null;
-    window.dataSelecionadaCliente = new Date(); // Reseta data para hoje se quiser, ou mantém
+    window.dataSelecionadaCliente = new Date(); // Reseta data
     
     // 2. Limpa Visual (Remove classes .selected)
     document.querySelectorAll('.selected').forEach(el => {
@@ -17821,9 +17809,13 @@ function cancelarAgendamentoMagico() {
         if(el.classList.contains('slot-time')) el.style.border = '1px solid #444';
     });
 
-    // 3. Esconde Container Imediatamente
+    // 3. Esconde Container Imediatamente e ZERA o estilo visual com Força Bruta
     const container = document.getElementById('containerBotoesAgendamento');
-    if(container) container.style.display = 'none';
+    if(container) {
+        container.style.setProperty('display', 'none', 'important');
+        container.style.setProperty('opacity', '0', 'important');
+        container.style.setProperty('transform', 'translateX(-50%) scale(0.8)', 'important');
+    }
 }
 
 async function abrirBarbeiroPerfil(barbeiroUid, isGuest = false) {
@@ -19322,6 +19314,7 @@ function abrirHistoricoCliente() {
     });
 }
 
+
 // --- FUNÇÃO AUXILIAR PARA GERAR BOTÕES COM BLOQUEIO DE TIER (CORRIGIDA) ---
 function gerarBotaoPro(label, onclickOriginal, tierNecessario, perfilUsuario) {
     const niveis = { 'tier1': 1, 'tier2': 2, 'tier3': 3, 'tier4': 4 };
@@ -19363,9 +19356,7 @@ function abrirModalAvaliacao(agendamentoId, barbeiroUid) {
   document.getElementById('inputAvaliacaoFotoFile').value = ''; // Limpa o input de arquivo
   document.getElementById('avaliacaoUploadProgress').style.display = 'none'; // Esconde a barra
   
-  setTimeout(() => {
-        abrirModal('modalAvaliacaoCliente');
-    }, 300);
+  abrirModal('modalAvaliacaoCliente');
 }
 
 async function executarAvaliacaoCliente() {
@@ -22637,8 +22628,14 @@ function exibirAnimacaoRecompensaFinal(totalPontos) {
     // 2. Mostra o overlay com a animação do CSS
     if (overlay) overlay.classList.add('show');
 
-    // 3. Feedback visual mantido sem animação
-    tocarSom('sucesso');
+    // 3. Dispara os Confetes (usando a biblioteca que adicionamos)
+    // Lança um jato de confetes dourados e vermelhos do centro
+    confetti({
+        particleCount: 150,
+        spread: 100,
+        origin: { y: 0.6 }, // Sai um pouco abaixo do centro
+        colors: ['#FFD700', '#FFA500', '#FF4500', '#FFFFFF']
+    });
 
     // 4. Esconde tudo automaticamente após 3.5 segundos
     setTimeout(() => {
@@ -23765,6 +23762,10 @@ async function verificarCheckInDiario(usuario) {
         
         tocarSom('sucesso');
         abrirModal('modalCheckIn');
+        
+        if (ehDia7 && typeof confetti === 'function') {
+            confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 }, zIndex: 20000 });
+        }
 
     } catch (e) {
         console.error("Erro no check-in:", e);
@@ -26733,7 +26734,7 @@ function renderizarCardFinanceiro3D(item, cor, fotoUrl) {
     const origemSegura = item.colecaoOrigem || ''; 
 
     return `
-    <div class="card-financeiro feed-item" style="position: relative; margin: 15px 10px 20px 35px; background: #222; border-radius: 12px; border-left: 5px solid ${cor}; padding: 15px 15px 15px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 8px 15px rgba(0,0,0,0.4); z-index: 1;">
+    <div class="card-financeiro gsap-feed-item" style="position: relative; margin: 15px 10px 20px 35px; background: #222; border-radius: 12px; border-left: 5px solid ${cor}; padding: 15px 15px 15px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 8px 15px rgba(0,0,0,0.4); z-index: 1;">
         
         <div style="position: absolute; left: -30px; top: 50%; transform: translateY(-50%); width: 60px; height: 60px; border-radius: 50%; border: 3px solid ${cor}; box-shadow: 5px 5px 15px rgba(0,0,0,0.6); background: #000; overflow: hidden; z-index: 99;">
             <img src="${fotoUrl}" onerror="this.src='/icone.png'" style="width:100%; height:100%; object-fit:cover;">
@@ -27629,25 +27630,25 @@ async function carregarFinanceiro(periodo = 'mes') {
     });
 
     // Atualiza Gráficos (Se as funções existirem no seu código)
-    if (typeof renderizarGraficoEvolucaoLucro === 'function') {
-        const labels = Object.keys(mapaResultados).sort((a,b) => {
-            const [dA, mA] = a.split('/').map(Number);
-            const [dB, mB] = b.split('/').map(Number);
-            return new Date(2026, mA-1, dA) - new Date(2026, mB-1, dB);
-        });
-        const vals = labels.map(l => mapaResultados[l]);
-        renderizarGraficoEvolucaoLucro(labels, vals);
-    }
-    
-    if (typeof renderizarGraficoMetodos === 'function') renderizarGraficoMetodos(mPix, mDinheiro, mDebito, mCredito);
+        if (typeof renderizarGraficoEvolucaoLucro === 'function') {
+            const labels = Object.keys(mapaResultados).sort((a,b) => {
+                const [dA, mA] = a.split('/').map(Number);
+                const [dB, mB] = b.split('/').map(Number);
+                return new Date(2026, mA-1, dA) - new Date(2026, mB-1, dB);
+            });
+            const vals = labels.map(l => mapaResultados[l]);
+            renderizarGraficoEvolucaoLucro(labels, vals);
+        }
+        
+        if (typeof renderizarGraficoMetodos === 'function') renderizarGraficoMetodos(mPix, mDinheiro, mDebito, mCredito);
 
-    window.dadosGraficosCache = { entradas: entradasCategorias, saidas: despesasCategorias };
-    if(typeof renderizarGraficoDinamico === 'function') renderizarGraficoDinamico(window.estadoGraficoAtual || 'saida', false);
+        window.dadosGraficosCache = { entradas: entradasCategorias, saidas: despesasCategorias };
+        if(typeof renderizarGraficoDinamico === 'function') renderizarGraficoDinamico(window.estadoGraficoAtual || 'saida', false);
 
-    // Renderiza a Lista Final
-    if (typeof filtrarListaFinanceira === 'function') {
-        filtrarListaFinanceira('todas');
-    }
+        // Renderiza a Lista Final
+        if (typeof filtrarListaFinanceira === 'function') {
+            filtrarListaFinanceira('todas');
+        }
 
     } catch (e) { 
         console.error(e);
@@ -27739,7 +27740,7 @@ function filtrarListaFinanceira(filtro) {
 
         // Monta o Card
         html += `
-        <div class="feed-item" 
+        <div class="gsap-feed-item" 
              onclick="abrirModalEditarLancamento('${item.id}')"
              style="background: linear-gradient(145deg, #1a1a1a, #222); padding: 12px; border-radius: 10px; margin-bottom: 8px; border-left: 4px solid ${cor}; box-shadow: 0 4px 6px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
             
@@ -27768,25 +27769,19 @@ function filtrarListaFinanceira(filtro) {
 
     lista.innerHTML = html;
 
-    // 4. Animação nativa com Intersection Observer (SUBSTITUINDO GSAP)
-    const observerOptions = {
-        root: document.getElementById('gestaoBodyScroll'),
-        rootMargin: '0px',
-        threshold: 0.1
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-            }
+    // 4. Animação GSAP (MANTIDO)
+    if (typeof gsap !== "undefined" && typeof ScrollTrigger !== "undefined") {
+        gsap.registerPlugin(ScrollTrigger);
+        ScrollTrigger.getAll().forEach(t => t.kill()); 
+        
+        const cards = gsap.utils.toArray(".gsap-feed-item");
+        cards.forEach((card) => {
+            gsap.fromTo(card, { opacity: 0, y: 20 }, {
+                opacity: 1, y: 0, duration: 0.3, ease: "power2.out",
+                scrollTrigger: { trigger: card, scroller: "#gestaoBodyScroll", start: "top 100%" }
+            });
         });
-    }, observerOptions);
-
-    // Observa todos os elementos com classe feed-item
-    document.querySelectorAll('.feed-item').forEach(item => {
-        observer.observe(item);
-    });
+    }
 }
 
 async function abrirModalEditarLancamento(idDoc) {
@@ -28499,15 +28494,25 @@ async function gerenciarPagamentoProfissional(uidProfissional, nomeProfissional,
 
     } catch (e) {
         console.error(e);
-        fecharTodosOsModais();
         alert("Erro ao calcular finanças.");
     }
 }
 
 async function realizarPagamentoNoBanco(uidRecebedor, valorLiquidoParaPagar, nomeRecebedor) {
     // 1. Bloqueios de segurança
-    if (!uidRecebedor || uidRecebedor === auth.currentUser.uid) {
-        return alert("Erro Crítico: O beneficiário não pode ser o mesmo que o pagador. Verifique o cadastro do profissional.");
+    if (!uidRecebedor) {
+        return alert("Erro Crítico: Beneficiário inválido.");
+    }
+    
+    // PERMITIR PAGAMENTO PARA SI MESMO SE FOR PROPRIETÁRIO/ADMIN
+    if (uidRecebedor === auth.currentUser.uid) {
+        // Verifica se o usuário atual é proprietário ou admin
+        const meuPerfil = await db.collection('usuarios').doc(auth.currentUser.uid).get();
+        const dadosPerfil = meuPerfil.data();
+        
+        if (!dadosPerfil.isProprietario && dadosPerfil.tipo !== 'admin') {
+            return alert("Erro Crítico: Apenas proprietários ou administradores podem pagar a si mesmo.");
+        }
     }
     
     if (valorLiquidoParaPagar <= 0) return alert("Não há saldo pendente.");
@@ -31073,6 +31078,7 @@ async function processarCompraPlayStore(skuId) {
                 
                 // 3. Feedback visual (Mantido)
                 tocarSom('sucesso');
+                if (typeof confetti === 'function') confetti({ particleCount: 200 });
                 exibirPopup("💎 SUCESSO!", "Diamantes adicionados!", 'sucesso');
                 fecharModalCompraMoedas();
                 
@@ -34296,6 +34302,7 @@ async function enviarGiftCard() {
         });
 
         fecharTodosOsModais();
+        if(typeof confetti === 'function') confetti();
         exibirPopup("Sucesso!", `Você enviou R$ ${valor.toFixed(2)} em ${tipoMoeda} para ${amigoData.nome}!`);
 
     } catch (e) {
@@ -37953,6 +37960,7 @@ async function comprarKingPoints() {
 
         fecharTodosOsModais();
         tocarSom('sucesso');
+        if (typeof confetti === 'function') confetti();
         exibirPopup("Sucesso!", `Você comprou ${qtd} King Points! 👑`);
         
         // Reabre o modal para ver o saldo novo
@@ -38343,8 +38351,8 @@ async function resgatarBauMissoes() {
         });
 
         fecharTodosOsModais();
-        tocarSom('sucesso');
-        exibirPopup("", `Você ganhou: ${premio.txt}`, "sucesso");
+        if (typeof confetti === 'function') confetti();
+        exibirPopup("🎁 Recompensa!", `Você ganhou: ${premio.txt}`, "sucesso");
         
         // Update local state to hide button immediately
         perfil.bauMissaoResgatado = true;
@@ -39196,7 +39204,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Função para aplicar o observador em novos elementos (chamada periodicamente)
     window.aplicarEfeitoScroll = function() {
         // Seleciona todos os elementos que devem ter animação
-        const elementos = document.querySelectorAll('.card, .produto-card, .em-alta-item, .card-equipe-grid, .agenda-slot-card');
+        const elementos = document.querySelectorAll('.card, .produto-card, .em-alta-item, .card-equipe-grid, .agenda-slot-card, .selectable-item');
         
         elementos.forEach(el => {
             // Se o elemento ainda não está sendo observado
@@ -39661,6 +39669,7 @@ async function girarRoletaEmbedded(vendedorUid) {
         // 5. EXIBE POPUP AO FINAL DA ANIMAÇÃO (6s)
         setTimeout(() => {
             msgDiv.innerHTML = `<b style="color:${resultado.cor}">PARABÉNS! GANHOU ${resultado.label}!</b>`;
+            if(typeof confetti === 'function') confetti({ origin: { y: 0.7 } });
             
             let mensagemPopup = '';
             if (resultado.tipo === 'desconto') {
@@ -40105,6 +40114,7 @@ async function iniciarRoleta(vendedorUid) {
                 setTimeout(() => {
                     document.getElementById('statusRoleta').innerHTML = "<b style='color:#2ecc71'>GANHOU!</b>";
                     
+                    if(typeof confetti === 'function') confetti();
                     if(typeof tocarSom === 'function') tocarSom('vitoria');
 
                     exibirPopupBloqueante("🎉 PARABÉNS!", `
@@ -44866,6 +44876,7 @@ async function girarRoleta() {
             perfil = userDoc.data();
             perfil.uid = auth.currentUser.uid;
 
+            if (typeof confetti === 'function') confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, zIndex: 99999 });
             if (typeof tocarSom === 'function') tocarSom('sucesso');
 
             // Exibe popup bloqueante
@@ -45899,18 +45910,18 @@ function fecharModal(alvo) {
         modal.classList.remove('show');
         modal.classList.remove('active');
         
-        // Adiciona classe para animação de saída
+        // Adiciona classe de animação (para combinar com sua função global)
         modal.classList.add('closing');
-        
-        // Remove o modal do DOM após a animação (0.2s)
+
+        // Delay para animação (300ms) e esconde
         setTimeout(() => {
-            modal.remove();
+            modal.style.display = 'none';
             modal.classList.remove('closing');
             
             // Para vídeo se tiver
             const iframe = modal.querySelector('iframe');
             if (iframe) try { iframe.src = iframe.src; } catch(e) {}
-        }, 200);
+        }, 300);
 
     } else {
         // Se ainda assim não achou (ex: erro de digitação no ID), não trava o sistema
@@ -46399,99 +46410,9 @@ window.resetarBotaoManual = function() {
     }
 }
 
-function isEventoCarnavalAtivo() {
-    const hoje = new Date();
-    const dia = hoje.getDate();
-    const mes = hoje.getMonth(); // No Javascript: 0 = Jan, 1 = Fev
-
-    // Verifica se é Fevereiro (1) E se o dia está entre 10 e 18
-    if (mes === 1 && dia >= 10 && dia <= 18) {
-        return true;
-    }
-    
-    return false;
-}
 
 // 2. FUNÇÃO VISUAL (MÁSCARAS)
-function soltarExplosaoCarnaval() {
-    const icones = ['🎭', '🥁', '🎷', '🎊', '🎉', '💃', '🎺', '✨'];
-    const container = document.body;
-    for (let i = 0; i < 30; i++) {
-        const el = document.createElement('div');
-        el.innerText = icones[Math.floor(Math.random() * icones.length)];
-        el.style.position = 'fixed';
-        el.style.zIndex = '999999';
-        el.style.left = Math.random() * 100 + 'vw';
-        el.style.top = '-50px';
-        el.style.fontSize = (Math.random() * 20 + 20) + 'px'; 
-        el.style.pointerEvents = 'none';
-        el.style.userSelect = 'none';
-        
-        const duracao = Math.random() * 2 + 1; 
-        el.style.transition = `top ${duracao}s ease-in, transform ${duracao}s linear, opacity ${duracao}s ease`;
-        container.appendChild(el);
-
-        setTimeout(() => {
-            el.style.top = '110vh'; 
-            el.style.transform = `rotate(${Math.random() * 360}deg)`;
-            el.style.opacity = '0';
-        }, 50);
-        setTimeout(() => { el.remove(); }, duracao * 1000 + 100);
-    }
-}
-
-// 3. INICIALIZADOR + DETECTOR DE FECHAMENTO
-(function iniciarEventoCarnaval() {
-    if (!isEventoCarnavalAtivo()) return;
-
-    console.log("🎭 CARNAVAL: Aguardando 10s...");
-
-    // A) AGENDAR ABERTURA APÓS 10s
-    setTimeout(() => {
-        const modalBoasVindas = document.getElementById('modalBoasVindasCarnaval');
-        
-        if (modalBoasVindas) {
-            // Verifica se não está aberto ainda
-            if (modalBoasVindas.style.display !== 'block' && !modalBoasVindas.classList.contains('show')) {
-                
-                // 1. ABRE O MODAL
-                abrirModal('modalBoasVindasCarnaval');
-                soltarExplosaoCarnaval();
-                if(typeof tocarSom === 'function') tocarSom('sucesso');
-
-                console.log("🎭 CARNAVAL: Aberto! Fechando em 4s...");
-
-                // 2. AGENDA O FECHAMENTO AUTOMÁTICO (4 SEGUNDOS)
-                setTimeout(() => {
-                    // Verifica se ainda está aberto antes de tentar fechar
-                    if(modalBoasVindas.style.display === 'block' || modalBoasVindas.classList.contains('show')) {
-                        console.log("🎭 CARNAVAL: Tempo esgotado (4s). Fechando...");
-                        
-                        // Tenta usar sua função, se não der, usa a genérica
-                        if(typeof fecharModalAtual === 'function') {
-                            fecharModalAtual();
-                        } else {
-                            fecharModal('modalBoasVindasCarnaval');
-                        }
-                    }
-                }, 4000); // 4000 milissegundos = 4 segundos
-            }
-        } else {
-            console.error("❌ ERRO: HTML do modal carnaval não encontrado.");
-        }
-
-    }, 10000); 
-
-    // B) INTERCEPTOR DE MODAIS
-    const funcaoOriginalAbrirModal = window.abrirModal;
-    window.abrirModal = function(idModal) {
-        if (funcaoOriginalAbrirModal) funcaoOriginalAbrirModal(idModal);
-        if (idModal && idModal !== 'modalAguarde' && idModal !== 'modalLoading' && idModal !== 'modalRastreamento') {
-            soltarExplosaoCarnaval();
-        }
-    };
-
-})();
+// Removido
 
 // Variável global para guardar os dados (Cache)
 window.cacheMeusAgendamentos = [];
@@ -47769,8 +47690,8 @@ function alternarGraficoEntradaSaida() {
     const novoEstado = window.estadoGraficoAtual === 'saida' ? 'entrada' : 'saida';
     window.estadoGraficoAtual = novoEstado;
 
-    // Chama a renderização COM animação (se GSAP disponível)
-    renderizarGraficoDinamico(novoEstado, typeof gsap !== "undefined");
+    // Chama a renderização COM animação
+    renderizarGraficoDinamico(novoEstado, true);
 }
 
 function renderizarGraficoDinamico(tipo, animar = false) {
@@ -47885,8 +47806,19 @@ function renderizarGraficoDinamico(tipo, animar = false) {
         });
 
         // Animação de entrada dos itens da legenda (Stagger)
-        document.querySelectorAll(".legenda-item-anim").forEach(el => el.style.opacity = 1);
-
+        if (typeof gsap !== "undefined") {
+            gsap.to(".legenda-item-anim", {
+                opacity: 1,
+                x: 0,
+                duration: 0.4,
+                stagger: 0.1,
+                ease: "power2.out",
+                delay: 0.2 // Espera o card virar um pouco
+            });
+        } else {
+            // Fallback sem GSAP
+            document.querySelectorAll(".legenda-item-anim").forEach(el => el.style.opacity = 1);
+        }
     };
 
     // --- EXECUÇÃO DA ANIMAÇÃO DO CARD (FLIP 3D) ---
@@ -47913,33 +47845,11 @@ function renderizarGraficoDinamico(tipo, animar = false) {
             ease: "elastic.out(1, 0.6)" // Efeito elástico suave no final
         });
 
-    } else if (animar) {
-        // Fallback CSS quando GSAP não está disponível
-        containerCard.style.transition = "all 0.4s ease";
-        containerCard.style.opacity = "0.5";
-        containerCard.style.transform = "scale(0.95)";
-        
-        setTimeout(() => {
-            desenharGrafico();
-            containerCard.style.opacity = "1";
-            containerCard.style.transform = "scale(1)";
-        }, 200);
     } else {
         // Se for carga inicial (sem animação), só desenha
         desenharGrafico();
-        
-        // Animação de legenda - GSAP ou fallback CSS
         if(typeof gsap !== "undefined") {
-            gsap.to(".legenda-item-anim", { opacity: 1, x: 0, duration: 0.5, stagger: 0.1 });
-        } else {
-            // Fallback CSS simples
-            const legendaItems = document.querySelectorAll(".legenda-item-anim");
-            legendaItems.forEach((item, index) => {
-                setTimeout(() => {
-                    item.style.opacity = "1";
-                    item.style.transform = "translateX(0)";
-                }, index * 100);
-            });
+             gsap.to(".legenda-item-anim", { opacity: 1, x: 0, duration: 0.5, stagger: 0.1 });
         }
     }
 }
