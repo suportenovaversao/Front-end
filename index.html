@@ -1008,11 +1008,101 @@ function abrirModalGenericoCheio(htmlContent) {
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
   <script src="https://unpkg.com/@studio-freight/lenis@1.0.33/dist/lenis.min.js"></script>
 
   <style>
+    /* =========================================
+       🎨 ANIMAÇÕES CSS NATIVAS (SUBSTITUIÇÃO GSAP)
+       ========================================= */
+    
+    /* Fade In Up - Substitui gsap.fromTo com y: 20 */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Fade In - Substitui gsap.to opacity: 0 -> 1 */
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    /* Slide In Left - Substitui animações de entrada pela esquerda */
+    @keyframes slideInLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    /* Slide In Right - Substitui animações de entrada pela direita */
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    /* Classes de animação para aplicação direta */
+    .fade-in-up {
+        animation: fadeInUp 0.5s ease-out forwards;
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.4s ease-out forwards;
+    }
+    
+    .slide-in-left {
+        animation: slideInLeft 0.5s ease-out forwards;
+    }
+    
+    .slide-in-right {
+        animation: slideInRight 0.5s ease-out forwards;
+    }
+    
+    /* Stagger effect para listas - substitui stagger do GSAP */
+    .fade-in-up-stagger {
+        animation: fadeInUp 0.5s ease-out forwards;
+    }
+    
+    /* Para elementos de legenda que antes usavam translateX */
+    .legenda-item-anim {
+        animation: slideInLeft 0.4s ease-out forwards;
+    }
+    
+    /* Para cards de feed que antes usavam GSAP */
+    .gsap-feed-item {
+        animation: fadeInUp 0.3s ease-out forwards;
+    }
+    
+    /* Delays para efeito cascata (stagger) */
+    .stagger-1 { animation-delay: 0.1s; }
+    .stagger-2 { animation-delay: 0.2s; }
+    .stagger-3 { animation-delay: 0.3s; }
+    .stagger-4 { animation-delay: 0.4s; }
+    .stagger-5 { animation-delay: 0.5s; }
+    .stagger-6 { animation-delay: 0.6s; }
+    .stagger-7 { animation-delay: 0.7s; }
+    .stagger-8 { animation-delay: 0.8s; }
+    .stagger-9 { animation-delay: 0.9s; }
+    .stagger-10 { animation-delay: 1.0s; }
+    
+    /* ========================================= */
+
     /* =========================================
        🍎 VACINA PARA IPHONE (BLACKOUT TOTAL)
        ========================================= */
@@ -8911,24 +9001,6 @@ canvas.confetti-canvas {
 </head>
 <body>
 
-<div id="cinematicSplash">
-    
-    <div class="logo-wrapper">
-        <div class="logo-aura"></div>
-        <img id="splashLogo" src="/iconeinicial.png" alt="Logo King Agenda">
-    </div>
-
-    <div id="splashAppName">KING AGENDA</div>
-    <div id="splashSlogan">Where Style Meets Royalty</div>
-    
-    <div id="splashChecklist">
-        <div class="check-item" id="check1"><span>Procurando satélites...</span> <span class="status">Aguarde...</span></div>
-        <div class="check-item" id="check2"><span>Conectando ao servidor King...</span> <span class="status">Aguarde...</span></div>
-        <div class="check-item" id="check3"><span>Sincronizando dados globais...</span> <span class="status">Aguarde...</span></div>
-        <div class="check-item" id="check4"><span>Carregando interface neural...</span> <span class="status">Aguarde...</span></div>
-        <div class="check-item" id="check5"><span>Iniciando sistema...</span> <span class="status">Aguarde...</span></div>
-    </div>
-</div>
 
 <button id="btnPararAlerta" onclick="pararAlertaManual()" class="hidden" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 20000; background: #c0392b; color: white; border: 2px solid #fff; padding: 10px 20px; border-radius: 30px; font-weight: bold; box-shadow: 0 0 15px #c0392b; animation: pulse-red 1s infinite;">
     🔕 PARAR ALERTA
@@ -8944,12 +9016,6 @@ canvas.confetti-canvas {
   <div class="modal-content">
     <div class="spinner"></div>
     <span id="popupAguardeTexto">Aguarde...</span>
-  </div>
-</div>
-
-<div id="modalOnboarding" class="modal modal-fullscreen" style="z-index: 99999; background: #000;">
-  <div class="modal-content" style="width:100%; height:100%; background: #000; padding:0; border:none;">
-    <div id="onboardingContent" style="width:100%; height:100%;"></div>
   </div>
 </div>
 
@@ -11744,34 +11810,34 @@ input:checked + .slider:before { transform: translateX(24px); }
     </div>
 </div>
 
-<div id="modalVisagistaIA" class="modal" style="display:none; z-index: 10000;">
-    <div class="modal-content" style="background: #121212; border: 1px solid #d4af37; border-radius: 15px; max-width: 500px; height: 80vh; display: flex; flex-direction: column; padding: 0; overflow: hidden;">
+<div id="modalVisagistaAbsoluto" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999999; align-items: center; justify-content: center;">
+    
+    <div style="background: #121212; border: 1px solid #d4af37; border-radius: 15px; width: 95%; max-width: 500px; height: 85vh; display: flex; flex-direction: column; overflow: hidden; position: relative; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
         
-        <div style="padding: 15px; background: linear-gradient(45deg, #1a1a1a, #000); border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-between;">
+        <div id="headerVisagistaIA" style="padding: 15px; display: flex; align-items: center; justify-content: space-between;">
             <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="width: 40px; height: 40px; background: #d4af37; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;">🤖</div>
+                <div id="iconeVisagistaIA" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;">🤖</div>
                 <div>
-                    <h3 style="margin: 0; color: #d4af37; font-size: 16px;">Visagista Virtual</h3>
-                    <span style="font-size: 11px; color: #aaa;">IA Especialista em Estilo Masculino</span>
+                    <h3 id="tituloVisagistaIA" style="margin: 0; color: #fff; font-size: 16px;">Visagista</h3>
+                    <span id="subtituloVisagistaIA" style="font-size: 11px; color: #aaa;">Carregando...</span>
                 </div>
             </div>
-            <span class="close-btn" onclick="fecharModal('modalVisagistaIA')" style="color: #fff; font-size: 24px; cursor: pointer;">&times;</span>
-        </div>
-
-        <div id="chatVisagistaBody" style="flex: 1; overflow-y: auto; padding: 15px 15px 50px 15px; display: flex; flex-direction: column; gap: 15px; background-color: #0d0d0d; scroll-behavior: smooth;">
-            <div class="ia-message" style="background: #222; padding: 10px 15px; border-radius: 12px 12px 12px 0; max-width: 85%; align-self: flex-start; border-left: 3px solid #d4af37; color: #ddd; font-size: 14px;">
-                Olá! Sou seu Visagista Pessoal. Para começarmos, me conte: qual o formato do seu rosto (redondo, quadrado, oval...) e como é sua barba hoje?
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div id="btnContainerVipIA"></div>
+                <span onclick="document.getElementById('modalVisagistaAbsoluto').style.display='none'" style="color: #fff; font-size: 30px; cursor: pointer; line-height: 1;">&times;</span>
             </div>
         </div>
 
-        <div style="padding: 15px; background: #1a1a1a; border-top: 1px solid #333; display: flex; gap: 10px;">
-            <input type="text" id="inputVisagista" placeholder="Ex: Meu rosto é oval e tenho falhas na barba..." 
-                   style="flex: 1; background: #000; border: 1px solid #333; padding: 12px; color: #fff; border-radius: 25px; outline: none;">
-            <button onclick="enviarMensagemVisagista()" id="btnEnviarVisagista"
-                    style="background: #d4af37; border: none; width: 45px; height: 45px; border-radius: 50%; color: #000; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+        <div id="chatVisagistaBody" style="flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; background-color: #0d0d0d; scroll-behavior: smooth;">
+        </div>
+
+        <div style="padding: 15px; background: #1a1a1a; border-top: 1px solid #333; display: flex; gap: 10px; align-items: center;">
+            <input type="text" id="inputVisagista" placeholder="Descreva seu rosto ou barba..." style="flex: 1; background: #000; border: 1px solid #444; padding: 15px; color: #fff; border-radius: 25px; outline: none; font-size: 14px;">
+            <button id="btnEnviarVisagista" onclick="enviarMensagemVisagista()" style="background: linear-gradient(45deg, #d4af37, #f1c40f); border: none; width: 50px; height: 50px; border-radius: 50%; color: #000; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px;">
                 ➤
             </button>
         </div>
+
     </div>
 </div>
 
@@ -11822,6 +11888,28 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
     console.error("Erro ao definir a persistência de autenticação:", error);
   });
 const storage = firebase.storage();
+
+// --- BYPASS FORÇADO DO ONBOARDING ---
+// Esta linha força o app a entender que o usuário já viu todas as telas de apresentação
+// Pulando assim as 4 telas (vaga, loja, barbearia/salão, tipo de perfil) e indo direto para o login
+localStorage.setItem('onboarding_concluido', 'true');
+console.log('🚀 BYPASS ONBOARDING ATIVADO: Pulando telas de apresentação forçadamente');
+
+// --- CAMADA EXTRA DE SEGURANÇA ---
+// Força o modal de onboarding a permanecer oculto mesmo que algo tente abri-lo
+function forcarOcultamentoOnboarding() {
+    const modalOnboarding = document.getElementById('modalOnboarding');
+    if (modalOnboarding) {
+        modalOnboarding.style.display = 'none !important';
+        modalOnboarding.classList.remove('show');
+        console.log('🛡️ Modal onboarding forçado a permanecer oculto');
+    }
+}
+
+// Aplica a segurança assim que o DOM estiver pronto
+document.addEventListener('DOMContentLoaded', forcarOcultamentoOnboarding);
+// Aplica novamente após um pequeno delay para garantir
+setTimeout(forcarOcultamentoOnboarding, 1000);
 
 // --- SISTEMA DE SOM ---
 const audioAlert = document.getElementById('sndAlert');
@@ -12880,8 +12968,7 @@ const BACKEND_API_URL = 'https://navalhabackend.onrender.com';
 let currentStoryId = null; // ID do post atual sendo visto
 let commentsListener = null; // Listener para fechar ao sair
 let likesListener = null; // Listener para atualizar likes em tempo real
-const MINHA_KEY_IA = "AIzaSyCIu5lDE_tiOK4GKEj43_LvXyC5nDAXXNI"; // Sua Key Nova
-let modelosDisponiveis = [];
+let modelosDisponiveis = ["gemini-1.5-flash"]; // Modelo fixo para evitar erro 403
 let historicoChatVisagista = [];
 
 
@@ -14172,10 +14259,9 @@ function setupViewSwitcher() {
             { id: 'loja', icon: '🛍️', label: 'Loja' }
         ];
     } else if (perfil.tipo === 'secretaria') {
-        // --- ALTERAÇÃO AQUI: REMOVIDA A AGENDA E DIRECIONA INÍCIO PARA O PAINEL DELA ---
         views = [
-            { id: 'secretaria', icon: '👩‍💼', label: 'Início' }, // Vai para o Dashboard dela
-            { id: 'profissionais', icon: '👥', label: 'Equipe' }, // Atalho direto pra equipe
+            { id: 'secretaria', icon: '👩‍💼', label: 'Início' }, 
+            { id: 'profissionais', icon: '👥', label: 'Equipe' }, 
             { id: 'emAlta', icon: '🔥', label: 'Em Alta' },
             { id: 'loja', icon: '🛍️', label: 'Loja' }
         ];
@@ -14194,13 +14280,15 @@ function setupViewSwitcher() {
             { id: 'emAlta', icon: '🔥', label: 'Em Alta' },
             { id: 'loja', icon: '🛍️', label: 'Loja' }
         ];
-    } else if (perfil.tipo === 'embaixador') {
+    } else if (perfil.tipo === 'cliente' || perfil.tipo === 'embaixador') {
+        // Base comum para Cliente e Embaixador
         views = [
             { id: 'cliente', icon: '🏠', label: 'Início' },
             { id: 'emAlta', icon: '🔥', label: 'Em Alta' },
             { id: 'loja', icon: '🛍️', label: 'Loja' }
         ];
     } else {
+        // Fallback genérico
         views = [
             { id: 'cliente', icon: '🏠', label: 'Início' },
             { id: 'emAlta', icon: '🔥', label: 'Em Alta' },
@@ -14252,14 +14340,55 @@ function switchView(view) {
     }
     // --------------------------------------
 
+    // --- 🚀 SISTEMA DE ANTI-LAG: PAINEL EM ALTA ---
+    if (view === 'emAlta' && !window.liberadoEmAlta) {
+        
+        // 1. Libera a trava para podermos chamar a tela original no fundo
+        window.liberadoEmAlta = true;
+        
+        // 2. Executa a troca de tela imediatamente (isso faz o HTML renderizar e o navegador começar a baixar as imagens pesadas)
+        switchView('emAlta'); 
+        
+        // 3. Aplica o Popup bloqueador com delay de 50ms (para garantir que fique por cima de tudo)
+        setTimeout(() => {
+            let segundos = 5;
+            
+            // Chama o seu loader padrão
+            if(typeof exibirAguarde === 'function') {
+                exibirAguarde(`Estamos carregando todas as imagens, aguarde ${segundos} segundos...`);
+            }
+            
+            // Pausa as "frases engraçadas" do seu loader para fixar a contagem regressiva
+            if (typeof intervaloFrases !== 'undefined' && intervaloFrases) {
+                clearInterval(intervaloFrases);
+            }
+            
+            const textoEl = document.getElementById('popupAguardeTexto');
+            
+            // 4. Inicia o motor do cronômetro (Roda a cada 1 segundo)
+            const timer = setInterval(() => {
+                segundos--;
+                
+                if (segundos > 0) {
+                    if (textoEl) {
+                        textoEl.textContent = `Estamos carregando todas as imagens, aguarde ${segundos} segundos...`;
+                    }
+                } else {
+                    // Quando chegar no zero, destrava tudo!
+                    clearInterval(timer);
+                    window.liberadoEmAlta = false; // Arma a trava para a próxima vez que ele clicar no menu
+                    if (typeof fecharAguarde === 'function') fecharAguarde(null, true);
+                }
+            }, 1000);
+            
+        }, 50);
+        
+        return; // Interrompe a execução atual, pois já mandamos rodar no fundo ali no passo 2
+    }
+    // --- FIM DO SISTEMA ANTI-LAG ---
+
     userView.currentType = view;
     renderCurrentView(); 
-}
-
-
-function switchView(view) {
-    userView.currentType = view;
-    renderCurrentView();
 }
 
 function renderCurrentView() {
@@ -15808,7 +15937,8 @@ auth.onAuthStateChanged(async user => {
         // Define a view inicial
         if (!userView.originalType) {
             userView.originalType = perfil.tipo;
-            userView.currentType = perfil.tipo;
+            // 🟢 CORREÇÃO: Força a view inicial do embaixador a ser a de cliente
+            userView.currentType = (perfil.tipo === 'embaixador') ? 'cliente' : perfil.tipo;
         }
         renderCurrentView(); // Renderiza a view correta
 
@@ -15858,8 +15988,8 @@ if (!perfil.latitude || !perfil.longitude) {
 setInterval(async () => {
     if (!auth.currentUser || !perfil) return;
     
-    // Só roda se for cliente (quem precisa ver o mapa abrir)
-    if (perfil.tipo !== 'cliente') return;
+    // 🟢 CORREÇÃO: Cliente e Embaixador rodam o mapa normalmente
+    if (perfil.tipo !== 'cliente' && perfil.tipo !== 'embaixador') return;
 
     const agora = new Date();
     const horasAtual = agora.getHours();
@@ -15929,7 +16059,8 @@ setInterval(async () => {
         // --- VERIFICAÇÃO AGENDAMENTO EXATO (HORA DO SERVIÇO) ---
         // Backup para garantir que abra na hora exata se a regra de 20min falhar ou for ignorada
         setInterval(() => {
-            if (!perfil || perfil.tipo !== 'cliente') return;
+            // 🟢 CORREÇÃO: Embaixador liberado aqui também
+            if (!perfil || (perfil.tipo !== 'cliente' && perfil.tipo !== 'embaixador')) return; 
             
             const agora = new Date();
             const horaAtual = agora.getHours().toString().padStart(2,'0') + ':' + agora.getMinutes().toString().padStart(2,'0');
@@ -15951,7 +16082,9 @@ setInterval(async () => {
                   });
               });
         }, 60000);// --- !! BLOCO DE ONBOARDING ATUALIZADO !! ---
-        if (perfil.tipo !== 'cliente' && perfil.precisaConfiguracaoInicial === true) {
+        
+        // 🟢 CORREÇÃO: O Onboarding bloqueava os embaixadores. Agora não mais!
+        if (perfil.tipo !== 'cliente' && perfil.tipo !== 'embaixador' && perfil.precisaConfiguracaoInicial === true) {
             setTimeout(() => {
                 const onboardingAberto = document.querySelector('#modalOnboardingServicos, #modalOnboardingPromocoes, #modalOnboardingAgenda, #modalOnboardingLogomarca, #modalOnboardingPortfolio');
                 if (!onboardingAberto || !onboardingAberto.classList.contains('show')) {
@@ -15959,7 +16092,7 @@ setInterval(async () => {
                    iniciarFluxoDeConfiguracaoProfissional(); 
                 }
             }, 2000);
-        } else if (perfil.tipo !== 'cliente' && perfil.precisaConfiguracaoInicial === false) {
+        } else if (perfil.tipo !== 'cliente' && perfil.tipo !== 'embaixador' && perfil.precisaConfiguracaoInicial === false) {
              setTimeout(() => {
                 verificarPendenciasEssenciaisProfissional(user.uid);
              }, 3000); 
@@ -16146,7 +16279,7 @@ setInterval(async () => {
         // --- INÍCIO DOS LISTENERS DA SOLICITAÇÃO ATUAL ---
             
             // LÓGICA DO PROFISSIONAL
-        if (perfil.tipo !== 'cliente') {
+        if (perfil.tipo !== 'cliente' && perfil.tipo !== 'embaixador') { // 🟢 CORREÇÃO: Pula profissionais se for Embaixador
             
             // 1. LISTENER DE AGENDAMENTOS (ATUALIZADO: ALARME + MONITORAMENTO DE VAGA ATIVA)
             if (agendamentoListener) {
@@ -16307,8 +16440,8 @@ setInterval(async () => {
 
         }
 
-        // LÓGICA DO CLIENTE
-        if (perfil.tipo === 'cliente') {
+        // LÓGICA DO CLIENTE (E EMBAIXADOR)
+        if (perfil.tipo === 'cliente' || perfil.tipo === 'embaixador') { // 🟢 CORREÇÃO AQUI
             
             // --- LISTENER MESTRE DE AGENDAMENTOS (DETECTA TUDO) ---
             if (unsubscribeCliente) unsubscribeCliente();
@@ -25986,10 +26119,6 @@ async function carregarEquipeComPagamentos() {
     }
 }
 
-// =================================================================
-// 👑 GESTÃO DE MEMBRO V2 (COM BOTÃO DE NAVEGAÇÃO PARA DASHBOARD)
-// =================================================================
-
 async function abrirGestaoMembroV2(uidMembro) {
     const anterior = document.getElementById('modalGestaoV2');
     if (anterior) anterior.remove();
@@ -25997,41 +26126,84 @@ async function abrirGestaoMembroV2(uidMembro) {
     try {
         const uidDono = auth.currentUser.uid;
         
-        // Busca Dados
+        // 1. Busca Dados do Profissional
         const docUser = await db.collection('usuarios').doc(uidMembro).get();
         if (!docUser.exists) return alert("Erro: Usuário não encontrado.");
         const dados = docUser.data();
         const nome = dados.nome || "Membro";
         const foto = dados.fotoPerfil || dados.logo_url || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
 
-        // --- LÓGICA DE COMISSÃO CORRIGIDA ---
-        // Pega direto o valor do banco. Se salvou 45, lê 45.
         let comissaoProfissional = parseFloat(dados.comissao || dados.taxaComissao || 0);
         if (isNaN(comissaoProfissional) || comissaoProfissional === 0) comissaoProfissional = 50;
 
-        // CALCULA SALDO LÍQUIDO
-        const servicosSnap = await db.collection('agendamentos')
-            .where('barbeiroUid', '==', uidMembro)
-            .where('donoUid', '==', uidDono)
-            .where('status', 'in', ['concluido', 'avaliado']).get();
+        // ========================================================================
+        // 🚀 ESPELHAMENTO DO PAINEL DE DESEMPENHO (O MOTOR PERFEITO)
+        // Faz a exata mesma leitura da função carregarFinanceiroIndividual
+        // ========================================================================
+        
+        const agora = new Date();
+        const dataInicio = new Date(agora.getFullYear(), agora.getMonth(), 1); dataInicio.setHours(0, 0, 0, 0);
+        const dataFim = new Date(agora.getFullYear(), agora.getMonth() + 1, 0); dataFim.setHours(23, 59, 59, 999);
 
-        let totalLiquidoProfissional = 0;
-        servicosSnap.forEach(doc => {
-            const val = parseFloat(doc.data().valor) || 0;
-            // Cálculo: Valor * Porcentagem do Profissional
-            const ganho = val * (comissaoProfissional / 100);
-            totalLiquidoProfissional += ganho;
+        // Busca serviços usando sua correção de dataConclusao
+        const snapAgendamentos = await db.collection('agendamentos')
+            .where('barbeiroUid', '==', uidMembro)
+            .where('dataConclusao', '>=', firebase.firestore.Timestamp.fromDate(dataInicio))
+            .where('dataConclusao', '<=', firebase.firestore.Timestamp.fromDate(dataFim))
+            .get();
+
+        // Busca o extrato do profissional no mês
+        const snapExtrato = await db.collection('extrato_financeiro')
+            .where('donoUid', '==', uidDono) 
+            .where('usuarioUid', '==', uidMembro) 
+            .get();
+
+        let totalMinhaComissao = 0;
+        let totalJaRecebidoNoPeriodo = 0;
+
+        // Loop de comissões (Idêntico ao Relatório)
+        snapAgendamentos.forEach(doc => {
+            const ag = doc.data();
+            
+            const statusValidos = ['concluido', 'avaliado', 'Concluido', 'Concluído'];
+            if (!statusValidos.includes(ag.status)) return;
+
+            const valBruto = parseFloat(ag.valorFinalPago || ag.valor || ag.valorOriginal || 0);
+            let minhaComissao = 0;
+
+            if (ag.comissaoCalculada !== undefined && ag.comissaoCalculada !== null) {
+                minhaComissao = parseFloat(ag.comissaoCalculada);
+            } else if (ag.financeiro && ag.financeiro.comissao) {
+                minhaComissao = parseFloat(ag.financeiro.comissao);
+            } else {
+                const percentualUsar = parseFloat(ag.percentualComissao || comissaoProfissional);
+                minhaComissao = (valBruto * percentualUsar) / 100;
+            }
+
+            totalMinhaComissao += minhaComissao;
         });
 
-        const pagosSnap = await db.collection('pagamentos_equipe')
-            .where('recebedorUid', '==', uidMembro)
-            .where('pagadorUid', '==', uidDono).get();
+        // Loop de saídas (Adiantamentos e Pagamentos - Idêntico ao Relatório)
+        snapExtrato.forEach(doc => {
+            const ext = doc.data();
+            if (ext.agendamentoId) return; 
 
-        let totalJaPago = 0;
-        pagosSnap.forEach(doc => totalJaPago += (parseFloat(doc.data().valor) || 0));
+            // Pega tanto 'saida_manual' quanto 'despesa_comissao' para abater quando clicar no botão de Zerar
+            if (ext.tipo === 'saida_manual' || ext.tipo === 'despesa_comissao') {
+                const valorPago = parseFloat(ext.valor) || 0;
+                const dataPag = ext.dataEvento ? ext.dataEvento.toDate() : new Date();
 
-        let saldoReal = totalLiquidoProfissional - totalJaPago;
-        if (saldoReal > -0.5 && saldoReal < 0.5) saldoReal = 0;
+                if (dataPag >= dataInicio && dataPag <= dataFim) {
+                    totalJaRecebidoNoPeriodo += valorPago;
+                }
+            }
+        });
+
+        // Matemática final cravada
+        let saldoReal = totalMinhaComissao - totalJaRecebidoNoPeriodo;
+        if (saldoReal > -0.5 && saldoReal < 0.5) saldoReal = 0; 
+
+        // ========================================================================
 
         // Cria Modal
         const modal = document.createElement('div');
@@ -26060,7 +26232,7 @@ async function abrirGestaoMembroV2(uidMembro) {
 
             <div style="padding:0 25px 25px 25px;">
                 <div style="background:#121212; padding:20px; border-radius:15px; text-align:center; border:1px solid ${saldoReal > 0 ? '#f39c12' : '#2ecc71'}; margin-top:20px;">
-                    <p style="color:#aaa; font-size:12px; text-transform:uppercase;">SALDO LÍQUIDO A PAGAR</p>
+                    <p style="color:#aaa; font-size:12px; text-transform:uppercase;">SALDO LÍQUIDO A PAGAR (MÊS)</p>
                     <h1 style="color:${saldoReal > 0 ? '#f39c12' : '#2ecc71'}; font-size:36px; margin:5px 0 20px;">
                         ${saldoReal.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}
                     </h1>
@@ -27255,161 +27427,263 @@ function renderizarSeletorDatasEquipe(uidProfissional) {
 window.dadosGraficosCache = { entradas: {}, saidas: {} };
 window.estadoGraficoAtual = 'saida'; // Começa mostrando saídas
 
-// --- TASK 2: CRUD DE METAS (MÚLTIPLAS) ---
+// --- TASK 2: METAS INTELIGENTES (DIÁRIA, SEMANAL, MENSAL) ---
 
 window.abrirConfiguracaoMetas = function() {
     const painelGestao = document.getElementById('gestaoBodyScroll');
     if (painelGestao) painelGestao.style.display = 'none';
-    const modalGestao = document.getElementById('modalFinanceiroProprietario');
-    if (modalGestao) modalGestao.classList.remove('show');
-    if (typeof fecharTodosOsModais === 'function') fecharTodosOsModais();
-    else if (typeof fecharModalAtual === 'function') fecharModalAtual();
-    setTimeout(() => { abrirModal('modalConfigurarMeta'); }, 500);
+    
+    let modal = document.getElementById('modalConfigurarAs3Metas');
+    if(!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modalConfigurarAs3Metas';
+        modal.className = 'modal';
+        modal.style.zIndex = '999999'; // Acima de tudo
+        document.body.appendChild(modal);
+    }
+
+    // Pega do perfil ou assume padrões
+    const p = (typeof perfil !== 'undefined' && perfil) ? perfil : {};
+    const mDiaria = p.metaDiaria || 0;
+    const mSemanal = p.metaSemanal || 0;
+    const mMensal = p.metaMensal || 0;
+    const tipoCalculo = p.tipoCalculoMeta || 'liquido'; // 'liquido' ou 'bruto'
+
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 350px; background: #1a1a1a; border: 1px solid #d4af37;">
+            <h3 style="color: var(--cor-destaque); text-align: center; margin-bottom: 20px;">🎯 Definir Objetivos</h3>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="font-size: 12px; color: #aaa;">Como calcular o progresso?</label>
+                <select id="inputTipoCalculoMeta" style="width: 100%; padding: 10px; border-radius: 8px; background: #222; border: 1px solid #444; color: #fff; margin-top: 5px;">
+                    <option value="bruto" ${tipoCalculo === 'bruto' ? 'selected' : ''}>Faturamento Bruto (Só Entradas)</option>
+                    <option value="liquido" ${tipoCalculo === 'liquido' ? 'selected' : ''}>Lucro Líquido (Entradas - Saídas)</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="font-size: 12px; color: #aaa;">Meta Diária (R$):</label>
+                <input type="number" id="inputMetaDiaria" value="${mDiaria}" placeholder="Ex: 200" style="width: 100%; padding: 10px; border-radius: 8px; background: #222; border: 1px solid #444; color: #fff; margin-top: 5px;">
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="font-size: 12px; color: #aaa;">Meta Semanal (R$):</label>
+                <input type="number" id="inputMetaSemanal" value="${mSemanal}" placeholder="Ex: 1000" style="width: 100%; padding: 10px; border-radius: 8px; background: #222; border: 1px solid #444; color: #fff; margin-top: 5px;">
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="font-size: 12px; color: #aaa;">Meta Mensal (R$):</label>
+                <input type="number" id="inputMetaMensal" value="${mMensal}" placeholder="Ex: 5000" style="width: 100%; padding: 10px; border-radius: 8px; background: #222; border: 1px solid #444; color: #fff; margin-top: 5px;">
+            </div>
+
+            <p style="font-size:10px; color:#777; text-align:center; margin-bottom:15px;">
+                *Para <b>excluir/desativar</b> uma meta, basta colocar o valor <b>0</b>.
+            </p>
+            
+            <div style="display: flex; gap: 10px;">
+                <button onclick="fecharConfiguracaoMetas()" style="flex: 1; background: #555; color: #fff; border: none; border-radius: 8px; padding: 10px; font-weight: bold; cursor: pointer;">Cancelar</button>
+                <button onclick="salvarAs3Metas(this)" style="flex: 1; background: linear-gradient(45deg, #d4af37, #f1c40f); color: #000; border: none; font-weight: bold; border-radius: 8px; padding: 10px; cursor: pointer;">💾 Salvar</button>
+            </div>
+        </div>
+    `;
+    
+    modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('show'), 10);
 }
 
-// 1. Abrir modal para nova meta
-function prepararNovaMeta() {
-    // Limpa inputs
-    document.getElementById('inputIdMeta').value = '';
-    document.getElementById('inputNomeMeta').value = '';
-    document.getElementById('inputValorMeta').value = '';
-    
-    // Fecha gestão e abre modal com delay
-    const modalGestao = document.getElementById('modalFinanceiroProprietario');
-    if(modalGestao && modalGestao.classList.contains('show')) modalGestao.classList.remove('show');
-    
-    setTimeout(() => abrirModal('modalConfigurarMeta'), 300);
-}
-
-// 2. Abrir modal para editar meta
-function editarMetaGestao(id, nome, valor) {
-    document.getElementById('inputIdMeta').value = id;
-    document.getElementById('inputNomeMeta').value = nome;
-    document.getElementById('inputValorMeta').value = valor;
-    
-    const modalGestao = document.getElementById('modalFinanceiroProprietario');
-    if(modalGestao && modalGestao.classList.contains('show')) modalGestao.classList.remove('show');
-    
-    setTimeout(() => abrirModal('modalConfigurarMeta'), 300);
-}
-
-// 3. Salvar (Criar ou Atualizar)
-async function salvarMetaGestao() {
-    const idMeta = document.getElementById('inputIdMeta').value;
-    const nome = document.getElementById('inputNomeMeta').value;
-    const valor = parseFloat(document.getElementById('inputValorMeta').value);
-    
-    if(!nome || !valor || valor <= 0) return alert("Preencha corretamente!");
-    
-    exibirAguarde("Salvando Meta...");
-    
-    try {
-        const docRef = db.collection('usuarios').doc(auth.currentUser.uid);
-        const docSnap = await docRef.get();
-        const dados = docSnap.data();
-        let metas = dados.metasFinanceiras || [];
-        
-        if (idMeta) {
-            // ATUALIZAR
-            const index = metas.findIndex(m => m.id == idMeta);
-            if (index !== -1) {
-                metas[index] = { id: idMeta, nome, valor };
-            }
-        } else {
-            // CRIAR NOVA
-            metas.push({
-                id: Date.now().toString(),
-                nome: nome,
-                valor: valor
-            });
-        }
-        
-        await docRef.update({ metasFinanceiras: metas });
-        
-        // Fecha modal e recarrega
-        const modalMeta = document.getElementById('modalConfigurarMeta');
-        if(modalMeta) modalMeta.classList.remove('show');
-        fecharTodosOsModais();
-
-        if(typeof abrirModalFinanceiroProprietario === 'function') {
-            abrirModalFinanceiroProprietario();
-        } else {
-            abrirModal('modalFinanceiroProprietario');
-            carregarFinanceiro(); 
-        }
-
-    } catch(e) {
-        fecharTodosOsModais();
-        alert("Erro: " + e.message);
+// FUNÇÃO PARA FECHAR O MODAL CORRETAMENTE
+window.fecharConfiguracaoMetas = function() {
+    const modal = document.getElementById('modalConfigurarAs3Metas');
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => { 
+            modal.style.display = 'none'; 
+            const painelGestao = document.getElementById('gestaoBodyScroll');
+            if (painelGestao) painelGestao.style.display = 'block';
+        }, 300);
     }
 }
 
-// 4. Deletar Meta
-async function deletarMetaGestao(id) {
-    if(!confirm("Tem certeza que deseja excluir esta meta?")) return;
-    
+window.salvarAs3Metas = async function(btn) {
+    const mDiaria = parseFloat(document.getElementById('inputMetaDiaria').value) || 0;
+    const mSemanal = parseFloat(document.getElementById('inputMetaSemanal').value) || 0;
+    const mMensal = parseFloat(document.getElementById('inputMetaMensal').value) || 0;
+    const tipoCalc = document.getElementById('inputTipoCalculoMeta').value; // 'bruto' ou 'liquido'
+
+    const textoOriginal = btn.innerHTML;
+    btn.innerHTML = '<div class="spinner" style="width:15px;height:15px;display:inline-block;"></div>';
+    btn.disabled = true;
+
     try {
-        const docRef = db.collection('usuarios').doc(auth.currentUser.uid);
-        const docSnap = await docRef.get();
-        const dados = docSnap.data();
-        let metas = dados.metasFinanceiras || [];
+        await db.collection('usuarios').doc(auth.currentUser.uid).update({
+            metaDiaria: mDiaria,
+            metaSemanal: mSemanal,
+            metaMensal: mMensal,
+            tipoCalculoMeta: tipoCalc
+        });
         
-        // Filtra removendo o ID alvo
-        const novasMetas = metas.filter(m => m.id != id);
+        // Atualiza em memória
+        if (typeof perfil !== 'undefined' && perfil) {
+            perfil.metaDiaria = mDiaria;
+            perfil.metaSemanal = mSemanal;
+            perfil.metaMensal = mMensal;
+            perfil.tipoCalculoMeta = tipoCalc;
+        }
+
+        exibirPopup("Sucesso", "Suas preferências e metas foram salvas!");
+        fecharConfiguracaoMetas(); 
         
-        await docRef.update({ metasFinanceiras: novasMetas });
+        // Recarrega as barras de progresso
+        if (typeof carregarFinanceiro === 'function') carregarFinanceiro('mes'); 
         
-        // Recarrega visual (sem fechar modal de gestão)
-        carregarFinanceiro();
-        
-    } catch(e) {
-        alert("Erro ao excluir: " + e.message);
+    } catch (e) {
+        console.error(e);
+        alert("Erro ao salvar metas: " + e.message);
+        btn.innerHTML = textoOriginal;
+        btn.disabled = false;
     }
 }
 
-// 5. Renderizar Lista de Metas (Chamado dentro do carregarFinanceiro)
-function renderizarMetasList(saldoLiquido, metas) {
+// Funções antigas esvaziadas apenas para não quebrar botões no HTML
+function prepararNovaMeta() {}
+function editarMetaGestao() {}
+async function salvarMetaGestao() {}
+async function deletarMetaGestao() {}
+
+// ========================================================================
+// A MÁGICA DO "RESET" AUTOMÁTICO E DAS 3 BARRAS (LUCRO OU FATURAMENTO)
+// ========================================================================
+async function renderizarMetasList(saldoLiquidoFiltro, metasAntigas) {
     const container = document.getElementById('listaMetasContainer');
     if(!container) return;
-    
-    container.innerHTML = '';
-    
-    if(!metas || metas.length === 0) {
-        container.innerHTML = '<p style="color:#aaa; font-size:11px; text-align:center; padding:20px;">Nenhum objetivo definido.<br>Clique em "+ Nova Meta".</p>';
-        return;
-    }
-    
-    // Saldo considerado (só positivo)
-    const saldoParaBarra = Math.max(0, saldoLiquido);
-    
-    metas.forEach(meta => {
-        const percent = Math.min((saldoParaBarra / meta.valor) * 100, 100);
-        let corBarra = 'linear-gradient(90deg, #e74c3c, #c0392b)'; // Vermelho
-        if(percent >= 50) corBarra = 'linear-gradient(90deg, #f1c40f, #f39c12)'; // Amarelo
-        if(percent >= 100) corBarra = 'linear-gradient(90deg, #2ecc71, #27ae60)'; // Verde
 
-        const html = `
-            <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.05);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                    <span style="font-size:12px; font-weight:bold; color:#fff;">${meta.nome}</span>
-                    <div style="display:flex; gap:8px;">
-                        <button onclick="editarMetaGestao('${meta.id}', '${meta.nome}', ${meta.valor})" style="background:none; border:none; cursor:pointer; font-size:12px;">✏️</button>
-                        <button onclick="deletarMetaGestao('${meta.id}')" style="background:none; border:none; cursor:pointer; font-size:12px;">🗑️</button>
-                    </div>
+    container.innerHTML = '<div style="text-align:center; padding: 15px;"><div class="spinner" style="display:inline-block;"></div><br><span style="font-size:10px; color:#aaa;">Calculando desempenho dos agendamentos...</span></div>';
+
+    const p = (typeof perfil !== 'undefined' && perfil) ? perfil : {};
+    const mDiaria = p.metaDiaria || 0;
+    const mSemanal = p.metaSemanal || 0;
+    const mMensal = p.metaMensal || 0;
+    const tipoCalculo = p.tipoCalculoMeta || 'liquido'; // Lê a preferência (padrão: líquido)
+
+    // 1. O SEGREDO DO RESET
+    const agora = new Date();
+    const inicioHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+    
+    const inicioSemana = new Date(inicioHoje);
+    inicioSemana.setDate(inicioSemana.getDate() - inicioSemana.getDay());
+    
+    const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
+
+    let entradaHoje = 0, entradaSemana = 0, entradaMes = 0;
+    let saidaHoje = 0, saidaSemana = 0, saidaMes = 0;
+
+    try {
+        // 2A. BUSCA AS ENTRADAS (Agendamentos Concluídos)
+        const snapAgendamentos = await db.collection('agendamentos')
+            .where('donoUid', '==', auth.currentUser.uid)
+            .where('status', '==', 'concluido')
+            .get();
+
+        snapAgendamentos.forEach(doc => {
+            const ag = doc.data();
+            let dataTransacao = null;
+            if (ag.dataConclusao && ag.dataConclusao.toDate) dataTransacao = ag.dataConclusao.toDate();
+            else if (ag.ts && ag.ts.toDate) dataTransacao = ag.ts.toDate();
+
+            const valorPago = ag.valorFinalPago || ag.valor || 0;
+
+            if (dataTransacao && dataTransacao >= inicioMes) {
+                entradaMes += valorPago;
+                if (dataTransacao >= inicioSemana) entradaSemana += valorPago;
+                if (dataTransacao >= inicioHoje) entradaHoje += valorPago;
+            }
+        });
+
+        // 2B. BUSCA AS SAÍDAS (Apenas se o cálculo for 'liquido' para poupar processamento)
+        if (tipoCalculo === 'liquido') {
+            const snapExtrato = await db.collection('extrato_financeiro')
+                .where('donoUid', '==', auth.currentUser.uid)
+                .where('ts', '>=', firebase.firestore.Timestamp.fromDate(inicioMes))
+                .get();
+
+            snapExtrato.forEach(doc => {
+                const d = doc.data();
+                if (d.tipo === 'despesa' || d.tipo === 'saida') {
+                    let dataDespesa = null;
+                    if (d.dataEvento && d.dataEvento.toDate) dataDespesa = d.dataEvento.toDate();
+                    else if (d.ts && d.ts.toDate) dataDespesa = d.ts.toDate();
+
+                    const valorDespesa = Math.abs(d.valor || 0);
+
+                    if (dataDespesa && dataDespesa >= inicioMes) {
+                        saidaMes += valorDespesa;
+                        if (dataDespesa >= inicioSemana) saidaSemana += valorDespesa;
+                        if (dataDespesa >= inicioHoje) saidaHoje += valorDespesa;
+                    }
+                }
+            });
+        }
+
+    } catch (e) {
+        console.error("Erro ao calcular Entradas e Saídas:", e);
+    }
+
+    // 3. A MATEMÁTICA BASEADA NA ESCOLHA DO USUÁRIO
+    const valorHoje = tipoCalculo === 'bruto' ? entradaHoje : (entradaHoje - saidaHoje);
+    const valorSemana = tipoCalculo === 'bruto' ? entradaSemana : (entradaSemana - saidaSemana);
+    const valorMes = tipoCalculo === 'bruto' ? entradaMes : (entradaMes - saidaMes);
+
+    // 4. CALCULA A PORCENTAGEM
+    const calcPct = (total, meta) => meta > 0 ? Math.max(Math.min((total / meta) * 100, 100), 0).toFixed(1) : 0;
+    
+    const pctHoje = calcPct(valorHoje, mDiaria);
+    const pctSemana = calcPct(valorSemana, mSemanal);
+    const pctMes = calcPct(valorMes, mMensal);
+
+    const getCor = (pct, meta) => {
+        if(meta <= 0) return '#444';
+        if(pct >= 100) return 'linear-gradient(90deg, #2ecc71, #27ae60)'; 
+        if(pct >= 50) return 'linear-gradient(90deg, #f1c40f, #f39c12)'; 
+        return 'linear-gradient(90deg, #3498db, #2980b9)'; 
+    };
+
+    // Função visual adaptativa
+    const renderBarra = (titulo, valorFinal, entrada, saida, meta, pct, cor, icone, corTitulo) => {
+        const rotuloExibicao = tipoCalculo === 'bruto' ? 'Faturamento' : 'Líquido';
+        const textoMeta = meta > 0 ? `${rotuloExibicao} R$ ${valorFinal.toFixed(2)} / ${meta.toFixed(2)}` : `Livre (R$ ${valorFinal.toFixed(2)})`;
+        const textoPct = meta > 0 ? `${pct}% Concluído` : `Sem Meta (Desativada)`;
+        const wBarra = meta > 0 ? pct : 0; 
+
+        // Muda a legenda embaixo do título dependendo do que o dono escolheu ver
+        let detalheConta = '';
+        if (tipoCalculo === 'liquido') {
+            detalheConta = `<span style="font-size:9px; color:#888; display:block; margin-top:2px;">(Entrou R$ ${entrada.toFixed(2)} | Saiu R$ ${saida.toFixed(2)})</span>`;
+        } else {
+            detalheConta = `<span style="font-size:9px; color:#aaa; display:block; margin-top:2px;">(Apenas Entradas)</span>`;
+        }
+
+        return `
+        <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:5px;">
+                <div>
+                    <span style="font-size:11px; font-weight:bold; color:${corTitulo};">${icone} ${titulo}</span>
+                    ${detalheConta}
                 </div>
-                
-                <div style="background: rgba(255,255,255,0.1); height: 10px; border-radius: 5px; overflow: hidden; position:relative;">
-                    <div style="width: ${percent}%; height: 100%; background: ${corBarra}; transition: width 0.5s;"></div>
-                </div>
-                
-                <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:10px; color:#aaa;">
-                    <span>${percent.toFixed(1)}%</span>
-                    <span>R$ ${saldoLiquido.toFixed(2)} / R$ ${meta.valor.toFixed(2)}</span>
-                </div>
+                <span style="font-size:11px; color:#fff; font-weight:bold; text-align:right;">${textoMeta}</span>
             </div>
-        `;
-        container.innerHTML += html;
-    });
+            <div style="background: rgba(255,255,255,0.1); height: 8px; border-radius: 4px; overflow: hidden;">
+                <div style="width: ${wBarra}%; height: 100%; background: ${cor}; transition: width 1s ease-out;"></div>
+            </div>
+            <div style="text-align:right; margin-top:3px; font-size:9px; color:#aaa;">${textoPct}</div>
+        </div>`;
+    };
+
+    // 5. DESENHA AS 3 BARRAS
+    container.innerHTML = `
+        ${renderBarra('Meta Hoje', valorHoje, entradaHoje, saidaHoje, mDiaria, pctHoje, getCor(pctHoje, mDiaria), '📅', '#3498db')}
+        ${renderBarra('Meta Semanal', valorSemana, entradaSemana, saidaSemana, mSemanal, pctSemana, getCor(pctSemana, mSemanal), '📆', '#9b59b6')}
+        ${renderBarra('Meta Mensal', valorMes, entradaMes, saidaMes, mMensal, pctMes, getCor(pctMes, mMensal), '🗓️', '#f1c40f')}
+    `;
 }
 
 async function carregarFinanceiro(periodo = 'mes') {
@@ -27769,19 +28043,11 @@ function filtrarListaFinanceira(filtro) {
 
     lista.innerHTML = html;
 
-    // 4. Animação GSAP (MANTIDO)
-    if (typeof gsap !== "undefined" && typeof ScrollTrigger !== "undefined") {
-        gsap.registerPlugin(ScrollTrigger);
-        ScrollTrigger.getAll().forEach(t => t.kill()); 
-        
-        const cards = gsap.utils.toArray(".gsap-feed-item");
-        cards.forEach((card) => {
-            gsap.fromTo(card, { opacity: 0, y: 20 }, {
-                opacity: 1, y: 0, duration: 0.3, ease: "power2.out",
-                scrollTrigger: { trigger: card, scroller: "#gestaoBodyScroll", start: "top 100%" }
-            });
-        });
-    }
+    // 4. Animação CSS Nativa (Substitui GSAP)
+    const cards = lista.querySelectorAll(".gsap-feed-item");
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+    });
 }
 
 async function abrirModalEditarLancamento(idDoc) {
@@ -31073,6 +31339,19 @@ async function processarCompraPlayStore(skuId) {
                     // Opcional: mesmo se falhar o consumo agora, você já entregou os diamantes.
                 }
 
+                // --- 🟢 A MÁGICA DO EMBAIXADOR AQUI ---
+                // Mapeie aqui os SKUs da sua loja e os valores REAIS que eles custam na Google Play.
+                let valorEmReaisDaCompra = 0;
+                if (skuId === 'pacote_10') valorEmReaisDaCompra = 10.00;
+                else if (skuId === 'pacote_30') valorEmReaisDaCompra = 30.00;
+                else if (skuId === 'pacote_50') valorEmReaisDaCompra = 50.00;
+                else if (skuId === 'pacote_100') valorEmReaisDaCompra = 100.00;
+
+                if (valorEmReaisDaCompra > 0) {
+                    await processarComissaoEmbaixadorGlobal(auth.currentUser.uid, valorEmReaisDaCompra);
+                }
+                // -------------------------------------
+
                 // 2. Finaliza a transação na interface do Google (Mantido)
                 await paymentResponse.complete('success');
                 
@@ -31424,6 +31703,21 @@ function monitorarHorariosRealTime(uidProfissional, containerId, modoVisualizaca
                     }
 
                     // CARD LIVRE
+                    // VERIFICAÇÃO DE CONFLITO VISUAL: Não renderizar botão se horário está "esmagado" no meio de um atendimento
+                    const horaAvaliadaMin = timeToMin(hora);
+                    let estaEsmagado = false;
+                    
+                    for (let bloco of blocosBloqueados) {
+                        if (horaAvaliadaMin > bloco.inicio && horaAvaliadaMin < bloco.fim) {
+                            estaEsmagado = true;
+                            break;
+                        }
+                    }
+                    
+                    if (estaEsmagado) {
+                        return; // Pula este horário sem renderizar o botão
+                    }
+                    
                     if (isHoje) {
                         const [h, m] = hora.split(':').map(Number);
                         if (h < horaAtual || (h === horaAtual && m <= minAtual)) return;
@@ -32588,9 +32882,14 @@ function aprovarDeposito(id, uid, valor) {
         t.update(userRef, updates);
         t.update(db.collection("solicitacoes").doc(id), { status: "aprovado" });
 
-      }).then(() => {
+      }).then(async () => {
         exibirPopup("Depósito aprovado!");
         notifyUser(uid, "💰 Depósito Aprovado!", `R$ ${valor.toFixed(2)} creditados.`, { link: '#carteira' });
+
+        // --- 🟢 A MÁGICA DO EMBAIXADOR AQUI ---
+        await processarComissaoEmbaixadorGlobal(uid, valor);
+        // -------------------------------------
+
       }).catch(e => {
         exibirPopup("Erro: " + e.message);
       });
@@ -35791,7 +36090,7 @@ async function abrirModalDashboardBarbeiro(uidTarget) {
 }
 
 async function carregarFinanceiroIndividual(periodo = 'mes', uidMembro) {
-    console.log(`>>> 🚀 Iniciando Financeiro Profissional (CORRIGIDO) - ${periodo} <<<`);
+    console.log(`>>> 🚀 Iniciando Financeiro Profissional - Filtro: ${periodo} <<<`);
 
     const elEntradas = document.getElementById('resumoEntradas'); 
     const elSaidas = document.getElementById('resumoSaidas');      
@@ -35805,7 +36104,7 @@ async function carregarFinanceiroIndividual(periodo = 'mes', uidMembro) {
     const agora = new Date();
     let dataInicio, dataFim;
 
-    // --- Lógica de Datas (Mantida) ---
+    // --- CONFIGURAÇÃO DAS DATAS ---
     if (periodo === 'custom') {
         const inpInicio = document.getElementById('finDataInicio').value;
         const inpFim = document.getElementById('finDataFim').value;
@@ -35818,6 +36117,7 @@ async function carregarFinanceiroIndividual(periodo = 'mes', uidMembro) {
             dataInicio = new Date(agora); dataInicio.setHours(0, 0, 0, 0);
         } else if (periodo === 'semana') {
             dataInicio = new Date(agora);
+            // Ajuste para a semana começar na segunda-feira
             const diff = agora.getDate() - agora.getDay() + (agora.getDay() === 0 ? -6 : 1);
             dataInicio.setDate(diff); dataInicio.setHours(0, 0, 0, 0);
         } else {
@@ -35828,37 +36128,40 @@ async function carregarFinanceiroIndividual(periodo = 'mes', uidMembro) {
     try {
         const uidLogado = auth.currentUser.uid;
 
-        // 1. Busca Taxa Padrão do Perfil (Fallback)
+        // 1. Busca Taxa Padrão do Perfil
         const userDoc = await db.collection('usuarios').doc(uidAlvo).get();
-        let taxaPadraoProfissional = 50; // Começa com 50 se não achar nada
+        let taxaPadraoProfissional = 50; 
         
         if (userDoc.exists) {
             const d = userDoc.data();
-            // PEGA O VALOR DIRETO (Sem inverter)
             const taxaBanco = parseFloat(d.comissao || d.taxaComissao || 0);
             if (taxaBanco > 0) taxaPadraoProfissional = taxaBanco;
         }
 
-        // 2. BUSCA AGENDAMENTOS
+        // =====================================================================
+        // 🚀 CORREÇÃO APLICADA: QUERY FIREBASE SIMPLIFICADA
+        // Removemos o `.where('status', 'in', ...)` para evitar erros de Índice
+        // =====================================================================
         const snapAgendamentos = await db.collection('agendamentos')
-            .where('barbeiroUid', '==', uidAlvo)
-            .where('status', 'in', ['concluido', 'avaliado', 'Concluido']) 
-            .where('ts', '>=', firebase.firestore.Timestamp.fromDate(dataInicio))
-            .where('ts', '<=', firebase.firestore.Timestamp.fromDate(dataFim))
-            .get();
+    .where('barbeiroUid', '==', uidAlvo)
+    .where('status', 'in', ['concluido', 'avaliado', 'Concluido']) 
+    .where('dataConclusao', '>=', firebase.firestore.Timestamp.fromDate(dataInicio)) // <-- AGORA SIM!
+    .where('dataConclusao', '<=', firebase.firestore.Timestamp.fromDate(dataFim))    // <-- AGORA SIM!
+    .get();
 
-        // 3. BUSCA EXTRATO (Saídas Manuais / Pagamentos)
         const snapExtrato = await db.collection('extrato_financeiro')
             .where('donoUid', '==', uidLogado) 
             .where('usuarioUid', '==', uidAlvo) 
             .where('tipo', '==', 'saida_manual')
+            .where('dataEvento', '>=', firebase.firestore.Timestamp.fromDate(dataInicio)) // Também adicionado filtro de data aqui para otimizar
+            .where('dataEvento', '<=', firebase.firestore.Timestamp.fromDate(dataFim))
             .get();
 
         let totalMinhaComissao = 0;
         let totalJaRecebidoNoPeriodo = 0;
         const itens = [];
 
-        // --- LÓGICA DO GRÁFICO (Mantida) ---
+        // Prepara gráfico
         const mesesGrafico = {};
         for (let i = 5; i >= 0; i--) {
             const d = new Date();
@@ -35867,32 +36170,27 @@ async function carregarFinanceiroIndividual(periodo = 'mes', uidMembro) {
             mesesGrafico[chave] = 0;
         }
 
-        // =====================================================================
-        // 🔍 O CULO DO PROBLEMA ESTAVA AQUI - AGORA CORRIGIDO
-        // =====================================================================
+        // Processa Agendamentos
         snapAgendamentos.forEach(doc => {
             const ag = doc.data();
+
+            // 🚀 CORREÇÃO APLICADA: FILTRO DE STATUS FEITO NO JAVASCRIPT
+            const statusValidos = ['concluido', 'avaliado', 'Concluido'];
+            if (!statusValidos.includes(ag.status)) return; // Ignora se não estiver concluído
+
             const valBruto = parseFloat(ag.valorFinalPago || ag.valor || ag.valorOriginal || 0);
-            
-            // --- CORREÇÃO APLICADA AQUI: PUXANDO DATACONCLUSAO SE EXISTIR ---
             let campoDataReferencia = ag.dataConclusao ? ag.dataConclusao : ag.ts;
             const dataAg = campoDataReferencia ? campoDataReferencia.toDate() : new Date();
-            // ----------------------------------------------------------------
             
             let minhaComissao = 0;
 
-            // PRIORIDADE 1: Se já tem o cálculo salvo no banco (o ideal)
             if (ag.comissaoCalculada !== undefined && ag.comissaoCalculada !== null) {
                 minhaComissao = parseFloat(ag.comissaoCalculada);
             } 
-            // PRIORIDADE 2: Se tem financeiro salvo (novo padrão)
             else if (ag.financeiro && ag.financeiro.comissao) {
                 minhaComissao = parseFloat(ag.financeiro.comissao);
-            }
-            // PRIORIDADE 3: Recalcula na hora (FALLBACK) - AQUI ESTAVA O ERRO DE 20.40
+            } 
             else {
-                // Usa a porcentagem salva no agendamento OU a do perfil
-                // REMOVI O "100 - X". Agora é direto.
                 const percentualUsar = parseFloat(ag.percentualComissao || taxaPadraoProfissional);
                 minhaComissao = (valBruto * percentualUsar) / 100;
             }
@@ -35900,9 +36198,8 @@ async function carregarFinanceiroIndividual(periodo = 'mes', uidMembro) {
             totalMinhaComissao += minhaComissao;
             itens.push({ tipo: 'servico', descricao: `${ag.servico} - ${ag.clienteNome}`, valor: minhaComissao, valorOriginal: valBruto, data: dataAg });
         });
-        // =====================================================================
 
-        // Processar Extrato (Mantido)
+        // Processa Extrato
         snapExtrato.forEach(doc => {
             const ext = doc.data();
             if (ext.agendamentoId) return; 
@@ -35913,10 +36210,8 @@ async function carregarFinanceiroIndividual(periodo = 'mes', uidMembro) {
 
             if (mesesGrafico[chaveMes] !== undefined) mesesGrafico[chaveMes] += valorPago;
 
-            if (dataPag >= dataInicio && dataPag <= dataFim) {
-                totalJaRecebidoNoPeriodo += valorPago;
-                itens.push({ tipo: 'pagamento', descricao: `💰 ${ext.descricao}`, valor: valorPago, data: dataPag });
-            }
+            totalJaRecebidoNoPeriodo += valorPago;
+            itens.push({ tipo: 'pagamento', descricao: `💰 ${ext.descricao}`, valor: valorPago, data: dataPag });
         });
 
         itens.sort((a, b) => b.data - a.data);
@@ -35930,7 +36225,7 @@ async function carregarFinanceiroIndividual(periodo = 'mes', uidMembro) {
             elSaldo.style.color = saldoFinal >= 0 ? '#2ecc71' : '#e74c3c';
         }
 
-        // RENDERIZA GRÁFICO (Mantido)
+        // RENDERIZA GRÁFICO
         const ctx = document.getElementById('chartEvolucaoAdiantamentos');
         if (ctx) {
             const chartExistente = Chart.getChart("chartEvolucaoAdiantamentos");
@@ -35958,7 +36253,7 @@ async function carregarFinanceiroIndividual(periodo = 'mes', uidMembro) {
             });
         }
 
-        // LISTA VISUAL (Mantida)
+        // LISTA VISUAL
         lista.innerHTML = itens.length === 0 ? '<p style="text-align:center;color:#666;padding:20px;">Nenhum dado no período.</p>' : 
         itens.map(item => {
             const isPag = item.tipo === 'pagamento';
@@ -35975,7 +36270,10 @@ async function carregarFinanceiroIndividual(periodo = 'mes', uidMembro) {
             </div>`;
         }).join('');
 
-    } catch (e) { console.error("Erro Financeiro:", e); }
+    } catch (e) { 
+        console.error("Erro Financeiro:", e); 
+        lista.innerHTML = `<p style="text-align:center;color:red;padding:20px;">Erro ao carregar: ${e.message}</p>`;
+    }
 }
 
 async function abrirModalEditarLancamento(idDoc) {
@@ -36953,42 +37251,40 @@ let altaUnsubscribeLikes = null;
 let unsubscribeEmAlta = null;
 
 function carregarFeedEmAlta() {
-    // ADICIONE ESTA LINHA NO COMEÇO:
-    atualizarProgressoMissao('ver_em_alta');
-    // -----------------------------
+    // Atualiza progresso de missão
+    if(typeof atualizarProgressoMissao === 'function') atualizarProgressoMissao('ver_em_alta');
 
     const container = document.getElementById('gridEmAlta');
-    if (container) container.classList.remove('em-alta-grid');
+    if (!container) return;
+    
+    container.classList.remove('em-alta-grid');
 
     // Se já tiver um listener rodando, não recria o HTML, apenas deixa atualizar
     if (unsubscribeEmAlta) {
-        // Se quiser forçar recarga visual completa, descomente abaixo:
-        // unsubscribeEmAlta(); unsubscribeEmAlta = null;
-        // Mas para fluidez, se já está rodando, não faz nada.
         return; 
     }
 
     container.innerHTML = '<div class="spinner" style="margin: 50px auto;"></div>';
 
-    if(typeof atualizarProgressoMissao === 'function') atualizarProgressoMissao('ver_em_alta');
-
-    // Query em tempo real
+    // Query em tempo real otimizada
     const query = db.collection('batalha_likes')
         .orderBy('count', 'desc') 
         .limit(100);
 
     unsubscribeEmAlta = query.onSnapshot(snap => {
-        // Remove spinner na primeira carga
+        // Remove spinner na primeira carga e prepara a grid
         const spinner = container.querySelector('.spinner');
-        if(spinner) container.innerHTML = '<div class="em-alta-grid"></div>';
+        if(spinner) {
+            container.innerHTML = ''; // Limpa o container
+            const novaGrid = document.createElement('div');
+            novaGrid.className = 'em-alta-grid';
+            container.appendChild(novaGrid);
+        }
         
         const grid = container.querySelector('.em-alta-grid');
+        if (!grid) return;
         
         // Limpa a lista global para manter sincronizado
-        // Nota: Em atualizações "modified", não precisamos limpar, mas em "added"/"removed" sim.
-        // Para simplificar a lógica de ordenação (já que a ordem muda com os likes),
-        // vamos reconstruir o array de dados, mas atualizar o DOM com inteligência.
-        
         listaEmAltaGlobal = [];
         snap.forEach(doc => {
             const d = doc.data();
@@ -36996,6 +37292,9 @@ function carregarFeedEmAlta() {
                 listaEmAltaGlobal.push({ id: doc.id, ...d });
             }
         });
+
+        // Otimização: Fragmento de documento para inserções em massa
+        const fragment = document.createDocumentFragment();
 
         // Loop nas mudanças do banco
         snap.docChanges().forEach(change => {
@@ -37010,9 +37309,18 @@ function carregarFeedEmAlta() {
             const totalLikes = (d.count || 0) + likesFeed;
 
             if (change.type === 'added') {
-                // Adiciona novo item na Grid
+                // Adiciona novo item na Grid usando fragment para evitar reflows no DOM
                 const item = criarElementoEmAlta(d, docId, totalLikes, listaEmAltaGlobal.length - 1);
-                grid.appendChild(item);
+                
+                // LIMPEZA FORÇADA (Caso o GSAP use classes CSS diretamente no HTML do card)
+                if(item.classList) {
+                    item.classList.remove('gsap-card', 'fade-up', 'reveal-on-scroll');
+                    item.style.opacity = '1';
+                    item.style.transform = 'none';
+                    item.style.visibility = 'visible';
+                }
+                
+                fragment.appendChild(item);
             }
             
             if (change.type === 'modified') {
@@ -37021,19 +37329,19 @@ function carregarFeedEmAlta() {
                 if (cardExistente) {
                     const badgeLike = cardExistente.querySelector('.em-alta-likes-text');
                     if (badgeLike) {
-                        // Efeito visual de pulso no número
-                        badgeLike.style.transform = "scale(1.5)";
-                        badgeLike.style.color = "#ff4500"; // Laranja temporário
                         badgeLike.textContent = `❤️ ${totalLikes}`;
-                        
-                        setTimeout(() => {
-                            badgeLike.style.transform = "scale(1)";
-                            badgeLike.style.color = "white";
-                        }, 300);
                     }
                 } else {
                     // Se não achou (caso raro de ordenação), recria
                     const item = criarElementoEmAlta(d, docId, totalLikes, 0); 
+                    
+                    // LIMPEZA FORÇADA
+                    if(item.classList) {
+                        item.classList.remove('gsap-card', 'fade-up', 'reveal-on-scroll');
+                        item.style.opacity = '1';
+                        item.style.transform = 'none';
+                    }
+                    
                     grid.appendChild(item);
                 }
             }
@@ -37043,11 +37351,16 @@ function carregarFeedEmAlta() {
                 if (card) card.remove();
             }
         });
+        
+        // Adiciona tudo de uma vez (Reduz LAG de renderização inicial)
+        if (fragment.children.length > 0) {
+            grid.appendChild(fragment);
+        }
 
     }, error => {
-        console.error(error);
+        console.error("Erro no Feed Em Alta:", error);
         if(container.innerHTML.includes('spinner')) 
-            container.innerHTML = '<p style="text-align:center;">Erro ao carregar feed.</p>';
+            container.innerHTML = '<p style="text-align:center; color:#e74c3c;">Erro ao carregar o feed. Tente novamente.</p>';
     });
 }
 
@@ -37069,7 +37382,7 @@ function criarElementoEmAlta(d, docId, totalLikes, indexVirtual) {
         <div class="em-alta-badge">💎 TOP</div>
         <div class="em-alta-overlay">
             <div class="em-alta-stats">
-                <span class="em-alta-likes-text" style="transition: all 0.3s;">❤️ ${totalLikes}</span>
+                <span class="em-alta-likes-text">❤️ ${totalLikes}</span>
                 <span style="opacity:0.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:80px;">${d.ownerName}</span>
             </div>
         </div>
@@ -45701,82 +46014,10 @@ async function cancelarAgendamentoAposAprovacao(agendamentoId) {
         exibirPopup("Cancelado", "Valor reembolsado.");
         fecharModalPeloId('modalVagaImediataAprovada');
     } catch (e) {
-        fecharTodosOsModais();
         exibirPopup("Erro ao cancelar: " + e.message);
     }
 }
 
-window.abrirChatVisagista = function() {
-    // Verifica status
-    const ehProfissional = ['barbeiro', 'manicure_pedicure', 'designer_cilios', 'admin'].includes(perfil.tipo);
-    const ehVip = isVipAtivo(perfil);
-    const acessoTotal = ehProfissional || ehVip;
-
-    // Reseta histórico
-    historicoChatVisagista = [];
-    
-    // Configura o Prompt
-    const promptSistema = acessoTotal ? PROMPT_VIP : PROMPT_FREE;
-    
-    // MENSAGEM INICIAL (Personalizada conforme seu pedido)
-    const mensagemInicial = acessoTotal 
-        ? "Olá, Mestre! 🍷 Sou seu Visagista VIP. Estou pronto para analisar cada detalhe do seu perfil. Como está seu visual hoje?"
-        : "Olá! Irei te ajudar a chegar na sua melhor versão. Para começar, **me diga qual o formato do seu rosto** (ou como é sua barba) e irei te dar algumas dicas! 💈";
-
-    // Injeta no histórico
-    historicoChatVisagista.push({
-        role: "user",
-        parts: [{ text: promptSistema + " Aja conforme suas instruções a partir de agora." }]
-    });
-    historicoChatVisagista.push({
-        role: "model",
-        parts: [{ text: mensagemInicial }]
-    });
-
-    // --- VISUAL DO MODAL (MANTIDO) ---
-    const modalHeader = document.querySelector('#modalVisagistaIA .modal-content > div:first-child');
-    const iconeIA = modalHeader.querySelector('div > div:first-child');
-    const tituloIA = modalHeader.querySelector('h3');
-    const subTituloIA = modalHeader.querySelector('span');
-
-    if (acessoTotal) {
-        // VIP
-        modalHeader.style.background = "linear-gradient(45deg, #1a1a1a, #000)";
-        modalHeader.style.borderBottom = "1px solid #d4af37";
-        iconeIA.style.background = "#d4af37";
-        iconeIA.innerHTML = "💎";
-        tituloIA.innerHTML = "Visagista Virtual <span style='background:#d4af37; color:#000; font-size:9px; padding:2px 5px; border-radius:4px;'>VIP</span>";
-        subTituloIA.innerText = "Consultoria de Elite Ilimitada";
-        const btnVenda = document.getElementById('btnVendaHeaderIA');
-        if(btnVenda) btnVenda.remove();
-    } else {
-        // FREE
-        modalHeader.style.background = "linear-gradient(45deg, #2c3e50, #000)";
-        modalHeader.style.borderBottom = "1px solid #7f8c8d";
-        iconeIA.style.background = "#95a5a6";
-        iconeIA.innerHTML = "🤖";
-        tituloIA.innerHTML = "Assistente Estilo <span style='background:#95a5a6; color:#000; font-size:9px; padding:2px 5px; border-radius:4px;'>BÁSICO</span>";
-        subTituloIA.innerText = "Dicas iniciais de visagismo";
-
-        if (!document.getElementById('btnVendaHeaderIA')) {
-            const btnHtml = `
-                <button id="btnVendaHeaderIA" onclick="abrirModalVip(); fecharModal('modalVisagistaIA')" 
-                        style="margin-left:auto; margin-right:10px; background:#d4af37; color:#000; border:none; border-radius:4px; font-size:10px; font-weight:bold; padding:5px 10px; cursor:pointer; animation: pulse 2s infinite;">
-                    SEJA VIP 💎
-                </button>
-            `;
-            const closeBtn = modalHeader.querySelector('.close-btn');
-            closeBtn.insertAdjacentHTML('beforebegin', btnHtml);
-        }
-    }
-
-    // Renderiza a msg inicial
-    const chatBody = document.getElementById('chatVisagistaBody');
-    chatBody.innerHTML = `<div class="ia-message">${formatarRespostaIA(mensagemInicial)}</div>`;
-
-    abrirModal('modalVisagistaIA');
-    carregarModelosGoogle();
-}
 
 function iniciarEscutaVagaImediataProfissional(uidLogado) {
     console.log("📡 RADAR LIGADO PARA O ID: " + uidLogado);
@@ -47805,52 +48046,22 @@ function renderizarGraficoDinamico(tipo, animar = false) {
             }
         });
 
-        // Animação de entrada dos itens da legenda (Stagger)
-        if (typeof gsap !== "undefined") {
-            gsap.to(".legenda-item-anim", {
-                opacity: 1,
-                x: 0,
-                duration: 0.4,
-                stagger: 0.1,
-                ease: "power2.out",
-                delay: 0.2 // Espera o card virar um pouco
-            });
-        } else {
-            // Fallback sem GSAP
-            document.querySelectorAll(".legenda-item-anim").forEach(el => el.style.opacity = 1);
-        }
+        // Animação de entrada dos itens da legenda (CSS Nativo)
+        const legendaItems = containerLegenda.querySelectorAll(".legenda-item-anim");
+        legendaItems.forEach((item, index) => {
+            item.style.animationDelay = `${0.2 + (index * 0.1)}s`;
+        });
     };
 
-    // --- EXECUÇÃO DA ANIMAÇÃO DO CARD (FLIP 3D) ---
-    if (animar && typeof gsap !== "undefined") {
-        // Timeline para sequenciar: Gira 90deg -> Troca Conteúdo -> Gira de volta
-        const tl = gsap.timeline();
-
-        // 1. Sai o gráfico antigo (Gira e some)
-        tl.to(containerCard, {
-            rotationX: 90, // Gira no eixo X (cambalhota) ou Y (porta)
-            opacity: 0.5,
-            duration: 0.4,
-            ease: "power2.in"
-        });
-
-        // 2. Troca o conteúdo no meio do giro (Callback)
-        tl.call(desenharGrafico);
-
-        // 3. Entra o gráfico novo
-        tl.to(containerCard, {
-            rotationX: 0,
-            opacity: 1,
-            duration: 0.6,
-            ease: "elastic.out(1, 0.6)" // Efeito elástico suave no final
-        });
-
+    // --- EXECUÇÃO DA ANIMAÇÃO DO CARD (CSS Nativo) ---
+    if (animar) {
+        // Animação CSS simples de fade
+        containerCard.style.animation = 'fadeIn 0.6s ease-out';
+        setTimeout(desenharGrafico, 200); // Espera um pouco para o efeito visual
+        
     } else {
         // Se for carga inicial (sem animação), só desenha
         desenharGrafico();
-        if(typeof gsap !== "undefined") {
-             gsap.to(".legenda-item-anim", { opacity: 1, x: 0, duration: 0.5, stagger: 0.1 });
-        }
     }
 }
 
@@ -48599,121 +48810,102 @@ const PROMPT_FREE = `
     IMPORTANTE: Não seja um vendedor chato. Seja um consultor que quer ajudar mais, mas é impedido pelo sistema.
 `;
 
-// 1. Função que descobre quais modelos sua conta pode usar
+// 1. Função desativada - modelo fixo para evitar erro 403
 async function carregarModelosGoogle() {
-    if (modelosDisponiveis.length > 0) return; // Já carregou
-
-    console.log("🔍 Perguntando ao Google quais modelos você tem...");
-    try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${MINHA_KEY_IA}`);
-        const data = await response.json();
-
-        if (data.models) {
-            // Filtra só os que servem para gerar texto (generateContent)
-            modelosDisponiveis = data.models
-                .filter(m => m.supportedGenerationMethods.includes("generateContent"))
-                .map(m => m.name.replace("models/", "")); // Remove o prefixo 'models/'
-
-            // Coloca os melhores no topo da lista (Flash e Pro)
-            modelosDisponiveis.sort((a, b) => {
-                if (a.includes("flash")) return -1;
-                if (b.includes("flash")) return 1;
-                return 0;
-            });
-
-            console.log("✅ Modelos carregados:", modelosDisponiveis);
-        } else {
-            console.error("❌ Nenhum modelo encontrado na sua conta.", data);
-        }
-    } catch (e) {
-        console.error("Erro ao listar modelos:", e);
-        // Fallback de emergência
-        modelosDisponiveis = ["gemini-1.5-flash", "gemini-pro"]; 
-    }
+    // Função desativada - usamos modelo fixo "gemini-1.5-flash"
+    console.log("🔒 Usando modelo fixo gemini-1.5-flash (busca de modelos desativada)");
+    return;
 }
 
 window.abrirChatVisagista = function() {
-    // Verifica status
-    const ehProfissional = ['barbeiro', 'manicure_pedicure', 'designer_cilios', 'admin'].includes(perfil.tipo);
-    const ehVip = isVipAtivo(perfil);
-    const acessoTotal = ehProfissional || ehVip;
+    try {
+        console.log("Iniciando Visagista ABSOLUTO...");
+        window.modeloVisagistaAtual = "gemini-1.5-flash";
+        
+        if (typeof fecharTodosOsModais === 'function') fecharTodosOsModais();
+        
+        const p = (typeof perfil !== 'undefined' && perfil) ? perfil : {};
+        const tipoUser = p.tipo || 'cliente';
+        const ehProfissional = ['barbeiro', 'manicure_pedicure', 'designer_cilios', 'admin'].includes(tipoUser);
+        const ehVip = (typeof isVipAtivo === 'function') ? isVipAtivo(p) : false;
+        const acessoTotal = ehProfissional || ehVip;
 
-    // Reseta histórico
-    historicoChatVisagista = [];
-    
-    // Configura o Prompt
-    const promptSistema = acessoTotal ? PROMPT_VIP : PROMPT_FREE;
-    
-    // MENSAGEM INICIAL (Personalizada conforme seu pedido)
-    const mensagemInicial = acessoTotal 
-        ? "Olá, Mestre! 🍷 Sou seu Visagista VIP. Estou pronto para analisar cada detalhe do seu perfil. Como está seu visual hoje?"
-        : "Olá! Irei te ajudar a chegar na sua melhor versão. Para começar, **me diga qual o formato do seu rosto** (ou como é sua barba) e irei te dar algumas dicas! 💈";
+        window.historicoChatVisagista = [];
+        window.conteudoHistorico = []; 
+        
+        const pVip = typeof PROMPT_VIP !== 'undefined' ? PROMPT_VIP : "Atue como um visagista especialista de elite.";
+        const pFree = typeof PROMPT_FREE !== 'undefined' ? PROMPT_FREE : "Atue como um consultor de estilo básico.";
+        const promptSistema = acessoTotal ? pVip : pFree;
+        
+        const mensagemInicial = acessoTotal 
+            ? "Olá, Mestre! 🍷 Sou seu Visagista VIP. Como está seu visual hoje?"
+            : "Olá! Sou o seu Visagista Virtual. Me diga qual o formato do seu rosto e irei te dar algumas dicas! 💈";
 
-    // Injeta no histórico
-    historicoChatVisagista.push({
-        role: "user",
-        parts: [{ text: promptSistema + " Aja conforme suas instruções a partir de agora." }]
-    });
-    historicoChatVisagista.push({
-        role: "model",
-        parts: [{ text: mensagemInicial }]
-    });
+        window.historicoChatVisagista.push({ role: "user", parts: [{ text: promptSistema + " Aja conforme suas instruções." }] });
+        window.historicoChatVisagista.push({ role: "model", parts: [{ text: mensagemInicial }] });
 
-    // --- VISUAL DO MODAL (MANTIDO) ---
-    const modalHeader = document.querySelector('#modalVisagistaIA .modal-content > div:first-child');
-    if (modalHeader) {
-        const iconeIA = modalHeader.querySelector('div > div:first-child');
-        const tituloIA = modalHeader.querySelector('h3');
-        const subTituloIA = modalHeader.querySelector('span');
+        const header = document.getElementById('headerVisagistaIA');
+        const icone = document.getElementById('iconeVisagistaIA');
+        const titulo = document.getElementById('tituloVisagistaIA');
+        const sub = document.getElementById('subtituloVisagistaIA');
+        const btnVipContainer = document.getElementById('btnContainerVipIA');
 
-        if (acessoTotal) {
-            // VIP
-            modalHeader.style.background = "linear-gradient(45deg, #1a1a1a, #000)";
-            modalHeader.style.borderBottom = "1px solid #d4af37";
-            if(iconeIA) {
-                iconeIA.style.background = "#d4af37";
-                iconeIA.innerHTML = "💎";
-            }
-            if(tituloIA) tituloIA.innerHTML = "Visagista Virtual <span style='background:#d4af37; color:#000; font-size:9px; padding:2px 5px; border-radius:4px;'>VIP</span>";
-            if(subTituloIA) subTituloIA.innerText = "Consultoria de Elite Ilimitada";
-            const btnVenda = document.getElementById('btnVendaHeaderIA');
-            if(btnVenda) btnVenda.remove();
-        } else {
-            // FREE
-            modalHeader.style.background = "linear-gradient(45deg, #2c3e50, #000)";
-            modalHeader.style.borderBottom = "1px solid #7f8c8d";
-            if(iconeIA) {
-                iconeIA.style.background = "#95a5a6";
-                iconeIA.innerHTML = "🤖";
-            }
-            if(tituloIA) tituloIA.innerHTML = "Assistente Estilo <span style='background:#95a5a6; color:#000; font-size:9px; padding:2px 5px; border-radius:4px;'>BÁSICO</span>";
-            if(subTituloIA) subTituloIA.innerText = "Dicas iniciais de visagismo";
-
-            if (!document.getElementById('btnVendaHeaderIA')) {
-                const btnHtml = `
-                    <button id="btnVendaHeaderIA" onclick="abrirModalVip(); fecharModal('modalVisagistaIA')" 
-                            style="margin-left:auto; margin-right:10px; background:#d4af37; color:#000; border:none; border-radius:4px; font-size:10px; font-weight:bold; padding:5px 10px; cursor:pointer; animation: pulse 2s infinite;">
-                        SEJA VIP 💎
-                    </button>
-                `;
-                const closeBtn = modalHeader.querySelector('.close-btn');
-                if(closeBtn) closeBtn.insertAdjacentHTML('beforebegin', btnHtml);
+        if (header && icone && titulo && sub && btnVipContainer) {
+            if (acessoTotal) {
+                header.style.background = "linear-gradient(45deg, #1a1a1a, #000)";
+                header.style.borderBottom = "1px solid #d4af37";
+                icone.style.background = "#d4af37"; icone.innerHTML = "💎";
+                titulo.innerHTML = "Visagista VIP";
+                sub.innerText = "Consultoria Ilimitada";
+                btnVipContainer.innerHTML = "";
+            } else {
+                header.style.background = "linear-gradient(45deg, #2c3e50, #000)";
+                header.style.borderBottom = "1px solid #7f8c8d";
+                icone.style.background = "#95a5a6"; icone.innerHTML = "🤖";
+                titulo.innerHTML = "Assistente Básico";
+                sub.innerText = "Dicas iniciais";
+                btnVipContainer.innerHTML = `<button onclick="abrirModalVip(); document.getElementById('modalVisagistaAbsoluto').style.display='none'" style="background:#d4af37; color:#000; border:none; border-radius:4px; font-size:10px; font-weight:bold; padding:5px 10px; cursor:pointer;">SEJA VIP 💎</button>`;
             }
         }
+
+        const chatBody = document.getElementById('chatVisagistaBody');
+        if(chatBody) {
+            const corBorda = acessoTotal ? '#d4af37' : '#95a5a6';
+            const txtFormatado = (typeof formatarRespostaIA === 'function') ? formatarRespostaIA(mensagemInicial) : mensagemInicial;
+            chatBody.innerHTML = `
+                <div style="background: #222; padding: 12px 15px; border-radius: 12px 12px 12px 0; max-width: 85%; align-self: flex-start; border-left: 3px solid ${corBorda}; color: #fff; font-size: 14px;">
+                    ${txtFormatado}
+                </div>
+            `;
+        }
+
+        // --- A MÁGICA ACONTECE AQUI ---
+        const modalEl = document.getElementById('modalVisagistaAbsoluto');
+        if (modalEl) {
+            // 1. ARRACA O MODAL DE QUALQUER DIV ESCONDIDA E COLOCA NA RAIZ DO SITE
+            document.body.appendChild(modalEl); 
+            
+            // 2. FORÇA A EXIBIÇÃO
+            modalEl.style.display = 'flex';
+            modalEl.classList.add('show');
+            modalEl.style.opacity = '1';
+            modalEl.style.visibility = 'visible';
+            
+            setTimeout(() => {
+                const inputVisagista = document.getElementById('inputVisagista');
+                if(inputVisagista) inputVisagista.focus();
+            }, 300);
+            
+            console.log("Modal na raiz do site e visível!");
+        } else {
+            alert("O HTML do modalVisagistaAbsoluto não foi encontrado no arquivo.");
+        }
+
+    } catch(erro) {
+        console.error("Erro crítico:", erro);
     }
-
-    // Renderiza a msg inicial
-    const chatBody = document.getElementById('chatVisagistaBody');
-    if(chatBody) chatBody.innerHTML = `<div class="ia-message">${formatarRespostaIA(mensagemInicial)}</div>`;
-
-    abrirModal('modalVisagistaIA');
-    carregarModelosGoogle();
 }
 
-// 3. Envia a mensagem usando a lista carregada
-// ======================================================
-// 🎨 TRADUTOR DE MARKSOWN (DA IA) PARA HTML (BONITO)
-// ======================================================
 function formatarRespostaIA(texto) {
     if (!texto) return "";
 
@@ -48790,50 +48982,36 @@ async function enviarMensagemVisagista() {
     chatBody.scrollTop = chatBody.scrollHeight;
 }
 
-// 4. Loop de Tentativas (Versão com LIMITE AUMENTADO)
 async function chamarGeminiComContingencia(conteudoHistorico) {
-    let erroFinal = null;
-    
-    // Se a lista estiver vazia, usa um fallback básico
-    const listaParaUsar = modelosDisponiveis.length > 0 ? modelosDisponiveis : ["gemini-1.5-flash", "gemini-pro"];
+    try {
+        console.log("[IA] Solicitando resposta ao servidor seguro (Render)...");
+        
+        // Link real do seu backend
+        const URL_SERVIDOR = 'https://navalhabackend.onrender.com/api/chat-visagista'; 
+        
+        const response = await fetch(URL_SERVIDOR, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                conteudoHistorico: conteudoHistorico,
+                modeloAtual: window.modeloVisagistaAtual 
+            })
+        });
 
-    console.log(`🎰 Tentando com ${listaParaUsar.length} modelos disponíveis...`);
+        const data = await response.json();
 
-    for (let modelo of listaParaUsar) {
-        try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${MINHA_KEY_IA}`;
-            
-            const response = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: conteudoHistorico,
-                    generationConfig: { 
-                        temperature: 0.7, 
-                        maxOutputTokens: 8000 // <--- AQUI ESTAVA 500, AGORA É 8000 (TEXTO INFINITO)
-                    }
-                })
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                if (response.status === 429) {
-                    console.warn(`⚠️ Modelo ${modelo} sem cota (429). Tentando próximo...`);
-                    continue; 
-                }
-                throw new Error(data.error?.message || "Erro API");
-            }
-
-            console.log(`✅ SUCESSO com o modelo: ${modelo}`);
-            return data.candidates[0].content.parts[0].text;
-
-        } catch (erro) {
-            console.warn(`❌ Falha em ${modelo}:`, erro.message);
-            erroFinal = erro;
+        if (data.sucesso) {
+            console.log(`✅ Servidor respondeu usando o modelo: ${data.modeloAceito}`);
+            window.modeloVisagistaAtual = data.modeloAceito; // Salva para a próxima mensagem ser mais rápida
+            return data.texto;
+        } else {
+            throw new Error(data.erro || "Falha no servidor.");
         }
+
+    } catch (erro) {
+        console.error("❌ Erro de conexão com o seu backend:", erro);
+        throw erro;
     }
-    throw erroFinal;
 }
 
 // Substitua todo aquele bloco final por este:
