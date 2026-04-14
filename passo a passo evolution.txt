@@ -1,0 +1,47 @@
+https://evolution-king-agenda.onrender.com/instance/connect/KingAgenda
+
+webhook url: https://navalhabackend.onrender.com/webhook/whatsapp
+
+código:
+async function conectarBarbearia() {
+    const headers = { "Content-Type": "application/json", "apikey": "Ja997640401" };
+    
+    console.log("🧹 1. Limpando a área...");
+    await fetch("https://evolution-king-agenda.onrender.com/instance/delete/KingAgenda", { method: "DELETE", headers });
+
+    console.log("✨ 2. Criando o motor zerado...");
+    await fetch("https://evolution-king-agenda.onrender.com/instance/create", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+            "instanceName": "KingAgenda",
+            "token": "Ja997640401",
+            "qrcode": true,
+            "integration": "WHATSAPP-BAILEYS"
+        })
+    });
+
+    console.log("⏳ 3. Esperando o servidor gerar a imagem (5 segundos)...");
+    setTimeout(async () => {
+        const res = await fetch("https://evolution-king-agenda.onrender.com/instance/connect/KingAgenda", { headers: { "apikey": "Ja997640401" } });
+        const data = await res.json();
+        
+        if(data.base64) {
+            console.log("🎉 SUCESSO! OLHA PRA TELA!");
+            const div = document.createElement('div');
+            div.innerHTML = `
+                <div style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.95);z-index:999999;display:flex;justify-content:center;align-items:center;flex-direction:column;">
+                    <h1 style="color:#00e676;font-family:sans-serif;text-align:center;">📱 APONTE O CELULAR DO KING AGENDA! 💈</h1>
+                    <p style="color:white;font-family:sans-serif;font-size:18px;">Vá em Configurações > Aparelhos Conectados > Conectar</p>
+                    <img src="${data.base64}" style="width:350px;height:350px;background:white;padding:20px;border-radius:15px;margin-top:10px;box-shadow: 0 0 20px rgba(0,230,118,0.5);" />
+                    <button onclick="this.parentElement.remove()" style="margin-top:30px;padding:10px 20px;cursor:pointer;font-size:16px;border-radius:8px;border:none;background:#ff3d00;color:white;font-weight:bold;">Fechar Tela</button>
+                </div>
+            `;
+            document.body.appendChild(div);
+        } else {
+            console.log("Vish, a imagem demorou mais que 5 segundos pra ficar pronta. Roda a função de novo!", data);
+        }
+    }, 5000);
+}
+
+conectarBarbearia();

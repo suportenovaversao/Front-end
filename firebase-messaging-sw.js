@@ -17,7 +17,7 @@ firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
 // ==============================================================
-// 2. LÓGICA DE NOTIFICAÇÃO E ALARME (MANTIDA)
+// 2. LÓGICA DE NOTIFICAÇÃO E ALARME (MANTIDA INTACTA)
 // ==============================================================
 
 function dispararLoopNotificacao(title, body, data, vezesRestantes) {
@@ -77,8 +77,12 @@ self.addEventListener('notificationclick', function(event) {
   );
 });
 
-const CACHE_NAME = 'king-agenda-shell-v74'; // Atualizei a versão para limpar o antigo
-const CACHE_IMAGES = 'king-agenda-images-v74'; 
+// ==============================================================
+// 3. CACHE E INTERCEPTAÇÃO (CORRIGIDO PARA UPLOADS)
+// ==============================================================
+
+// Atualizei a versão para garantir que o navegador substitua o arquivo antigo
+const CACHE_NAME = 'king-agenda-shell-v476'; 
 const OFFLINE_URL = '/offline.html';
 
 const FILES_TO_CACHE = [
@@ -87,7 +91,25 @@ const FILES_TO_CACHE = [
   '/offline.html',
   '/firebase-messaging-sw.js',
   '/manifest.json',
-  '/icone.png'
+  '/icone.png',
+  // Firebase SDKs
+  'https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/11.0.1/firebase-auth-compat.js',
+  'https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore-compat.js',
+  'https://www.gstatic.com/firebasejs/11.0.1/firebase-messaging-compat.js',
+  'https://www.gstatic.com/firebasejs/11.0.1/firebase-storage-compat.js',
+  // Google Fonts
+  'https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap',
+  // Leaflet (Mapas)
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+  'https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css',
+  'https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js',
+  // Bibliotecas essenciais
+  'https://cdn.jsdelivr.net/npm/chart.js',
+  'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js',
+  'https://cdn.jsdelivr.net/npm/sweetalert2@11',
+  'https://unpkg.com/@studio-freight/lenis@1.0.33/dist/lenis.min.js'
 ];
 
 // A. INSTALAÇÃO
@@ -106,8 +128,8 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keyList) => {
       return Promise.all(keyList.map((key) => {
-        if (key !== CACHE_NAME && key !== CACHE_IMAGES) {
-          console.log('🧹 SW: Limpando cache antigo:', key);
+        if (key !== CACHE_NAME) {
+          // console.log('🧹 SW: Limpando cache antigo:', key);
           return caches.delete(key);
         }
       }));
@@ -116,39 +138,30 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// C. INTERCEPTAÇÃO E ESTRATÉGIA HÍBRIDA
+// C. INTERCEPTAÇÃO DE REDE (AQUI ESTAVA O ERRO)
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   const url = new URL(request.url);
 
-  // 1. ESTRATÉGIA PARA IMAGENS (Google Storage, Avatares, Produtos)
-  if (request.destination === 'image' || url.hostname.includes('firebasestorage.googleapis.com')) {
-      event.respondWith(
-          caches.open(CACHE_IMAGES).then(async (cache) => {
-              // Tenta pegar do cache primeiro
-              const cachedResponse = await cache.match(request);
-              if (cachedResponse) return cachedResponse;
-
-              // Se não tem, baixa da rede e guarda
-              try {
-                  // mode: 'no-cors' permite baixar imagens opacas (de outros domínios sem cabeçalho)
-                  const networkResponse = await fetch(request, { mode: 'no-cors' });
-                  
-                  // Salva no cache (mesmo se for opaca/status 0)
-                  cache.put(request, networkResponse.clone());
-                  
-                  return networkResponse;
-              } catch(e) {
-                  // Se falhar (sem net e sem cache), retorna vazio ou placeholder
-                  return new Response('', { status: 404, statusText: 'Offline Image' });
-              }
-          })
-      );
-      return;
+  // --- 🛡️ TRAVA DE SEGURANÇA (NOVA) ---
+  // 1. Se for Upload (POST, PUT, DELETE), IGNORA o Service Worker.
+  //    Isso resolve o erro "Request method 'POST' is unsupported".
+  if (request.method !== 'GET') {
+      return; 
   }
 
-  // 2. ESTRATÉGIA PARA O APP (HTML, CSS, JS Local)
-  if (request.mode === 'navigate' || request.destination === 'script' || request.destination === 'style') {
+  // 2. Se for para o Firebase Storage ou Firestore, IGNORA o Service Worker.
+  //    Deixa o navegador tratar direto. Isso resolve os erros de CORS e QUIC.
+  if (url.hostname.includes('firebasestorage.googleapis.com') || 
+      url.hostname.includes('firestore.googleapis.com') ||
+      url.hostname.includes('googleapis.com')) {
+      return;
+  }
+  // --- FIM DA TRAVA ---
+
+  // 3. ESTRATÉGIA PARA O APP (HTML, CSS, JS, Ícones Locais)
+  // Só aplica cache nos arquivos do próprio site para funcionar offline.
+  if (request.mode === 'navigate' || request.destination === 'script' || request.destination === 'style' || request.destination === 'image') {
       event.respondWith(
           caches.match(request).then((cachedResponse) => {
               // Tem no cache? Entrega na hora!

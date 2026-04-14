@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Animações CSS</title>
+    <style>
+        body {
+            background: #0c0c0c;
+            color: #e0e0e0;
+            font-family: 'Poppins', sans-serif;
+            padding: 20px;
+        }
+        
+        /* Animações CSS Nativas (mesmas do sistema principal) */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .fade-in-up {
+            animation: fadeInUp 0.5s ease-out forwards;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        
+        .slide-in-left {
+            animation: slideInLeft 0.5s ease-out forwards;
+        }
+        
+        .slide-in-right {
+            animation: slideInRight 0.5s ease-out forwards;
+        }
+        
+        .test-card {
+            background: linear-gradient(145deg, #1a1a1a, #222);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #d4af37;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        
+        .stagger-1 { animation-delay: 0.1s; }
+        .stagger-2 { animation-delay: 0.2s; }
+        .stagger-3 { animation-delay: 0.3s; }
+        .stagger-4 { animation-delay: 0.4s; }
+        .stagger-5 { animation-delay: 0.5s; }
+    </style>
+</head>
+<body>
+    <h1 class="fade-in-up">🎨 Teste de Animações CSS (GSAP Removido)</h1>
+    
+    <div class="test-card fade-in-up">
+        <h2>✅ Fade In Up</h2>
+        <p>Este card usa a animação fadeInUp que substitui gsap.fromTo com y: 20</p>
+    </div>
+    
+    <div class="test-card slide-in-left">
+        <h2>✅ Slide In Left</h2>
+        <p>Este card entra pela esquerda, substituindo animações GSAP de entrada</p>
+    </div>
+    
+    <div class="test-card slide-in-right">
+        <h2>✅ Slide In Right</h2>
+        <p>Este card entra pela direita, substituindo animações GSAP</p>
+    </div>
+    
+    <div class="test-card fade-in stagger-1">
+        <h2>🎯 Stagger Effect 1</h2>
+        <p>Card com delay de 0.1s (substitui stagger do GSAP)</p>
+    </div>
+    
+    <div class="test-card fade-in stagger-2">
+        <h2>🎯 Stagger Effect 2</h2>
+        <p>Card com delay de 0.2s (substitui stagger do GSAP)</p>
+    </div>
+    
+    <div class="test-card fade-in stagger-3">
+        <h2>🎯 Stagger Effect 3</h2>
+        <p>Card com delay de 0.3s (substitui stagger do GSAP)</p>
+    </div>
+    
+    <div class="test-card fade-in stagger-4">
+        <h2>🎯 Stagger Effect 4</h2>
+        <p>Card com delay de 0.4s (substitui stagger do GSAP)</p>
+    </div>
+    
+    <div class="test-card fade-in stagger-5">
+        <h2>🎯 Stagger Effect 5</h2>
+        <p>Card com delay de 0.5s (substitui stagger do GSAP)</p>
+    </div>
+    
+    <script>
+        console.log('✅ Animações CSS carregadas com sucesso!');
+        console.log('🚀 GSAP foi completamente removido do sistema');
+        console.log('📱 O sistema agora usa apenas CSS nativo para animações');
+        
+        // Teste dinâmico de animação (similar ao que o sistema faria)
+        setTimeout(() => {
+            const cards = document.querySelectorAll('.test-card');
+            console.log(`📊 Encontrados ${cards.length} cards para animar`);
+            
+            cards.forEach((card, index) => {
+                card.addEventListener('click', () => {
+                    card.style.animation = 'none';
+                    setTimeout(() => {
+                        card.style.animation = `fadeInUp 0.5s ease-out forwards`;
+                    }, 10);
+                });
+            });
+        }, 1000);
+    </script>
+</body>
+</html>
