@@ -28234,6 +28234,46 @@ async function salvarFachada() {
 let chartDespesasInstance = null;
 let cacheTransacoesFinanceiras = []; // <--- NOVA VARIÁVEL PARA GUARDAR OS DADOS
 
+// =========================================================
+// SUPER FUNÇÃO DOS BOTÕES DE DATA (Coloque logo acima da sua função principal)
+// =========================================================
+window.mudarDataPeloBotao = function(tipo) {
+    const inputInicio = document.getElementById('finDataInicio');
+    const inputFim = document.getElementById('finDataFim');
+    if (!inputInicio || !inputFim) return;
+
+    // Calcula a data exata do Brasil
+    const d = new Date();
+    const offset = d.getTimezoneOffset() * 60000;
+    const hojeStr = new Date(d.getTime() - offset).toISOString().split('T')[0];
+
+    if (tipo === 'dia') {
+        inputInicio.value = hojeStr;
+        inputFim.value = hojeStr;
+    } else if (tipo === 'semana') {
+        const seteDiasAtras = new Date(d.getTime() - (6 * 24 * 60 * 60 * 1000) - offset);
+        inputInicio.value = seteDiasAtras.toISOString().split('T')[0];
+        inputFim.value = hojeStr;
+    } else if (tipo === 'mes') {
+        const startMes = new Date(d.getFullYear(), d.getMonth(), 1);
+        const fimMes = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+        inputInicio.value = new Date(startMes.getTime() - offset).toISOString().split('T')[0];
+        inputFim.value = new Date(fimMes.getTime() - offset).toISOString().split('T')[0];
+    }
+    
+    // 1. Carrega as entradas e saídas normais
+    if(typeof carregarFinanceiro === 'function') carregarFinanceiro(tipo);
+    
+    // 2. Atualiza o Ticket Médio logo em seguida
+    if(typeof calcularEAtualizarTicketMedio === 'function') {
+        setTimeout(calcularEAtualizarTicketMedio, 800);
+    }
+};
+
+
+// =========================================================
+// A SUA FUNÇÃO ATUALIZADA
+// =========================================================
 async function abrirModalFinanceiroProprietario() {
     abrirModal('modalFinanceiroProprietario');
     const modalContent = document.querySelector('#modalFinanceiroProprietario .modal-content');
@@ -28326,16 +28366,16 @@ async function abrirModalFinanceiroProprietario() {
             </div>
 
             <div style="display:flex; gap:5px; margin-bottom:10px;">
-                <button onclick="carregarFinanceiro('dia')" style="flex:1; font-size:10px; padding:8px;">Hoje</button>
-                <button onclick="carregarFinanceiro('semana')" style="flex:1; font-size:10px; padding:8px;">Semana</button>
-                <button onclick="carregarFinanceiro('mes')" style="flex:1; font-size:10px; padding:8px; background:var(--cor-destaque); color:black;">Mês</button>
+                <button onclick="mudarDataPeloBotao('dia')" style="flex:1; font-size:10px; padding:8px;">Hoje</button>
+                <button onclick="mudarDataPeloBotao('semana')" style="flex:1; font-size:10px; padding:8px;">Semana</button>
+                <button onclick="mudarDataPeloBotao('mes')" style="flex:1; font-size:10px; padding:8px; background:var(--cor-destaque); color:black;">Mês</button>
             </div>
             
             <div style="background:#111; padding:10px; border-radius:8px; margin-bottom:15px; display:flex; gap:5px; align-items:center;">
-                <input type="date" id="finDataInicio" value="${formatarDataInput(inicioMes)}" style="flex:1; font-size:11px; background:#222; border:none; color:#fff;">
+                <input type="date" id="finDataInicio" onchange="if(typeof calcularEAtualizarTicketMedio === 'function') calcularEAtualizarTicketMedio()" value="${formatarDataInput(inicioMes)}" style="flex:1; font-size:11px; background:#222; border:none; color:#fff;">
                 <span style="font-size:10px;">até</span>
-                <input type="date" id="finDataFim" value="${formatarDataInput(hoje)}" style="flex:1; font-size:11px; background:#222; border:none; color:#fff;">
-                <button onclick="carregarFinanceiro('custom')" style="width:auto; padding:5px 10px;">🔍</button>
+                <input type="date" id="finDataFim" onchange="if(typeof calcularEAtualizarTicketMedio === 'function') calcularEAtualizarTicketMedio()" value="${formatarDataInput(hoje)}" style="flex:1; font-size:11px; background:#222; border:none; color:#fff;">
+                <button onclick="carregarFinanceiro('custom'); if(typeof calcularEAtualizarTicketMedio === 'function') setTimeout(calcularEAtualizarTicketMedio, 800);" style="width:auto; padding:5px 10px;">🔍</button>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
@@ -28390,6 +28430,32 @@ async function abrirModalFinanceiroProprietario() {
                 </div>
             </div>
 
+            <h4 style="font-size:12px; color:#888; margin-bottom:5px; text-transform:uppercase;">💵 Ticket Médio da Equipe</h4>
+            <div style="background: #1a1a1a; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #333;">
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+                    <span style="font-size:11px; color:#ccc;">Filtrar cálculo:</span>
+                    <select id="filtroTipoTicketMedio" onchange="if(typeof calcularEAtualizarTicketMedio === 'function') calcularEAtualizarTicketMedio()" style="background:#222; color:#fff; border:1px solid #444; padding:6px; border-radius:8px; font-size:11px;">
+                        <option value="total">Valor Total Produzido</option>
+                        <option value="comissao">Apenas Comissão / Lucro</option>
+                    </select>
+                </div>
+
+                <div id="carrosselProfissionaisTicket" class="scroll-gold-premium" style="display:flex; gap:10px; overflow-x:auto; padding:5px 0 15px 0; border-bottom:1px dashed #333; margin-bottom:15px;">
+                    <p style="color:#888; font-size:11px; text-align:center; width:100%;">Carregando equipe...</p>
+                </div>
+
+                <div style="text-align:center; padding: 10px 0;">
+                    <span style="font-size:11px; color:#aaa; text-transform:uppercase; letter-spacing:1px;">Ticket Médio do Período</span>
+                    <div id="valorTicketMedioDisplay" style="font-size:32px; font-weight:bold; color:#2ecc71; margin: 5px 0;">R$ 0,00</div>
+                    <div id="infoTicketMedio" style="font-size:11px; color:#888;">0 agendamentos contabilizados</div>
+                </div>
+
+                <div style="position: relative; height: 160px; width: 100%; margin-top: 15px;">
+                    <canvas id="graficoTicketMedio"></canvas>
+                </div>
+
+            </div>
             <div style="margin-bottom: 25px;">
                 <button onclick="document.getElementById('modalFinanceiroProprietario').style.display='none'; abrirHistoricoBarbeiro();" 
                     style="width: 100%; background: #222; border: 1px solid #444; color: #fff; padding: 15px; border-radius: 8px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
@@ -28425,7 +28491,405 @@ async function abrirModalFinanceiroProprietario() {
         if(typeof window.carregarCarrosselMetasEquipe === 'function') {
             window.carregarCarrosselMetasEquipe();
         }
+
+        if(typeof window.iniciarModuloTicketMedio === 'function') {
+            window.iniciarModuloTicketMedio();
+        }
+
     }, 100);
+}
+
+// Variáveis globais para o funcionamento do Ticket Médio
+let chartTicketMedioInstance = null;
+let uidProfissionalSelecionadoTicket = 'todos';
+
+async function iniciarModuloTicketMedio() {
+    const carrossel = document.getElementById('carrosselProfissionaisTicket');
+    if (!carrossel) return;
+
+    const donoUid = auth.currentUser.uid;
+    // Feedback visual de carregamento igual ao metas
+    carrossel.innerHTML = '<div style="padding:10px; color:#aaa; font-size:10px;">⏳ Buscando equipe...</div>';
+
+    try {
+        let uidsEquipe = new Set();
+        
+        // 1. Busca dados do dono
+        const donoDoc = await db.collection('usuarios').doc(donoUid).get();
+        const donoData = donoDoc.data() || {};
+        
+        // 2. Tenta ler o campo 'equipe' (Lógica de blindagem do seu código)
+        if (donoData.equipe) {
+            if (Array.isArray(donoData.equipe)) {
+                donoData.equipe.forEach(item => { 
+                    const uidSeguro = (typeof item === 'object' && item !== null) ? item.uid : item;
+                    if(uidSeguro && typeof uidSeguro === 'string') uidsEquipe.add(uidSeguro); 
+                });
+            } else if (typeof donoData.equipe === 'object') {
+                Object.keys(donoData.equipe).forEach(key => { 
+                    if(key && typeof key === 'string') uidsEquipe.add(key); 
+                });
+            }
+        }
+        
+        // 3. Busca por donoUid (Segurança extra que tem no seu código)
+        const snap = await db.collection('usuarios').where('donoUid', '==', donoUid).get();
+        snap.forEach(doc => uidsEquipe.add(doc.id));
+        
+        uidsEquipe.delete(donoUid);
+
+        // 4. Monta a lista final para o Ticket Médio
+        // Adicionamos o "Todos" e o "Dono" primeiro
+        let membros = [
+            {
+                id: 'todos',
+                nome: 'Todos',
+                foto: '🌟' // Ícone para todos
+            },
+            {
+                id: donoUid,
+                nome: 'Meu Caixa',
+                foto: donoData.fotoPerfil || donoData.logo_url || '👑'
+            }
+        ];
+
+        // Busca dados dos membros em paralelo (Igual ao metas)
+        if (uidsEquipe.size > 0) {
+            const promessas = Array.from(uidsEquipe).map(uid => db.collection('usuarios').doc(uid).get());
+            const docs = await Promise.all(promessas);
+            
+            docs.forEach(doc => {
+                if(doc && doc.exists) {
+                    const u = doc.data();
+                    if(u.tipo !== 'cliente') {
+                        membros.push({
+                            id: doc.id,
+                            nome: u.nome ? u.nome.split(' ')[0] : 'Profissional',
+                            foto: u.fotoPerfil || '' // Usa fotoPerfil como no seu código
+                        });
+                    }
+                }
+            });
+        }
+
+        // 5. Renderiza os itens no padrão do Ticket Médio
+        let html = '';
+        membros.forEach(m => {
+            const isTodos = m.id === 'todos';
+            
+            // Lógica de exibição da imagem ou ícone
+            let visualMedia = "";
+            if (m.foto && m.foto.length > 10) {
+                visualMedia = `<img src="${m.foto}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; background:#222;">`;
+            } else {
+                visualMedia = `<div style="width:40px; height:40px; border-radius:50%; background:#222; display:flex; align-items:center; justify-content:center; font-size:18px;">${m.foto || '👤'}</div>`;
+            }
+
+            html += `
+            <div onclick="selecionarProfissionalTicket('${m.id}', this)" 
+                 id="avatar-ticket-${m.id}" 
+                 class="avatar-ticket-item ${isTodos ? 'ativo' : ''}" 
+                 style="display:flex; flex-direction:column; align-items:center; min-width:65px; cursor:pointer; transition:all 0.3s; opacity: ${isTodos ? '1' : '0.5'}; transform: ${isTodos ? 'scale(1.05)' : 'scale(1)'};">
+                <div class="circulo-foto" style="width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; border: 2px solid ${isTodos ? 'var(--cor-destaque)' : 'transparent'}; margin-bottom:5px; overflow:hidden;">
+                    ${visualMedia}
+                </div>
+                <span style="font-size:10px; color: ${isTodos ? '#fff' : '#888'}; font-weight: ${isTodos ? 'bold' : 'normal'}; text-align:center;">${m.nome}</span>
+            </div>
+            `;
+        });
+
+        carrossel.innerHTML = html;
+
+        // Inicia o cálculo
+        if(typeof calcularEAtualizarTicketMedio === 'function') calcularEAtualizarTicketMedio();
+
+    } catch (e) {
+        console.error("❌ Erro no Ticket Médio:", e);
+        carrossel.innerHTML = '<div style="color:red; font-size:10px;">Erro ao carregar equipe</div>';
+    }
+}
+
+// 2. FUNÇÃO QUE CUIDA DO CLIQUE NOS AVATARES
+window.selecionarProfissionalTicket = function(uid, elemento) {
+    window.uidProfissionalSelecionadoTicket = uid;
+
+    // 1. Reseta todos os itens (estilo igual ao seu selecionarMembroMeta)
+    document.querySelectorAll('.avatar-ticket-item').forEach(el => {
+        el.style.opacity = '0.5';
+        el.style.transform = 'scale(1)';
+        el.querySelector('.circulo-foto').style.borderColor = 'transparent';
+        el.querySelector('span').style.color = '#888';
+        el.querySelector('span').style.fontWeight = 'normal';
+    });
+
+    // 2. Destaca o selecionado
+    if(elemento) {
+        elemento.style.opacity = '1';
+        elemento.style.transform = 'scale(1.05)';
+        elemento.querySelector('.circulo-foto').style.borderColor = 'var(--cor-destaque)';
+        elemento.querySelector('span').style.color = '#fff';
+        elemento.querySelector('span').style.fontWeight = 'bold';
+    }
+
+    // 3. Recalcula os valores
+    if(typeof calcularEAtualizarTicketMedio === 'function') {
+        calcularEAtualizarTicketMedio();
+    }
+};
+
+// 3. O CÉREBRO DA MATEMÁTICA E DO BANCO DE DADOS
+window.calcularEAtualizarTicketMedio = async function() {
+    const tipoFiltro = document.getElementById('filtroTipoTicketMedio').value; 
+    const dataInicioStr = document.getElementById('finDataInicio').value; 
+    const dataFimStr = document.getElementById('finDataFim').value;
+    const uidSelecionado = window.uidProfissionalSelecionadoTicket || 'todos';
+
+    if (!dataInicioStr || !dataFimStr) return;
+
+    // Garante que pegue desde o primeiro segundo até o último do dia
+    const start = new Date(dataInicioStr + "T00:00:00");
+    const end = new Date(dataFimStr + "T23:59:59");
+
+    document.getElementById('valorTicketMedioDisplay').innerHTML = "<span style='font-size:16px; color:#aaa;'>Calculando...</span>";
+
+    try {
+        let totalSoma = 0;
+        let totalAgendamentos = 0;
+        let totalJaRecebidoNoPeriodo = 0;
+        let isComissaoEspelhada = false;
+
+        // ========================================================
+        // 🚀 O MOTOR PERFEITO (ESPECIAL PARA COMISSÃO DO PROFISSIONAL)
+        // Lendo idêntico ao painel 'abrirGestaoMembroV2'
+        // ========================================================
+        if (uidSelecionado !== 'todos' && tipoFiltro === 'comissao') {
+            isComissaoEspelhada = true;
+
+            // 1. Busca a % do profissional
+            const docUser = await db.collection('usuarios').doc(uidSelecionado).get();
+            let comissaoProfissional = 50;
+            if (docUser.exists) {
+                const dadosUser = docUser.data();
+                comissaoProfissional = parseFloat(dadosUser.comissao || dadosUser.taxaComissao || 0);
+                if (isNaN(comissaoProfissional) || comissaoProfissional === 0) comissaoProfissional = 50;
+            }
+
+            // 2. Busca direto nos AGENDAMENTOS (A Fonte Perfeita)
+            const snapAgendamentos = await db.collection('agendamentos')
+                .where('barbeiroUid', '==', uidSelecionado)
+                .where('dataConclusao', '>=', firebase.firestore.Timestamp.fromDate(start))
+                .where('dataConclusao', '<=', firebase.firestore.Timestamp.fromDate(end))
+                .get();
+
+            snapAgendamentos.forEach(doc => {
+                const ag = doc.data();
+                const statusValidos = ['concluido', 'avaliado', 'Concluido', 'Concluído'];
+                if (!statusValidos.includes(ag.status)) return;
+
+                const valBruto = parseFloat(ag.valorFinalPago || ag.valor || ag.valorOriginal || 0);
+                let minhaComissao = 0;
+
+                // Regra de comissão exata do seu app
+                if (ag.comissaoCalculada !== undefined && ag.comissaoCalculada !== null) {
+                    minhaComissao = parseFloat(ag.comissaoCalculada);
+                } else if (ag.financeiro && ag.financeiro.comissao) {
+                    minhaComissao = parseFloat(ag.financeiro.comissao);
+                } else {
+                    const percentualUsar = parseFloat(ag.percentualComissao || comissaoProfissional);
+                    minhaComissao = (valBruto * percentualUsar) / 100;
+                }
+
+                totalSoma += minhaComissao;
+                totalAgendamentos++;
+            });
+
+            // 3. Busca saídas manuais e pagamentos para achar o "Saldo a Receber"
+            const snapExtrato = await db.collection('extrato_financeiro')
+                .where('donoUid', '==', auth.currentUser.uid)
+                .where('usuarioUid', '==', uidSelecionado)
+                .get();
+
+            snapExtrato.forEach(doc => {
+                const ext = doc.data();
+                if (ext.agendamentoId) return; 
+
+                if (ext.tipo === 'saida_manual' || ext.tipo === 'despesa_comissao') {
+                    const valorPago = parseFloat(ext.valor) || 0;
+                    let dataRegistro = ext.dataEvento ? ext.dataEvento.toMillis() : (ext.ts ? ext.ts.toMillis() : 0);
+                    if (dataRegistro >= start.getTime() && dataRegistro <= end.getTime()) {
+                        totalJaRecebidoNoPeriodo += valorPago;
+                    }
+                }
+            });
+
+        } else {
+            // ========================================================
+            // LÓGICA PADRÃO (Para o "Todos", Dono ou Filtro de Valor Total)
+            // ========================================================
+            const snapshot = await db.collection('extrato_financeiro')
+                .where('donoUid', '==', auth.currentUser.uid)
+                .get();
+
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const uidDesteRegistro = data.usuarioUid || data.donoUid;
+
+                let dataRegistro = data.dataEvento ? data.dataEvento.toMillis() : (data.ts ? data.ts.toMillis() : 0);
+                if (dataRegistro < start.getTime() || dataRegistro > end.getTime()) return; 
+
+                const tipo = data.tipo || "";
+                const isDespesa = tipo.includes('despesa') || tipo.includes('saida') || data.valor < 0;
+
+                if (!isDespesa) {
+                    if (uidSelecionado !== 'todos' && uidDesteRegistro !== uidSelecionado) return; 
+
+                    if (tipoFiltro === 'comissao') {
+                        let valorLiq = data.valorLiquidoProfissional || 0;
+                        if (uidDesteRegistro === auth.currentUser.uid && (!data.valorLiquidoProfissional || data.valorLiquidoProfissional == 0)) {
+                            valorLiq = data.valor || 0; 
+                        }
+                        totalSoma += parseFloat(valorLiq);
+                    } else {
+                        totalSoma += parseFloat(data.valor || 0);
+                    }
+
+                    if (tipo.includes('servico') || tipo.includes('venda') || tipo.includes('receita')) {
+                        totalAgendamentos++;
+                    }
+                }
+            });
+        }
+
+        // ========================================================
+        // O CLONE DO "TODOS" (Garante a igualdade do Topo da Tela)
+        // ========================================================
+        if (uidSelecionado === 'todos' && tipoFiltro === 'total') {
+            const spanEntradas = document.getElementById('resumoEntradas');
+            if (spanEntradas) {
+                const textoEntradas = spanEntradas.innerText;
+                let valorLimpo = textoEntradas.replace(/[^\d.,-]/g, '');
+                if (valorLimpo.includes(',')) {
+                    valorLimpo = valorLimpo.replace(/\./g, '').replace(',', '.');
+                }
+                const valorExatoCima = parseFloat(valorLimpo);
+                if (!isNaN(valorExatoCima) && valorExatoCima > 0) {
+                    totalSoma = valorExatoCima;
+                }
+            }
+        }
+
+        // ==========================================================
+        // EXIBIÇÃO NO PAINEL
+        // ==========================================================
+        let ticketMedio = 0;
+        if (totalAgendamentos > 0) {
+            ticketMedio = totalSoma / totalAgendamentos;
+        }
+
+        document.getElementById('valorTicketMedioDisplay').innerHTML = `R$ ${ticketMedio.toFixed(2).replace('.', ',')}`;
+        
+        if (isComissaoEspelhada) {
+            let saldoReal = totalSoma - totalJaRecebidoNoPeriodo;
+            if (saldoReal > -0.5 && saldoReal < 0.5) saldoReal = 0;
+
+            // 🌟 O NOVO RAIO-X ESPELHADO DO GESTÃO DE MEMBROS
+            document.getElementById('infoTicketMedio').innerHTML = `
+                <div style="display:inline-block; background:#222; padding:8px 12px; border-radius:8px; margin-top:5px; border:1px solid #444; text-align:left;">
+                    <span style="color:#aaa;">Comissão Produzida:</span> <b style="color:#2ecc71;">R$ ${totalSoma.toFixed(2).replace('.', ',')}</b> <br>
+                    <span style="color:#aaa;">Já Pago/Adiantado:</span> <b style="color:#e74c3c;">R$ ${totalJaRecebidoNoPeriodo.toFixed(2).replace('.', ',')}</b> <br>
+                    <span style="color:#aaa;">Saldo a Receber:</span> <b style="color:#f39c12; font-size:14px;">R$ ${saldoReal.toFixed(2).replace('.', ',')}</b> <br>
+                    <hr style="border:0; border-top:1px dashed #444; margin:5px 0;">
+                    <span style="color:#aaa;">Dividido por:</span> <b style="color:#fff;">${totalAgendamentos}</b> <span style="color:#aaa;">agendamentos</span>
+                </div>
+            `;
+        } else {
+            // Raio-X Padrão
+            document.getElementById('infoTicketMedio').innerHTML = `
+                <div style="display:inline-block; background:#222; padding:8px 12px; border-radius:8px; margin-top:5px; border:1px solid #444;">
+                    <span style="color:#aaa;">Soma Gerada:</span> <b style="color:#2ecc71;">R$ ${totalSoma.toFixed(2).replace('.', ',')}</b> <br>
+                    <span style="color:#aaa;">Dividido por:</span> <b style="color:#fff;">${totalAgendamentos}</b> <span style="color:#aaa;">agendamentos/vendas</span>
+                </div>
+            `;
+        }
+
+        if (typeof renderizarGraficoTicketMedio === 'function') {
+            renderizarGraficoTicketMedio(totalSoma, totalAgendamentos, ticketMedio);
+        }
+
+    } catch (error) {
+        console.error("Erro ao calcular Ticket Médio:", error);
+        document.getElementById('valorTicketMedioDisplay').innerHTML = "<span style='color:red; font-size:14px;'>Erro ao calcular.</span>";
+    }
+}
+
+// 4. FUNÇÃO QUE DESENHA O GRÁFICO DO TICKET
+function renderizarGraficoTicketMedio(totalSoma, totalAgendamentos, ticketMedio) {
+    const canvas = document.getElementById('graficoTicketMedio');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    // Se já existia um gráfico antigo, apaga para desenhar o novo
+    if (chartTicketMedioInstance) {
+        chartTicketMedioInstance.destroy();
+    }
+
+    // Só desenha se tiver dados
+    if (totalAgendamentos === 0) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+    }
+
+    chartTicketMedioInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Performance'],
+            datasets: [
+                {
+                    label: 'Total Faturado (R$)',
+                    data: [totalSoma],
+                    backgroundColor: 'rgba(54, 162, 235, 0.4)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                },
+                {
+                    label: 'Ticket Médio (R$)',
+                    data: [ticketMedio],
+                    backgroundColor: 'rgba(46, 204, 113, 0.8)', // Verde
+                    borderColor: 'rgba(46, 204, 113, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: { color: '#ccc', font: { size: 11 } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': R$ ' + context.raw.toFixed(2).replace('.', ',');
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#888', font: { size: 10 } }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#888', font: { size: 10 } }
+                }
+            }
+        }
+    });
 }
 
 function renderizarSeletorDatasEquipe(uidProfissional) {
