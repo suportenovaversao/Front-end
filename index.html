@@ -48906,9 +48906,9 @@ function mostrarDetalhesFinaisNoMesmoPopup(valorFinal, valorOriginal) {
     const tituloEl = document.getElementById('confirmacaoGenericaTitulo');
     const msgEl = document.getElementById('confirmacaoGenericaMensagem');
 
-    // 1. Atualiza os Textos
-    tituloEl.textContent = "Confirmar Agendamento?";
-    tituloEl.style.color = "var(--cor-destaque)";
+    // 1. Atualiza os Textos (Agora com cara de Recibo Final)
+    tituloEl.textContent = "Agendamento Confirmado! ✅";
+    tituloEl.style.color = "#2ecc71"; // Verde sucesso
     
     const horarioTexto = horario === 'imediato' ? 'uma Vaga Imediata' : `o horário das ${horario}`;
     const isVipUser = typeof isVipAtivo === 'function' ? isVipAtivo(perfil) : false; 
@@ -48922,76 +48922,67 @@ function mostrarDetalhesFinaisNoMesmoPopup(valorFinal, valorOriginal) {
         ${textoVip}
     </div>`;
 
-    // 2. Restaura botões
-    btnNao.style.display = 'block';
-    btnNao.textContent = "Cancelar";
+    // 2. Ajuste dos Botões
+    // Como a vaga já está salva no banco, escondemos o "Cancelar" para não confundir o cliente
+    if (btnNao) {
+        btnNao.style.display = 'none';
+        // Removemos qualquer função de deletar que estava aqui
+        btnNao.onclick = null; 
+    }
     
-    // 💡 CORREÇÃO IMPORTANTE AQUI:
-    // Se ele clicar em cancelar, como a vaga JÁ FOI SALVA pelo botão mágico,
-    // precisamos chamar a função que deleta ela do banco (desistirAgendamentoSalvo)
-    btnNao.onclick = () => {
-        if (typeof desistirAgendamentoSalvo === 'function') {
-            desistirAgendamentoSalvo();
-        } else {
-            fecharModalAtual();
-        }
-    };
-
-    // Mudei o texto para "OK" porque a vaga já está confirmada no banco
     btnSim.textContent = "Ok, Entendi";
-    btnSim.style.width = "";
-    btnSim.style.background = ""; 
+    btnSim.style.width = "100%"; // Deixa o botão grandão e centralizado
+    btnSim.style.background = "#2ecc71"; // Verde sucesso
     
     // ============================================================
-    // 🛑 O MOMENTO DA DECISÃO (CORRIGIDO: SEM CRIAR DUPLICADO)
+    // 🛑 O MOMENTO DA DECISÃO (APENAS FECHA A TELA)
     // ============================================================
     btnSim.onclick = () => {
         
+        // Bloqueia o botão para evitar clique duplo
+        btnSim.disabled = true;
+
         // Verifica se está no Modo Quiosque/VIP
         const isKioskMode = localStorage.getItem('modo_exclusivo_vip_uid');
 
         if (isKioskMode) {
             console.log("👮 MODO VIP DETECTADO NO CLIQUE: Iniciando contagem regressiva...");
 
-            // 1. Muda visualmente para o usuário saber que foi aceito
-            btnSim.disabled = true;
-            btnSim.textContent = "✅ Tudo Certo! Reiniciando...";
-            btnSim.style.background = "#2ecc71"; // Verde sucesso
-            btnNao.style.display = "none"; // Esconde cancelar
-
-            // 2. Exibe um loading que bloqueia a tela inteira
+            btnSim.textContent = "Tudo Certo! Reiniciando...";
+            
             if (typeof exibirAguarde === 'function') {
                 exibirAguarde("✅ Confirmado! Atualizando agenda...");
             }
 
-            // 3. A BOMBA RELÓGIO: Reinicia em 3 segundos SEM FALTA
             setTimeout(() => {
-                console.log("⏰ TEMPO ESGOTADO: FORÇANDO RELOAD AGORA!");
                 window.location.reload();
             }, 3000);
+            
         } else {
             // --- LÓGICA PARA USUÁRIO NORMAL DO APP ---
-            // Como o agendamento já foi criado lá atrás, aqui a gente SÓ FECHA A TELA!
             
+            // Fecha os modais de forma segura
             if (typeof fecharModal === 'function') {
-                fecharModal('modalConfirmacaoGenerica'); // Fecha este modal
-            } else {
+                fecharModal('modalConfirmacaoGenerica'); 
+            } else if (typeof fecharModalAtual === 'function') {
                 fecharModalAtual();
+            } else {
+                document.getElementById('modalConfirmacaoGenerica').style.display = 'none';
             }
 
-            // Limpa as seleções verdinhas da tela para o cliente
+            // Limpa o visual do app
             if (typeof limparBotoesAposSucesso === 'function') {
                 limparBotoesAposSucesso();
             }
 
-            // Mostra o aviso final de sucesso
+            // Mostra o popupzinho final
             if (typeof exibirPopup === 'function') {
                 exibirPopup("✅ Sucesso!", `Seu agendamento com ${barbeiroNome} está garantido!`, "sucesso");
             }
+            
+            // Desbloqueia o botão para o próximo uso
+            btnSim.disabled = false;
         }
-
-        // ❌ REMOVIDO: executarAgendamentoNoBanco(valorFinal, valorOriginal);
-        // O código acima que causava a duplicidade foi deletado!
     };
 }
 
