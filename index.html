@@ -27292,22 +27292,18 @@ async function abrirGestaoMembroV2(uidMembro) {
         if (isNaN(comissaoProfissional) || comissaoProfissional === 0) comissaoProfissional = 50;
 
         // ========================================================================
-        // 🚀 ESPELHAMENTO DO PAINEL DE DESEMPENHO (O MOTOR PERFEITO)
-        // Faz a exata mesma leitura da função carregarFinanceiroIndividual
+        // 🚀 CÁLCULO DE SALDO GLOBAL (SEM FILTRO DE MÊS)
         // ========================================================================
         
-        const agora = new Date();
-        const dataInicio = new Date(agora.getFullYear(), agora.getMonth(), 1); dataInicio.setHours(0, 0, 0, 0);
-        const dataFim = new Date(agora.getFullYear(), agora.getMonth() + 1, 0); dataFim.setHours(23, 59, 59, 999);
+        // Removemos as limitações de dataInicio e dataFim aqui!
 
-        // Busca serviços usando sua correção de dataConclusao
+        // Busca TODOS os agendamentos já feitos pelo barbeiro (histórico completo)
         const snapAgendamentos = await db.collection('agendamentos')
             .where('barbeiroUid', '==', uidMembro)
-            .where('dataConclusao', '>=', firebase.firestore.Timestamp.fromDate(dataInicio))
-            .where('dataConclusao', '<=', firebase.firestore.Timestamp.fromDate(dataFim))
+            // .where('dataConclusao'...) <- FILTRO REMOVIDO PARA PEGAR TUDO
             .get();
 
-        // Busca o extrato do profissional no mês
+        // Busca TODOS os extratos de pagamentos já efetuados (histórico completo)
         const snapExtrato = await db.collection('extrato_financeiro')
             .where('donoUid', '==', uidDono) 
             .where('usuarioUid', '==', uidMembro) 
@@ -27316,7 +27312,7 @@ async function abrirGestaoMembroV2(uidMembro) {
         let totalMinhaComissao = 0;
         let totalJaRecebidoNoPeriodo = 0;
 
-        // Loop de comissões (Idêntico ao Relatório)
+        // Loop de comissões (Soma absolutamente tudo que ele já produziu)
         snapAgendamentos.forEach(doc => {
             const ag = doc.data();
             
@@ -27338,7 +27334,7 @@ async function abrirGestaoMembroV2(uidMembro) {
             totalMinhaComissao += minhaComissao;
         });
 
-        // Loop de saídas (Adiantamentos e Pagamentos - Idêntico ao Relatório)
+        // Loop de saídas (Soma absolutamente tudo que já foi pago a ele)
         snapExtrato.forEach(doc => {
             const ext = doc.data();
             if (ext.agendamentoId) return; 
@@ -27346,15 +27342,14 @@ async function abrirGestaoMembroV2(uidMembro) {
             // Pega tanto 'saida_manual' quanto 'despesa_comissao' para abater quando clicar no botão de Zerar
             if (ext.tipo === 'saida_manual' || ext.tipo === 'despesa_comissao') {
                 const valorPago = parseFloat(ext.valor) || 0;
-                const dataPag = ext.dataEvento ? ext.dataEvento.toDate() : new Date();
-
-                if (dataPag >= dataInicio && dataPag <= dataFim) {
-                    totalJaRecebidoNoPeriodo += valorPago;
-                }
+                
+                // O FILTRO DE DATA (if dataPag >= dataInicio) FOI REMOVIDO DAQUI
+                // Agora toda saída registrada soma nos abates
+                totalJaRecebidoNoPeriodo += valorPago;
             }
         });
 
-        // Matemática final cravada
+        // Matemática final cravada (Total Produzido - Total Pago na história)
         let saldoReal = totalMinhaComissao - totalJaRecebidoNoPeriodo;
         if (saldoReal > -0.5 && saldoReal < 0.5) saldoReal = 0; 
 
@@ -27387,7 +27382,7 @@ async function abrirGestaoMembroV2(uidMembro) {
 
             <div style="padding:0 25px 25px 25px;">
                 <div style="background:#121212; padding:20px; border-radius:15px; text-align:center; border:1px solid ${saldoReal > 0 ? '#f39c12' : '#2ecc71'}; margin-top:20px;">
-                    <p style="color:#aaa; font-size:12px; text-transform:uppercase;">SALDO LÍQUIDO A PAGAR (MÊS)</p>
+                    <p style="color:#aaa; font-size:12px; text-transform:uppercase;">SALDO LÍQUIDO A PAGAR (TOTAL PENDENTE)</p>
                     <h1 style="color:${saldoReal > 0 ? '#f39c12' : '#2ecc71'}; font-size:36px; margin:5px 0 20px;">
                         ${saldoReal.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}
                     </h1>
@@ -30503,7 +30498,7 @@ async function gerenciarPagamentoProfissional(uidProfissional, nomeProfissional,
     }
 }
 
-async function realizarPagamentoNoBanco(uidRecebedor, valorLiquidoParaPagar, nomeRecebedor) {
+async function realizarPagamentoNoBanco(uidRecebedor, valorLiquidoParaPagar, nomeRecebedor, dataRecebida = null) {
     // 1. Bloqueios de segurança
     if (!uidRecebedor) {
         return alert("Erro Crítico: Beneficiário inválido.");
@@ -30522,14 +30517,20 @@ async function realizarPagamentoNoBanco(uidRecebedor, valorLiquidoParaPagar, nom
     
     if (valorLiquidoParaPagar <= 0) return alert("Não há saldo pendente.");
 
-    const confirmacao = confirm(`Pagar R$ ${valorLiquidoParaPagar.toLocaleString('pt-BR', {minimumFractionDigits: 2})} para ${nomeRecebedor}?\n\nIsso zerará o saldo do profissional.`);
-    if (!confirmacao) return;
+    // OBS: O alerta de confirm() antigo foi removido daqui porque as novas telas customizadas já servem como confirmação!
 
-    exibirAguarde("Processando Pagamento...");
+    if (typeof exibirAguarde === 'function') exibirAguarde("Processando Pagamento...");
 
     try {
         const meuUid = auth.currentUser.uid;
-        const agoraTimestamp = firebase.firestore.FieldValue.serverTimestamp();
+        
+        // =========================================================================
+        // A MÁGICA DA DATA: Define se salva retroativo ou com a data de agora
+        // =========================================================================
+        const agoraTimestamp = dataRecebida 
+            ? firebase.firestore.Timestamp.fromDate(dataRecebida) 
+            : firebase.firestore.FieldValue.serverTimestamp();
+
         const valorFinal = parseFloat(valorLiquidoParaPagar);
 
         // Criamos um objeto de lote (batch) para garantir que ou grava os dois, ou nenhum
@@ -30542,7 +30543,7 @@ async function realizarPagamentoNoBanco(uidRecebedor, valorLiquidoParaPagar, nom
             recebedorUid: uidRecebedor,
             recebedorNome: nomeRecebedor,
             valor: valorFinal,
-            data: agoraTimestamp,
+            data: agoraTimestamp, // Salva com a data escolhida
             tipo: 'comissao_zeramento'
         });
 
@@ -30556,8 +30557,8 @@ async function realizarPagamentoNoBanco(uidRecebedor, valorLiquidoParaPagar, nom
             categoria: 'variavel',
             descricao: `Pagamento Comissão: ${nomeRecebedor}`,
             valor: valorFinal,
-            dataEvento: agoraTimestamp,
-            ts: agoraTimestamp
+            dataEvento: agoraTimestamp, // Salva com a data escolhida
+            ts: agoraTimestamp // Salva com a data escolhida
         });
 
         // Executa as duas gravações de uma vez só
@@ -30565,8 +30566,10 @@ async function realizarPagamentoNoBanco(uidRecebedor, valorLiquidoParaPagar, nom
 
         console.log(`✅ Pagamento de R$ ${valorFinal} enviado para o profissional ${uidRecebedor}`);
 
-        fecharTodosOsModais();
-        alert("Sucesso! O saldo foi zerado e o extrato foi atualizado.");
+        if (typeof removerAguarde === 'function') removerAguarde();
+        if (typeof fecharTodosOsModais === 'function') fecharTodosOsModais();
+        
+        alert("Sucesso! O pagamento foi processado e o extrato atualizado.");
 
         // Recarrega a interface
         setTimeout(() => {
@@ -30575,7 +30578,8 @@ async function realizarPagamentoNoBanco(uidRecebedor, valorLiquidoParaPagar, nom
 
     } catch (e) {
         console.error("Erro ao pagar:", e);
-        fecharTodosOsModais();
+        if (typeof removerAguarde === 'function') removerAguarde();
+        if (typeof fecharTodosOsModais === 'function') fecharTodosOsModais();
         alert("Erro ao processar pagamento: " + e.message);
     }
 }
@@ -48055,12 +48059,14 @@ function previewFotoPerfil() {
 }
 
 // =========================================================================
-// NOVA FUNÇÃO: POPUP DE ESCOLHA (PAGAR TUDO OU VALE)
+// NOVA FUNÇÃO: POPUP DE ESCOLHA (PAGAR TUDO, MÊS OU VALE) COM PRÉ-VISUALIZAÇÃO
 // =========================================================================
 window.escolherTipoPagamento = function(uid, nome, saldoTotal) {
     // 1. Limpa popup antigo se houver
     const popupAntigo = document.getElementById('modalEscolhaPagamento');
     if (popupAntigo) popupAntigo.remove();
+
+    const dataAtual = new Date().toISOString().slice(0, 7); // Mês atual YYYY-MM
 
     // 2. Cria o novo Modal com estilo Premium
     const modal = document.createElement('div');
@@ -48077,7 +48083,7 @@ window.escolherTipoPagamento = function(uid, nome, saldoTotal) {
             <h3 style="color: #d4af37; margin-top: 0;">💸 Opções de Pagamento</h3>
             <p style="color: #fff; font-size: 14px; margin-bottom: 20px;">
                 Profissional: <b>${nome}</b><br>
-                Saldo a receber: <b style="color: #2ecc71;">R$ ${saldoTotal.toFixed(2)}</b>
+                Saldo pendente: <b style="color: #2ecc71;">R$ ${saldoTotal.toFixed(2)}</b>
             </p>
 
             <div id="botoesPagamento" style="display: flex; flex-direction: column; gap: 10px;">
@@ -48086,6 +48092,11 @@ window.escolherTipoPagamento = function(uid, nome, saldoTotal) {
                     ✅ PAGAR TUDO (Zerar)
                 </button>
                 
+                <button onclick="mostrarInputMes()" 
+                        style="background: #222; color: #fff; border: 1px solid #d4af37; font-weight: bold; padding: 15px; border-radius: 12px; font-size: 16px; cursor: pointer;">
+                    📅 PAGAR MÊS ESPECÍFICO
+                </button>
+
                 <button onclick="mostrarInputVale()" 
                         style="background: #222; color: #f39c12; border: 1px solid #f39c12; font-weight: bold; padding: 15px; border-radius: 12px; font-size: 16px; cursor: pointer;">
                     💵 PAGAR VALE (Adiantamento)
@@ -48097,8 +48108,24 @@ window.escolherTipoPagamento = function(uid, nome, saldoTotal) {
                 <input type="number" id="inputValorVale" placeholder="Ex: 50.00" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #111; color: #fff; font-size: 16px; margin-bottom: 10px; box-sizing: border-box;">
                 
                 <div style="display: flex; gap: 10px;">
-                    <button onclick="esconderInputVale()" style="flex: 1; background: #333; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;">Voltar</button>
-                    <button onclick="confirmarPagamentoParcial('${uid}', '${nome}', ${saldoTotal}, false)" style="flex: 1; background: #f39c12; color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;">Confirmar Vale</button>
+                    <button onclick="esconderInputs()" style="flex: 1; background: #333; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;">Voltar</button>
+                    <button onclick="confirmarPagamentoParcial('${uid}', '${nome}', ${saldoTotal}, false)" style="flex: 1; background: #f39c12; color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;">Avançar</button>
+                </div>
+            </div>
+
+            <div id="divInputMes" style="display: none; margin-top: 15px; text-align: left;">
+                <label style="color: #aaa; font-size: 12px;">Selecione o Mês a pagar:</label>
+                
+                <input type="month" id="inputValorMes" value="${dataAtual}" onchange="resetarBotaoMes()" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #d4af37; background: #111; color: #fff; font-size: 16px; margin-bottom: 10px; box-sizing: border-box; text-align:center;">
+                
+                <div id="boxValorCalculadoMes" style="display: none; background: rgba(46, 204, 113, 0.1); border: 1px dashed #2ecc71; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 15px;">
+                    <span style="color: #aaa; font-size: 12px; display: block;">Saldo pendente do mês:</span>
+                    <span id="txtValorCalculadoMes" style="color: #2ecc71; font-size: 24px; font-weight: bold;">R$ 0,00</span>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="esconderInputs()" style="flex: 1; background: #333; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;">Voltar</button>
+                    <button id="btnAvancarMes" onclick="calcularPagamentoMes('${uid}', '${nome}')" style="flex: 1; background: #2ecc71; color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;">Calcular Mês</button>
                 </div>
             </div>
 
@@ -48108,19 +48135,36 @@ window.escolherTipoPagamento = function(uid, nome, saldoTotal) {
 
     document.body.appendChild(modal);
 
-    // --- FUNÇÕES INTERNAS DESTE MODAL ---
+    // --- FUNÇÕES DE NAVEGAÇÃO ---
     window.mostrarInputVale = function() {
         document.getElementById('botoesPagamento').style.display = 'none';
+        document.getElementById('divInputMes').style.display = 'none';
         document.getElementById('divInputVale').style.display = 'block';
         document.getElementById('inputValorVale').focus();
     };
 
-    window.esconderInputVale = function() {
-        document.getElementById('botoesPagamento').style.display = 'flex';
+    window.mostrarInputMes = function() {
+        document.getElementById('botoesPagamento').style.display = 'none';
         document.getElementById('divInputVale').style.display = 'none';
-        document.getElementById('inputValorVale').value = '';
+        document.getElementById('divInputMes').style.display = 'block';
     };
 
+    window.esconderInputs = function() {
+        document.getElementById('botoesPagamento').style.display = 'flex';
+        document.getElementById('divInputVale').style.display = 'none';
+        document.getElementById('divInputMes').style.display = 'none';
+        document.getElementById('inputValorVale').value = '';
+        window.resetarBotaoMes(); 
+    };
+
+    window.resetarBotaoMes = function() {
+        document.getElementById('boxValorCalculadoMes').style.display = 'none';
+        const btn = document.getElementById('btnAvancarMes');
+        btn.innerHTML = "Calcular Mês";
+        btn.removeAttribute('data-saldo');
+    };
+
+    // --- ROTA 1: PROCESSA TUDO OU VALE ---
     window.confirmarPagamentoParcial = function(uidTarget, nomeTarget, saldoMaximo, pagarTudo) {
         let valorParaPagar = saldoMaximo;
 
@@ -48131,19 +48175,162 @@ window.escolherTipoPagamento = function(uid, nome, saldoTotal) {
             if (isNaN(valorParaPagar) || valorParaPagar <= 0) {
                 return alert("Por favor, digite um valor válido e maior que zero para o vale.");
             }
-            
-            // Se o vale for maior que o saldo a receber, ele deixa lançar, mas avisa!
             if (valorParaPagar > saldoMaximo) {
-                const alertaNegativo = confirm(`Atenção: O vale (R$ ${valorParaPagar.toFixed(2)}) é MAIOR que o saldo que ele tem a receber (R$ ${saldoMaximo.toFixed(2)}).\n\nO saldo do profissional ficará negativo. Deseja continuar?`);
+                const alertaNegativo = confirm(`Atenção: O vale (R$ ${valorParaPagar.toFixed(2)}) é MAIOR que o saldo que ele tem a receber (R$ ${saldoMaximo.toFixed(2)}).\n\nO saldo ficará negativo. Deseja continuar?`);
                 if (!alertaNegativo) return;
             }
         }
 
-        // Remove o nosso popup customizado
+        // Checagem de segurança para garantir que a função do popup de data existe
+        if (typeof window.abrirEscolhaDeData !== 'function') {
+            return alert("ERRO: A função 'abrirEscolhaDeData' não foi encontrada no código.");
+        }
+
         document.getElementById('modalEscolhaPagamento').remove();
+        window.abrirEscolhaDeData(uidTarget, nomeTarget, valorParaPagar);
+    };
+
+    // --- ROTA 2: PROCESSA E EXIBE O MÊS ESPECÍFICO ---
+    window.calcularPagamentoMes = async function(uidTarget, nomeTarget) {
+        const btn = document.getElementById('btnAvancarMes');
+
+        // LÓGICA CORRIGIDA: Lê o atributo oculto para avançar (100% seguro)
+        if (btn.hasAttribute('data-saldo')) {
+            const saldo = parseFloat(btn.getAttribute('data-saldo'));
+            
+            if (typeof window.abrirEscolhaDeData !== 'function') {
+                return alert("ERRO: A função 'abrirEscolhaDeData' não foi encontrada no código.");
+            }
+
+            document.getElementById('modalEscolhaPagamento').remove();
+            window.abrirEscolhaDeData(uidTarget, nomeTarget, saldo);
+            return;
+        }
+
+        // CASO CONTRÁRIO, FAZ O CÁLCULO E MOSTRA NA TELA:
+        const mesEscolhido = document.getElementById('inputValorMes').value;
+        if (!mesEscolhido) return alert("Selecione um mês.");
+
+        const [ano, mes] = mesEscolhido.split('-');
+        const dataInicio = new Date(ano, parseInt(mes) - 1, 1); dataInicio.setHours(0, 0, 0, 0);
+        const dataFim = new Date(ano, parseInt(mes), 0); dataFim.setHours(23, 59, 59, 999);
+
+        if (typeof exibirAguarde === 'function') exibirAguarde("Calculando mês...");
+
+        try {
+            const uidDono = auth.currentUser.uid;
+
+            // Busca Produção do Mês
+            const snapAg = await db.collection('agendamentos')
+                .where('barbeiroUid', '==', uidTarget)
+                .where('dataConclusao', '>=', firebase.firestore.Timestamp.fromDate(dataInicio))
+                .where('dataConclusao', '<=', firebase.firestore.Timestamp.fromDate(dataFim))
+                .get();
+
+            // Busca Extratos do Mês
+            const snapExtrato = await db.collection('extrato_financeiro')
+                .where('donoUid', '==', uidDono)
+                .where('usuarioUid', '==', uidTarget)
+                .get();
+
+            let totalProduzido = 0;
+            let totalRecebido = 0;
+
+            snapAg.forEach(doc => {
+                const ag = doc.data();
+                if (['concluido', 'avaliado', 'Concluido', 'Concluído'].includes(ag.status)) {
+                    totalProduzido += parseFloat(ag.comissaoCalculada || ag.financeiro?.comissao || 0);
+                }
+            });
+
+            snapExtrato.forEach(doc => {
+                const ext = doc.data();
+                if (ext.agendamentoId) return;
+                if (ext.tipo === 'saida_manual' || ext.tipo === 'despesa_comissao') {
+                    const dataPag = ext.dataEvento ? ext.dataEvento.toDate() : new Date();
+                    if (dataPag >= dataInicio && dataPag <= dataFim) {
+                        totalRecebido += parseFloat(ext.valor) || 0;
+                    }
+                }
+            });
+
+            if (typeof removerAguarde === 'function') removerAguarde();
+
+            let saldoDoMes = totalProduzido - totalRecebido;
+            if (saldoDoMes <= 0) return alert("Não há saldo pendente para este mês selecionado.");
+
+            // EXIBE O RESULTADO NA TELA E MUDA O BOTÃO
+            document.getElementById('boxValorCalculadoMes').style.display = 'block';
+            document.getElementById('txtValorCalculadoMes').innerText = saldoDoMes.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+            
+            btn.innerHTML = "✅ Avançar";
+            btn.setAttribute('data-saldo', saldoDoMes); // Guarda o valor no botão de forma segura
+
+        } catch (e) {
+            if (typeof removerAguarde === 'function') removerAguarde();
+            console.error(e);
+            alert("Erro ao calcular o mês.");
+        }
+    };
+};
+
+// =========================================================================
+// O NOVO POPUP: ESCOLHER A DATA DO EXTRATO
+// =========================================================================
+window.abrirEscolhaDeData = function(uidTarget, nomeTarget, valorPago) {
+    const hoje = new Date().toISOString().split('T')[0]; // Formato para o input date
+
+    const modal = document.createElement('div');
+    modal.id = 'modalEscolhaData';
+    modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.85); backdrop-filter: blur(5px);
+        z-index: 26000; display: flex; align-items: center; justify-content: center;
+        padding: 20px; box-sizing: border-box;
+    `;
+
+    modal.innerHTML = `
+        <div style="background: #1a1a1a; padding: 25px; border-radius: 20px; width: 100%; max-width: 350px; border: 1px solid #d4af37; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.8);">
+            <h3 style="color: #fff; margin-top: 0;">📅 Data do Pagamento</h3>
+            <p style="color: #aaa; font-size: 13px; margin-bottom: 20px;">
+                Você está pagando <b>R$ ${valorPago.toFixed(2)}</b> para ${nomeTarget}.<br>Qual data deve constar no extrato?
+            </p>
+
+            <button onclick="processarPagamentoComData('${uidTarget}', '${nomeTarget}', ${valorPago}, null)" 
+                    style="width: 100%; background: #2ecc71; color: #000; font-weight: bold; border: none; padding: 15px; border-radius: 12px; font-size: 15px; cursor: pointer; margin-bottom: 15px;">
+                ✅ SALVAR COM DATA DE HOJE
+            </button>
+
+            <div style="border-top: 1px solid #333; padding-top: 15px;">
+                <label style="color: #aaa; font-size: 12px; display: block; margin-bottom: 5px;">Ou escolha uma data retroativa:</label>
+                <input type="date" id="inputDataRetroativa" value="${hoje}" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #111; color: #fff; font-size: 16px; margin-bottom: 10px; box-sizing: border-box; text-align: center;">
+                
+                <button onclick="validarDataRetroativa('${uidTarget}', '${nomeTarget}', ${valorPago})" 
+                        style="width: 100%; background: #222; color: #d4af37; border: 1px solid #d4af37; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                    USAR DATA SELECIONADA
+                </button>
+            </div>
+
+            <button onclick="document.getElementById('modalEscolhaData').remove()" style="margin-top: 20px; background: transparent; border: none; color: #888; cursor: pointer; text-decoration: underline;">Cancelar</button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    window.validarDataRetroativa = function(uid, nome, valor) {
+        const dataString = document.getElementById('inputDataRetroativa').value;
+        if (!dataString) return alert("Selecione uma data.");
         
-        // Dispara a função real que já funciona perfeitamente (ela também registra a saída no caixa)
-        realizarPagamentoNoBanco(uidTarget, valorParaPagar, nomeTarget);
+        const [ano, mes, dia] = dataString.split('-');
+        const dataObjeto = new Date(ano, mes - 1, dia, 12, 0, 0); // Define a hora pro meio-dia pra evitar bug de timezone
+        processarPagamentoComData(uid, nome, valor, dataObjeto);
+    };
+
+    window.processarPagamentoComData = function(uid, nome, valor, dataObjeto) {
+        document.getElementById('modalEscolhaData').remove();
+        
+        // CHAMA A SUA FUNÇÃO REAL PASSANDO A DATA!
+        realizarPagamentoNoBanco(uid, valor, nome, dataObjeto);
     };
 };
 
@@ -48935,7 +49122,7 @@ function mostrarDetalhesFinaisNoMesmoPopup(valorFinal, valorOriginal) {
     btnSim.style.background = "#2ecc71"; // Verde sucesso
     
     // ============================================================
-    // 🛑 O MOMENTO DA DECISÃO (APENAS FECHA A TELA)
+    // 🛑 O MOMENTO DA DECISÃO (FECHAMENTO COMPLETO E LIMPEZA)
     // ============================================================
     btnSim.onclick = () => {
         
@@ -48961,21 +49148,29 @@ function mostrarDetalhesFinaisNoMesmoPopup(valorFinal, valorOriginal) {
         } else {
             // --- LÓGICA PARA USUÁRIO NORMAL DO APP ---
             
-            // Fecha os modais de forma segura
-            if (typeof fecharModal === 'function') {
-                fecharModal('modalConfirmacaoGenerica'); 
-            } else if (typeof fecharModalAtual === 'function') {
-                fecharModalAtual();
+            // 🚀 AQUI ESTÁ A CORREÇÃO: Fecha TODOS os modais, incluindo o card do profissional!
+            if (typeof fecharTodosOsModais === 'function') {
+                fecharTodosOsModais();
             } else {
+                // Fallback de segurança
                 document.getElementById('modalConfirmacaoGenerica').style.display = 'none';
             }
 
-            // Limpa o visual do app
+            // 🧹 LIMPEZA DE MEMÓRIA: Reseta o estado para garantir que o próximo agendamento venha limpo
+            window.agendamentoState = {
+                barbeiroUid: null,
+                barbeiroNome: null,
+                servico: null,
+                horario: null,
+                data: null
+            };
+
+            // Limpa o visual dos botões do app
             if (typeof limparBotoesAposSucesso === 'function') {
                 limparBotoesAposSucesso();
             }
 
-            // Mostra o popupzinho final
+            // Mostra o popupzinho final de sucesso no topo
             if (typeof exibirPopup === 'function') {
                 exibirPopup("✅ Sucesso!", `Seu agendamento com ${barbeiroNome} está garantido!`, "sucesso");
             }
@@ -49644,7 +49839,7 @@ function listarAssinaturasAtivas() {
 
                     <div class="acoes">
                         <button onclick="adicionarUsoManual('${id}', ${a.qtdeUsada})" class="btn-card" style="background:#2ecc71;">+1 Uso</button>
-                        <button onclick="renovarAssinatura('${id}', '${a.clienteNome}', ${a.valorPlano}, '${a.barbeiroUid}')" class="btn-card" style="background:#f39c12;">Renovar</button>
+                        <button onclick="perguntarValorRenovacao('${id}', '${a.clienteNome}', ${a.valorPlano}, '${a.barbeiroUid}')" class="btn-card" style="background:#f39c12;">Renovar</button>
                         <button onclick="excluirAssinatura('${id}')" class="btn-card" style="background:#e74c3c;">Excluir</button>
                     </div>
                 `;
@@ -49652,6 +49847,68 @@ function listarAssinaturasAtivas() {
             });
         });
 }
+
+window.perguntarValorRenovacao = function(idAssinatura, nomeCliente, valorAtual, barbeiroUidAntigo) {
+    const oldModal = document.getElementById('modalValorRenovacao');
+    if (oldModal) oldModal.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'modalValorRenovacao';
+    modal.className = 'modal show';
+    modal.style.cssText = "z-index: 22000; display: flex;";
+
+    modal.innerHTML = `
+        <div class="modal-content" style="border: 2px solid #3498db; max-width: 350px; text-align: left; position: relative;">
+            <button onclick="document.getElementById('modalValorRenovacao').remove()" style="position:absolute; top:10px; right:10px; background:transparent; color:#fff; border:none; cursor:pointer; font-size:18px;">✕</button>
+            <h3 style="color: #3498db; margin-top:0; text-align: center;">💰 Valor da Renovação</h3>
+            
+            <p style="color: #aaa; font-size: 14px; text-align: center; margin-bottom: 20px;">
+                O plano atual de <b>${nomeCliente}</b> custa:
+            </p>
+
+            <div style="background: rgba(46, 204, 113, 0.1); border: 1px dashed #2ecc71; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px;">
+                <span id="valorExibicaoPlano" style="color: #2ecc71; font-size: 28px; font-weight: bold;">R$ ${parseFloat(valorAtual).toFixed(2)}</span>
+                <button onclick="editarValorRenovacao()" style="background:transparent; border:none; color:#2ecc71; cursor:pointer; margin-left:10px; font-size:16px;" title="Editar Valor">✏️</button>
+            </div>
+
+            <input type="hidden" id="inputValorOculto" value="${valorAtual}">
+
+            <button onclick="avancarRenovacao('${idAssinatura}', '${nomeCliente}', '${barbeiroUidAntigo}')" style="width: 100%; background: #3498db; color: #fff; font-weight: bold; border: none; padding: 12px; border-radius: 8px; cursor: pointer;">
+                Confirmar Valor e Avançar ➔
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Função interna para o dono editar o valor se quiser
+    window.editarValorRenovacao = function() {
+        const inputHidden = document.getElementById('inputValorOculto');
+        const valorAtualInput = parseFloat(inputHidden.value);
+        
+        const novoValorStr = prompt(`Digite o NOVO valor para a renovação de ${nomeCliente}:`, valorAtualInput);
+        if (novoValorStr === null || novoValorStr.trim() === '') return;
+
+        const novoValor = parseFloat(novoValorStr.replace(',', '.'));
+        if (isNaN(novoValor) || novoValor <= 0) {
+            return alert("Por favor, digite um valor numérico válido maior que zero.");
+        }
+
+        // Atualiza a tela e o input oculto
+        document.getElementById('valorExibicaoPlano').innerText = `R$ ${novoValor.toFixed(2)}`;
+        inputHidden.value = novoValor;
+    };
+
+    // Função interna para avançar e fechar este modal
+    window.avancarRenovacao = function(id, nome, barbeiroAntigo) {
+        const valorDecidido = parseFloat(document.getElementById('inputValorOculto').value);
+        document.getElementById('modalValorRenovacao').remove();
+        
+        // Agora sim, chama a sua função original que escolhe o profissional,
+        // mas passando o valor (novo ou mantido) que ele decidiu agora!
+        window.renovarAssinatura(id, nome, valorDecidido, barbeiroAntigo);
+    };
+};
 
 // 6. ADICIONAR USO (+1) MANUALMENTE
 function adicionarUsoManual(id, qtdeAtual) {
@@ -50098,7 +50355,7 @@ window.resetarBotaoManual = function() {
 
 
 // =============================================================================
-// 🎨 DESENHISTA DO CARD (COM OS 3 BOTÕES)
+// 🎨 DESENHISTA DO CARD (AGORA COM BOTÃO DE CANCELAR)
 // =============================================================================
 window.renderizarListaAgendamentos = function(lista) {
     const container = document.getElementById('containerProximoAgendamento');
@@ -50126,7 +50383,8 @@ window.renderizarListaAgendamentos = function(lista) {
         const nomeFinal = ag.barbeiroNome || 'Profissional'; 
 
         const html = `
-        <div style="background: #1a1a1a; border-radius: 16px; padding: 15px; border-left: 4px solid var(--cor-destaque); box-shadow: 0 4px 15px rgba(0,0,0,0.5); margin-bottom: 0; border-top: 1px solid #333; border-right: 1px solid #333; border-bottom: 1px solid #333;">
+        <div style="background: #1a1a1a; border-radius: 16px; padding: 15px; border-left: 4px solid var(--cor-destaque); box-shadow: 0 4px 15px rgba(0,0,0,0.5); margin-bottom: 0; border-top: 1px solid #333; border-right: 1px solid #333; border-bottom: 1px solid #333; position: relative;">
+            
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 12px;">
                 <span style="color: #fff; font-weight: bold; font-size: 13px;">🗓️ ${dataFormatada}</span>
                 <span style="background: rgba(46, 204, 113, 0.1); color: #2ecc71; padding: 4px 8px; border-radius: 8px; font-size: 10px; font-weight: bold; letter-spacing: 0.5px;">
@@ -50150,13 +50408,22 @@ window.renderizarListaAgendamentos = function(lista) {
                 </div>
             </div>
 
+            <div style="border-top: 1px dashed #333; padding-top: 12px; display: flex; justify-content: flex-end;">
+                <button onclick="window.cancelarAgendamentoCliente('${ag.id}')" 
+                        style="background: transparent; color: #e74c3c; border: 1px solid #e74c3c; padding: 8px 15px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.2s;">
+                    ✕ CANCELAR AGENDAMENTO
+                </button>
             </div>
+
+        </div>
         `;
         
         container.insertAdjacentHTML('beforeend', html);
 
-        // 🔥 CHAMA A MÁGICA PARA PREENCHER AS MEDALHAS NO FUNDO DA TELA 🔥
-        window.carregarMedalhasAssincronasPorUid(ag.barbeiroUid, `medalhas_agendamento_${ag.id}`);
+        // CHAMA A MÁGICA PARA PREENCHER AS MEDALHAS NO FUNDO DA TELA
+        if (typeof window.carregarMedalhasAssincronasPorUid === 'function') {
+            window.carregarMedalhasAssincronasPorUid(ag.barbeiroUid, `medalhas_agendamento_${ag.id}`);
+        }
     });
 }
 
