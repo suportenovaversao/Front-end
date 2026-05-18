@@ -4,7 +4,15 @@
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "arquivos_privados/**",
+      "**/*.exe",
+      "**/*.bat",
+      "**/*.sh",
+      "**/*.dll",
+      "**/*.apk",
+      "**/*.aab",
+      "**/*.keystore"
     ],
     "headers": [
       {

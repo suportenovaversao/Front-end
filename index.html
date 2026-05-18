@@ -9276,32 +9276,6 @@ canvas.confetti-canvas {
         <p style="font-size: 11px; color: var(--cor-destaque); margin: 5px 0 0 0;">As tendências mais votadas dos Profissionais Diamante 💎</p>
     </div>
 
-    <div style="padding: 0 10px 15px 10px;">
-        <div onclick="abrirChatVisagista()" 
-             style="
-                background: linear-gradient(90deg, #111, #222);
-                border: 1px solid #d4af37;
-                border-radius: 12px;
-                padding: 12px 15px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                cursor: pointer;
-                box-shadow: 0 4px 10px rgba(212, 175, 55, 0.15);
-             ">
-            <div style="display:flex; align-items:center; gap:12px;">
-                <div style="background:#d4af37; color:#000; width:35px; height:35px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:bold;">
-                    AI
-                </div>
-                <div>
-                    <h4 style="margin:0; color:#fff; font-size:14px;">Visagista Virtual <span style="background:#d4af37; color:#000; font-size:8px; padding:2px 4px; border-radius:4px; margin-left:5px; vertical-align: middle;">VIP</span></h4>
-                    <p style="margin:2px 0 0 0; color:#888; font-size:10px;">Analise seu rosto agora</p>
-                </div>
-            </div>
-            <div style="color:#d4af37; font-size:16px;">➤</div>
-        </div>
-    </div>
-
     <div id="gridEmAlta" class="em-alta-grid" style="padding-bottom: 80px;">
         <div class="spinner" style="margin-top: 50px;"></div>
     </div>
@@ -11848,37 +11822,6 @@ input:checked + .slider:before { transform: translateX(24px); }
     </div>
 </div>
 
-<div id="modalVisagistaAbsoluto" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999999; align-items: center; justify-content: center;">
-    
-    <div style="background: #121212; border: 1px solid #d4af37; border-radius: 15px; width: 95%; max-width: 500px; height: 85vh; display: flex; flex-direction: column; overflow: hidden; position: relative; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
-        
-        <div id="headerVisagistaIA" style="padding: 15px; display: flex; align-items: center; justify-content: space-between;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <div id="iconeVisagistaIA" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;">🤖</div>
-                <div>
-                    <h3 id="tituloVisagistaIA" style="margin: 0; color: #fff; font-size: 16px;">Visagista</h3>
-                    <span id="subtituloVisagistaIA" style="font-size: 11px; color: #aaa;">Carregando...</span>
-                </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <div id="btnContainerVipIA"></div>
-                <span onclick="document.getElementById('modalVisagistaAbsoluto').style.display='none'" style="color: #fff; font-size: 30px; cursor: pointer; line-height: 1;">&times;</span>
-            </div>
-        </div>
-
-        <div id="chatVisagistaBody" style="flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; background-color: #0d0d0d; scroll-behavior: smooth;">
-        </div>
-
-        <div style="padding: 15px; background: #1a1a1a; border-top: 1px solid #333; display: flex; gap: 10px; align-items: center;">
-            <input type="text" id="inputVisagista" placeholder="Descreva seu rosto ou barba..." style="flex: 1; background: #000; border: 1px solid #444; padding: 15px; color: #fff; border-radius: 25px; outline: none; font-size: 14px;">
-            <button id="btnEnviarVisagista" onclick="enviarMensagemVisagista()" style="background: linear-gradient(45deg, #d4af37, #f1c40f); border: none; width: 50px; height: 50px; border-radius: 50%; color: #000; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px;">
-                ➤
-            </button>
-        </div>
-
-    </div>
-</div>
-
 <div id="modalRecuperarSenha" class="modal" style="z-index: 30000; background: rgba(0,0,0,0.9);">
     <div class="modal-content" style="background: #1a1a1a; border: 1px solid #333; max-width: 400px; text-align: center; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
         <div style="font-size: 45px; margin-bottom: 10px; filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));">🔐</div>
@@ -13076,9 +13019,6 @@ const BACKEND_API_URL = 'https://navalhabackend.onrender.com';
 let currentStoryId = null; // ID do post atual sendo visto
 let commentsListener = null; // Listener para fechar ao sair
 let likesListener = null; // Listener para atualizar likes em tempo real
-let modelosDisponiveis = ["gemini-1.5-flash"]; // Modelo fixo para evitar erro 403
-let historicoChatVisagista = [];
-
 
 /* === Onboarding Tela 2 - Funções de Seleção === */
 function toggleOnboardOption(element) {
@@ -13354,13 +13294,29 @@ function iniciarMonitoramentoEquipeGlobal(uid) {
 window.cacheLogosDonos = {};
 
 // =================================================================
-// 1. FUNÇÃO PRINCIPAL DE CARREGAMENTO (COM DISTÂNCIA DESTACADA)
+// 1. FUNÇÃO PRINCIPAL: VITRINE EM GAVETA PREMIUM + CHICLETE 2.0
 // =================================================================
-async function carregarBarbeirosPrincipal(containerId, isGuest = false) {
+window.carregarBarbeirosPrincipal = async function(containerId, isGuest = false) {
     const lista = document.getElementById(containerId);
     if (!lista) return; 
 
-    // --- INJEÇÃO DA BARRA DE BUSCA ---
+    // 🍬 1. INÍCIO DO CHICLETE (Memória do Cliente)
+    // Se tiver chiclete salvo e ainda NÃO tiver sido carregado nesta sessão...
+    const chicleteUid = localStorage.getItem('chicleteBarbeiroUid');
+    if (chicleteUid && !window.chicleteJaAbertoNestaSessao) {
+        
+        window.chicleteJaAbertoNestaSessao = true; // Marca que já abriu hoje
+        
+        // Abre o perfil do profissional automaticamente por cima de tudo
+        if (typeof abrirBarbeiroPerfil === 'function') {
+            abrirBarbeiroPerfil(chicleteUid, isGuest);
+        }
+        
+        // NÃO damos 'return' aqui! O código continua para montar a lista completa de barbeiros 
+        // no fundo da tela (escondida atrás do modal), para quando ele fechar o perfil!
+    }
+
+    // 2. BARRA DE BUSCA
     const idBusca = 'busca_input_' + containerId;
     let containerBusca = document.getElementById('container_' + idBusca);
 
@@ -13368,31 +13324,25 @@ async function carregarBarbeirosPrincipal(containerId, isGuest = false) {
         containerBusca = document.createElement('div');
         containerBusca.id = 'container_' + idBusca;
         containerBusca.className = 'search-bar-container';
-        
         containerBusca.innerHTML = `
-            <input type="text" 
-                   id="${idBusca}" 
-                   class="input-busca-moderno" 
-                   placeholder="🔍 Buscar profissional ou barbearia..." 
-                   autocomplete="off">
+            <input type="text" id="${idBusca}" class="input-busca-moderno" placeholder="🔍 Buscar profissional ou barbearia..." autocomplete="off">
         `;
-        
         if (lista.parentNode) lista.parentNode.insertBefore(containerBusca, lista);
 
         const inputEl = document.getElementById(idBusca);
         if(inputEl) {
             inputEl.addEventListener('input', function() {
-                filtrarCardsNaTela(this.value, containerId);
+                if(typeof filtrarCardsNaTela === 'function') filtrarCardsNaTela(this.value, containerId);
             });
         }
     }
 
-    // --- FILTROS DE NICHO ---
+    // 3. FILTROS DE NICHO
     if (typeof window.filtroNichoAtual === 'undefined') window.filtroNichoAtual = 'cabelo';
     const tiposFemininos = ['cabelereira', 'manicure_pedicure', 'designer_cilios'];
     let ehPainelFeminino = false;
     
-    if (perfil) {
+    if (typeof perfil !== 'undefined' && perfil) {
         if (tiposFemininos.includes(perfil.interesse_principal) || tiposFemininos.includes(perfil.tipo)) ehPainelFeminino = true;
     }
 
@@ -13412,10 +13362,9 @@ async function carregarBarbeirosPrincipal(containerId, isGuest = false) {
             filterDiv.id = filterDivId;
             filterDiv.className = 'niche-filter-container';
             filterDiv.innerHTML = `
-                <span class="niche-emoji ${window.filtroNichoAtual === 'cabelo' ? 'active' : ''}" onclick="mudarFiltroNicho('cabelo', '${containerId}')">💇‍♀️</span>
-                <span class="niche-emoji ${window.filtroNichoAtual === 'unha' ? 'active' : ''}" onclick="mudarFiltroNicho('unha', '${containerId}')">💅</span>
-                <span class="niche-emoji ${window.filtroNichoAtual === 'olho' ? 'active' : ''}" onclick="mudarFiltroNicho('olho', '${containerId}')">👁️</span>`;
-            
+                <span class="niche-emoji ${window.filtroNichoAtual === 'cabelo' ? 'active' : ''}" onclick="if(typeof mudarFiltroNicho==='function') mudarFiltroNicho('cabelo', '${containerId}')">💇‍♀️</span>
+                <span class="niche-emoji ${window.filtroNichoAtual === 'unha' ? 'active' : ''}" onclick="if(typeof mudarFiltroNicho==='function') mudarFiltroNicho('unha', '${containerId}')">💅</span>
+                <span class="niche-emoji ${window.filtroNichoAtual === 'olho' ? 'active' : ''}" onclick="if(typeof mudarFiltroNicho==='function') mudarFiltroNicho('olho', '${containerId}')">👁️</span>`;
             if (lista.parentNode) lista.parentNode.insertBefore(filterDiv, lista);
             filterDiv.style.display = 'flex';
         }
@@ -13425,20 +13374,20 @@ async function carregarBarbeirosPrincipal(containerId, isGuest = false) {
     }
     
     if(lista.innerHTML === '') lista.innerHTML = `<div style='text-align:center; margin-top:20px;'><div class="spinner"></div></div>`;
-    if (!localizacaoCliente) { obterLocalizacaoAtual().catch(()=>{}); }
-    if (barbeirosListener) barbeirosListener(); 
+    if (typeof localizacaoCliente === 'undefined' || !localizacaoCliente) { if(typeof obterLocalizacaoAtual==='function') obterLocalizacaoAtual().catch(()=>{}); }
+    if (typeof barbeirosListener !== 'undefined' && barbeirosListener) barbeirosListener(); 
 
-    // --- BUSCA NO BANCO ---
+    // 4. BUSCA NO BANCO
     let query = db.collection("usuarios").where("tipo", "==", tipoParaBuscar).limit(50);
     
-    barbeirosListener = query.onSnapshot(async snap => {
+    window.barbeirosListener = query.onSnapshot(async snap => {
         if (snap.empty) {
              lista.innerHTML = `<div style="text-align:center; padding:20px; margin-top: 20px; opacity:0.6;"><p>Nenhum profissional encontrado.</p></div>`;
              return;
         }
 
         let barbeiros = [];
-        const favoritos = (perfil && perfil.favoritos) ? perfil.favoritos : [];
+        const favoritos = (typeof perfil !== 'undefined' && perfil && perfil.favoritos) ? perfil.favoritos : [];
         const agora = Date.now();
         const listaParaBuscarLogo = [];
 
@@ -13457,12 +13406,12 @@ async function carregarBarbeirosPrincipal(containerId, isGuest = false) {
             const b = doc.data();
             b.uid = doc.id;
             if (b.isAnonymous === true) return; 
-            if (mostrarApenasFavoritos && !favoritos.includes(b.uid)) return;
+            if (typeof mostrarApenasFavoritos !== 'undefined' && mostrarApenasFavoritos && !favoritos.includes(b.uid)) return;
             if (b.tipo === 'cliente' || b.tipo === 'admin') return;
 
             b.isFavorito = favoritos.includes(b.uid);
 
-            if (localizacaoCliente && b.latitude && b.longitude) {
+            if (typeof localizacaoCliente !== 'undefined' && localizacaoCliente && b.latitude && b.longitude) {
                 b.distancia = calcularDistancia(localizacaoCliente.latitude, localizacaoCliente.longitude, b.latitude, b.longitude);
             } else {
                 b.distancia = Infinity;
@@ -13470,30 +13419,26 @@ async function carregarBarbeirosPrincipal(containerId, isGuest = false) {
             barbeiros.push(b);
         });
 
-        // --- ORDENAÇÃO ---
+        // 5. ORDENAÇÃO
         barbeiros.sort((a, b) => {
             if (a.isFavorito && !b.isFavorito) return -1;
             if (!a.isFavorito && b.isFavorito) return 1;
-            
             const sosA = (a.sosConfig && a.sosConfig.ativo && getSafeDate(a.sosConfig.expiraEm) > agora) ? 1 : 0;
             const sosB = (b.sosConfig && b.sosConfig.ativo && getSafeDate(b.sosConfig.expiraEm) > agora) ? 1 : 0;
             if (sosA !== sosB) return sosB - sosA;
-
             const aDisp = a.vagaImediata || (a.usaAgendaManual && Object.values(a.agenda || {}).some(v => v === true));
             const bDisp = b.vagaImediata || (b.usaAgendaManual && Object.values(b.agenda || {}).some(v => v === true));
             if (aDisp !== bDisp) return aDisp ? -1 : 1; 
-
             const timeA = getSafeDate(a.boostExpiracao);
             const timeB = getSafeDate(b.boostExpiracao);
             const aIsBoosted = timeA > agora;
             const bIsBoosted = timeB > agora;
-
             if (aIsBoosted && !bIsBoosted) return -1;
             if (!aIsBoosted && bIsBoosted) return 1;
-
             return (a.distancia || Infinity) - (b.distancia || Infinity);
         });
         
+        // 6. AGRUPAMENTO POR BARBEARIA
         const gruposMap = new Map();
         barbeiros.forEach(b => {
             let nomeBarbearia = b.nomeBarbearia || (b.pertenceABarbearia ? b.pertenceABarbearia.nome : '');
@@ -13509,34 +13454,99 @@ async function carregarBarbeirosPrincipal(containerId, isGuest = false) {
         let htmlBuffer = "";
 
         gruposMap.forEach((equipe, nomeBarbearia) => {
+            // ID limpo para controlar a gaveta
+            const idSanitizado = nomeBarbearia.replace(/[^a-zA-Z0-9]/g, '') + Math.floor(Math.random()*1000);
+            
+            // 📸 DEFINIÇÃO DA FOTO DA BARBEARIA COM FALLBACK PARA O ICONE LOCAL
+            let fotoLoja = 'icone.png'; 
+            const dono = equipe.find(b => b.isProprietario);
+            if(dono && dono.fotoPerfil) fotoLoja = dono.fotoPerfil;
+            else if (equipe[0] && equipe[0].logo_url) fotoLoja = equipe[0].logo_url;
+            else if (equipe[0] && equipe[0].fotoPerfil) fotoLoja = equipe[0].fotoPerfil;
+
+            // 📍 INTELIGÊNCIA DA BARBEARIA (Distância, Estrelas e Vaga)
+            let minDistance = Infinity;
+            let totalAvaliacoes = 0;
+            let somaAvaliacoes = 0;
+            let lojaTemVagaImediata = false;
+
+            equipe.forEach(b => {
+                if (b.distancia < minDistance) minDistance = b.distancia;
+                if (b.numAvaliacoes) {
+                    totalAvaliacoes += b.numAvaliacoes;
+                    somaAvaliacoes += b.somaAvaliacoes;
+                }
+                if (b.vagaImediata) lojaTemVagaImediata = true;
+            });
+
+            // Calcula estrelas da Loja
+            let notaMediaLoja = (totalAvaliacoes > 0) ? (somaAvaliacoes / totalAvaliacoes) : 5;
+            let qtdEstrelasLoja = Math.round(notaMediaLoja / 2);
+            if (qtdEstrelasLoja > 5) qtdEstrelasLoja = 5;
+            if (qtdEstrelasLoja < 0) qtdEstrelasLoja = 0;
+            const estrelasLojaHtml = '⭐'.repeat(qtdEstrelasLoja);
+
+            // Calcula Distância Visual da Loja
+            let distanciaLojaHtml = '';
+            if (minDistance !== Infinity) {
+                let corDist = minDistance <= 5 ? '#2ecc71' : (minDistance <= 15 ? '#f39c12' : '#e74c3c');
+                distanciaLojaHtml = `<span style="background: ${corDist}20; color: ${corDist}; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; border: 1px solid ${corDist}50; margin-left: 5px;">📍 ${minDistance.toFixed(1)} km</span>`;
+            }
+
+            // Tag de Status Geral
+            let statusLojaHtml = lojaTemVagaImediata 
+                ? `<span style="color: #2ecc71; font-size: 11px; font-weight: bold; display: flex; align-items: center; gap: 4px;">⚡ Vaga Imediata</span>` 
+                : `<span style="color: #f39c12; font-size: 11px; font-weight: bold; display: flex; align-items: center; gap: 4px;">📅 Agendar Horário</span>`;
+
+            // 🔥 A GAVETA COMEÇA AQUI 🔥 (Design Premium Melhorado)
             htmlBuffer += `
-            <div class="grupo-barbearia-container" style="margin-bottom: 25px; background: #151515; border-radius: 16px; border: 1px solid rgba(212, 175, 55, 0.3); box-shadow: 0 0 20px rgba(212, 175, 55, 0.15); overflow: hidden;">
+            <div class="loja-gaveta-container" style="margin-bottom: 20px; background: #1a1a1a; border-radius: 16px; border: 1px solid #333; box-shadow: 0 8px 25px rgba(0,0,0,0.6); overflow: hidden; transition: all 0.3s ease;">
                 
-                <div style="background: linear-gradient(90deg, rgba(212,175,55,0.2), rgba(0,0,0,0)); padding: 12px 15px; border-bottom: 1px solid rgba(212,175,55,0.2); display: flex; align-items: center; justify-content: space-between;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 18px;">💈</span> 
-                        <span style="color: #D4AF37; font-weight: bold; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; text-shadow: 0 0 10px rgba(212, 175, 55, 0.8);">${nomeBarbearia}</span>
+                <div onclick="const g = document.getElementById('gaveta_${idSanitizado}'); const s = document.getElementById('seta_${idSanitizado}'); if(g.style.display === 'none'){ g.style.display = 'flex'; s.style.transform = 'rotate(180deg)'; } else { g.style.display = 'none'; s.style.transform = 'rotate(0deg)'; }" 
+                     style="display: flex; align-items: center; padding: 18px 15px; cursor: pointer; background: linear-gradient(145deg, #111, #1e1e1e); position: relative; gap: 15px;">
+                    
+                    <div style="position: relative;">
+                        <img src="${fotoLoja}" onerror="this.src='icone.png'" style="width: 75px; height: 75px; border-radius: 14px; border: 2px solid #d4af37; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+                        <div style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); background: #d4af37; color: #000; font-size: 9px; font-weight: bold; padding: 3px 8px; border-radius: 10px; white-space: nowrap; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">
+                            ${estrelasLojaHtml}
+                        </div>
                     </div>
-                    <span style="font-size: 10px; background: rgba(212, 175, 55, 0.2); color: #D4AF37; border: 1px solid rgba(212, 175, 55, 0.5); padding: 4px 8px; border-radius: 12px; font-weight:bold;">
-                        ${equipe.length} membro(s)
-                    </span>
+                    
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
+                        <h3 style="margin: 0; font-size: 16px; color: #fff; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+                            ${nomeBarbearia}
+                        </h3>
+                        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 5px;">
+                            <span style="font-size: 11px; color: #aaa; background: #222; padding: 2px 8px; border-radius: 6px; border: 1px solid #444;">💈 ${equipe.length} Profissional(is)</span>
+                            ${distanciaLojaHtml}
+                        </div>
+                        <div style="margin-top: 2px;">
+                            ${statusLojaHtml}
+                        </div>
+                    </div>
+                    
+                    <div id="seta_${idSanitizado}" style="color: #d4af37; font-size: 16px; transition: transform 0.3s; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: rgba(212,175,55,0.1); border-radius: 50%; border: 1px solid rgba(212,175,55,0.3);">
+                        ▼
+                    </div>
                 </div>
                 
-                <div style="padding: 12px; display: flex; flex-direction: column; gap: 12px;">
+                <div id="gaveta_${idSanitizado}" style="display: none; padding: 15px; background: #0d0d0d; border-top: 1px solid #333; flex-direction: column; gap: 12px;">
             `;
 
+            // Loop de preenchimento dos profissionais dentro da gaveta oculta
             equipe.forEach(b => {
                 const notaMedia = (b.numAvaliacoes > 0) ? (b.somaAvaliacoes / b.numAvaliacoes) : 5;
                 let qtdEstrelas = Math.round(notaMedia / 2);
                 if (qtdEstrelas > 5) qtdEstrelas = 5;
                 if (qtdEstrelas < 0) qtdEstrelas = 0;
                 const reputacaoEstrelas = '⭐'.repeat(qtdEstrelas);
-
-                const fotoRosto = b.fotoPerfil || b.logo_url || 'https://placehold.co/60x60?text=Foto';
+                
+                // 📸 FALLBACK DA FOTO DO PROFISSIONAL PARA O ICONE.PNG
+                const fotoRosto = b.fotoPerfil || b.logo_url || 'icone.png';
 
                 let logoBadgeHtml = '';
                 if (b.logo_url && b.logo_url.length > 5 && !b.vinculoSalao) {
-                     logoBadgeHtml = criarHtmlBadgeLogo(b.logo_url, `badge_${b.uid}`, true);
+                     logoBadgeHtml = (typeof criarHtmlBadgeLogo === 'function') ? criarHtmlBadgeLogo(b.logo_url, `badge_${b.uid}`, true) : '';
                 } else {
                     let idPatrao = null;
                     if (b.donoUid) idPatrao = b.donoUid;
@@ -13547,10 +13557,10 @@ async function carregarBarbeirosPrincipal(containerId, isGuest = false) {
                     if (idPatrao && idPatrao !== b.uid) {
                         const idElemento = `logo_badge_${b.uid}`;
                         listaParaBuscarLogo.push({ elementId: idElemento, donoUid: idPatrao });
-                        logoBadgeHtml = criarHtmlBadgeLogo('', idElemento, false);
+                        logoBadgeHtml = (typeof criarHtmlBadgeLogo === 'function') ? criarHtmlBadgeLogo('', idElemento, false) : '';
                     } 
                     else if (b.logo_url) {
-                        logoBadgeHtml = criarHtmlBadgeLogo(b.logo_url, `badge_${b.uid}`, true);
+                        logoBadgeHtml = (typeof criarHtmlBadgeLogo === 'function') ? criarHtmlBadgeLogo(b.logo_url, `badge_${b.uid}`, true) : '';
                     }
                 }
 
@@ -13560,16 +13570,9 @@ async function carregarBarbeirosPrincipal(containerId, isGuest = false) {
                 else if (b.vagaImediata) statusHtml = `<div class="card-status status-imediato">⚡ Vaga Imediata</div>`;
                 else statusHtml = `<div class="card-status status-manual">📅 Agenda Programada</div>`; 
 
-                // =================================================================
-                // 🔥 NOVIDADE: LÓGICA VISUAL DE DISTÂNCIA COM CORES 
-                // =================================================================
                 let distanciaTextoHtml = '';
                 if (b.distancia !== Infinity) {
-                    let corDist = '';
-                    if (b.distancia <= 5) corDist = '#2ecc71';      // Verde (Perto)
-                    else if (b.distancia <= 15) corDist = '#f39c12'; // Laranja (Médio)
-                    else corDist = '#e74c3c';                        // Vermelho (Longe)
-
+                    let corDist = b.distancia <= 5 ? '#2ecc71' : (b.distancia <= 15 ? '#f39c12' : '#e74c3c');
                     distanciaTextoHtml = `
                         <div style="display: inline-flex; align-items: center; background: ${corDist}15; border: 1px solid ${corDist}50; color: ${corDist}; padding: 3px 8px; border-radius: 8px; font-size: 10px; font-weight: bold; margin: 4px 0;">
                             <span style="margin-right: 4px;">📍</span> A ${b.distancia.toFixed(1)} km de você
@@ -13585,21 +13588,17 @@ async function carregarBarbeirosPrincipal(containerId, isGuest = false) {
 
                 const heartColor = b.isFavorito ? 'var(--cor-destaque)' : 'white';
                 const heartIcon = b.isFavorito ? '❤️' : '♡';
-                
                 const dateBoost = getSafeDate(b.boostExpiracao);
                 const isBoosted = dateBoost > agora;
                 const classeBoost = isBoosted ? 'boosted-card' : '';
                 const iconeBoost = isBoosted ? '<span class="boost-icon">🚀</span>' : '';
-                const actionClick = isGuest ? `exibirPopup('Faça login', 'Crie uma conta para favoritar!'); mostrar('authView');` : `toggleFavorito('${b.uid}')`;
+                const actionClick = isGuest ? `if(typeof exibirPopup==='function') exibirPopup('Faça login', 'Crie uma conta para favoritar!'); if(typeof mostrar==='function') mostrar('authView');` : `if(typeof toggleFavorito==='function') toggleFavorito('${b.uid}')`;
 
                 let classeSOS = '';
                 let badgeSOS = '';
-                if (b.sosConfig && b.sosConfig.ativo) {
-                    const dataExp = getSafeDate(b.sosConfig.expiraEm);
-                    if (dataExp > agora) {
-                        classeSOS = 'radar-active';
-                        badgeSOS = `<div style="position:absolute; top:-10px; right:-10px; background:#e74c3c; color:white; font-weight:bold; font-size:12px; padding:4px 8px; border-radius:10px; border:2px solid white; z-index:10; animation:pulse-red 1s infinite; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">🔥 ${b.sosConfig.desconto}% OFF</div>`;
-                    }
+                if (b.sosConfig && b.sosConfig.ativo && getSafeDate(b.sosConfig.expiraEm) > agora) {
+                    classeSOS = 'radar-active';
+                    badgeSOS = `<div style="position:absolute; top:-10px; right:-10px; background:#e74c3c; color:white; font-weight:bold; font-size:12px; padding:4px 8px; border-radius:10px; border:2px solid white; z-index:10; animation:pulse-red 1s infinite; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">🔥 ${b.sosConfig.desconto}% OFF</div>`;
                 }
 
                 let badgePromoFixa = '';
@@ -13614,18 +13613,19 @@ async function carregarBarbeirosPrincipal(containerId, isGuest = false) {
                 }
 
                 let botaoContratar = '';
-                if (perfil && perfil.isProprietario && b.uid !== auth.currentUser.uid) {
+                if (typeof perfil !== 'undefined' && perfil && perfil.isProprietario && b.uid !== auth.currentUser.uid) {
                     const jaNaMinhaEquipe = perfil.equipe && perfil.equipe.some(m => (m.uid === b.uid || m === b.uid));
                     const jaTemPatrao = b.pertenceABarbearia && b.pertenceABarbearia.uid;
                     if (jaNaMinhaEquipe) botaoContratar = `<div class="card-team-badge">✅ Equipe</div>`;
                     else if (jaTemPatrao) botaoContratar = `<div class="card-team-badge" style="background:#555; color:#aaa; border:1px solid #777;">🚫</div>`;
-                    else botaoContratar = `<button class="card-invite-btn" onclick="event.stopPropagation(); solicitarComissaoEAdicionar('${b.uid}', '${b.nome}')" title="Convidar para Equipe">🤝</button>`;
+                    else botaoContratar = `<button class="card-invite-btn" onclick="event.stopPropagation(); if(typeof solicitarComissaoEAdicionar==='function') solicitarComissaoEAdicionar('${b.uid}', '${b.nome}')" title="Convidar para Equipe">🤝</button>`;
                 }
 
                 const especialidadesHtml = typeof gerarHtmlEspecialidades === 'function' ? gerarHtmlEspecialidades(b.especialidades) : '';
 
+                // AQUI SALVA O CHICLETE NO CLIQUE E ABRE A AGENDA
                 htmlBuffer += `
-                  <div class="card barbeiro-card ${classeBoost} ${classeSOS}" onclick="abrirBarbeiroPerfil('${b.uid}', ${isGuest})" style="position:relative;">
+                  <div class="card barbeiro-card ${classeBoost} ${classeSOS}" onclick="localStorage.setItem('chicleteBarbeiroUid', '${b.uid}'); if(typeof abrirBarbeiroPerfil==='function') abrirBarbeiroPerfil('${b.uid}', ${isGuest})" style="position:relative; background: #222; margin:0; border: 1px solid #333;">
                       ${iconeBoost}
                       ${badgeSOS}
                       ${badgePromoFixa}
@@ -13634,21 +13634,19 @@ async function carregarBarbeirosPrincipal(containerId, isGuest = false) {
                       <button class="card-action-btn card-favorite-btn" style="color:${heartColor}" onclick="event.stopPropagation(); ${actionClick}">
                           ${heartIcon}
                       </button>
-                      <button class="card-action-btn card-share-btn" onclick="event.stopPropagation(); compartilharPerfil('${b.nome}', '${b.uid}')">🔗</button>
+                      <button class="card-action-btn card-share-btn" onclick="event.stopPropagation(); if(typeof compartilharPerfil==='function') compartilharPerfil('${b.nome}', '${b.uid}')">🔗</button>
                       
                       <div class="card-header">
                           <div style="position: relative; width: 60px; height: 60px; margin-right: 15px;">
-                              <img src="${fotoRosto}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--cor-destaque);">
+                              <img src="${fotoRosto}" onerror="this.src='icone.png'" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--cor-destaque);">
                               ${logoBadgeHtml}
                           </div>
 
                           <div class="card-header-info">
-                              <h4 class="professional-name-card">${b.nome}</h4>
+                              <h4 class="professional-name-card" style="font-size:15px; margin-bottom: 2px;">${b.nome}</h4>
                               <p class="nome-estabelecimento" style="display:none;">${nomeBarbearia}</p>
-                              
                               ${distanciaTextoHtml}
-                              
-                              <p class="card-reputacao-info" style="margin-bottom: 2px;">${reputacaoEstrelas} (${b.numAvaliacoes || 0})</p> 
+                              <p class="card-reputacao-info" style="margin-bottom: 2px; font-size:11px;">${reputacaoEstrelas} (${b.numAvaliacoes || 0})</p> 
                               ${especialidadesHtml}
                           </div>
                       </div>
@@ -13656,27 +13654,29 @@ async function carregarBarbeirosPrincipal(containerId, isGuest = false) {
                   </div>`;
             });
 
+            // FECHA A GAVETA
             htmlBuffer += `
-                </div>
+                </div> 
             </div>`;
         });
 
         lista.innerHTML = htmlBuffer;
 
+        // INJEÇÃO DA LOGO DOS DONOS
         if (listaParaBuscarLogo.length > 0) {
             listaParaBuscarLogo.forEach(async (task) => {
                 const imgEl = document.getElementById(task.elementId);
                 if (!imgEl) return;
-                if (window.cacheLogosDonos[task.donoUid]) {
+                if (window.cacheLogosDonos && window.cacheLogosDonos[task.donoUid]) {
                     imgEl.src = window.cacheLogosDonos[task.donoUid];
                     imgEl.style.display = 'block';
-                } 
-                else {
+                } else {
                     try {
                         const docDono = await db.collection('usuarios').doc(task.donoUid).get();
                         if (docDono.exists) {
                             const dadosDono = docDono.data();
                             if (dadosDono.logo_url) {
+                                if(!window.cacheLogosDonos) window.cacheLogosDonos = {};
                                 window.cacheLogosDonos[task.donoUid] = dadosDono.logo_url;
                                 imgEl.src = dadosDono.logo_url;
                                 imgEl.style.display = 'block';
@@ -13689,10 +13689,10 @@ async function carregarBarbeirosPrincipal(containerId, isGuest = false) {
 
         const inputBusca = document.getElementById(idBusca);
         if (inputBusca && inputBusca.value.trim() !== '') {
-            filtrarCardsNaTela(inputBusca.value, containerId);
+            if(typeof filtrarCardsNaTela === 'function') filtrarCardsNaTela(inputBusca.value, containerId);
         }
     });
-}
+};
 
 // =================================================================
 // 2. FUNÇÕES AUXILIARES (ATUALIZADAS)
@@ -13986,7 +13986,7 @@ window.desistirAgendamentoSalvo = async function() {
 };
 
 function mostrarDetalhesFinaisNoMesmoPopup(valorFinal, valorOriginal) {
-    const { barbeiroUid, barbeiroNome, servico, horario } = agendamentoState;
+    const { barbeiroUid, barbeiroNome, servico, horario, data } = agendamentoState; 
     const btnSim = document.getElementById('btnConfirmacaoGenericaSim');
     const btnNao = document.getElementById('btnConfirmacaoGenericaNao');
     const tituloEl = document.getElementById('confirmacaoGenericaTitulo');
@@ -14019,7 +14019,7 @@ function mostrarDetalhesFinaisNoMesmoPopup(valorFinal, valorOriginal) {
         }
     };
 
-    // 3. 🔥 BOTÃO SIM: Como já salvamos no início, ele só finaliza o visual
+    // 3. 🔥 BOTÃO SIM: O momento da verdade!
     btnSim.textContent = "Sim, Confirmar";
     btnSim.style.width = ""; 
     btnSim.style.background = ""; 
@@ -14027,6 +14027,47 @@ function mostrarDetalhesFinaisNoMesmoPopup(valorFinal, valorOriginal) {
     btnSim.onclick = () => {
         // A vaga já está garantida no banco, agora só limpamos a casa
         fecharModal('modalConfirmacaoGenerica');
+
+        // ==========================================================
+        // 🚀 GATILHO DA MENSAGEM IMEDIATA (COM DETETIVE DE ERROS)
+        // ==========================================================
+        try {
+            const dataEscolhida = data || agendamentoState.dataEscolhida || "Hoje";
+            const telefoneCliente = perfil.telefone || ""; // Tenta puxar o telefone
+            
+            // LOGS PARA A CONSOLA (Para descobrirmos o que falhou)
+            console.log("Enviando para o Zap:", {
+                telefone: telefoneCliente, 
+                clienteNome: perfil.nome, 
+                barbeiroNome: barbeiroNome
+            });
+
+            fetch('https://navalhabackend.onrender.com/api/confirmar-agendamento', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    telefone: telefoneCliente, 
+                    clienteNome: perfil.nome || "Cliente", 
+                    barbeiroNome: barbeiroNome, 
+                    data: dataEscolhida, 
+                    horario: horarioTexto, 
+                    servico: servico.nome 
+                })
+            }).then(resposta => {
+                if (!resposta.ok) {
+                    console.error("O Servidor recusou a mensagem. Código:", resposta.status);
+                    resposta.text().then(texto => console.error("Motivo:", texto));
+                } else {
+                    console.log("✅ Mensagem disparada com sucesso pelo backend!");
+                }
+            }).catch(erroRede => {
+                console.error("Erro de rede ao tentar contactar o Render:", erroRede);
+            });
+
+        } catch(e) { 
+            console.error("Erro fatal no código do Zap:", e); 
+        }
+        // ==========================================================
         
         // Limpa os botões verdes e seleções da tela
         if(typeof limparBotoesAposSucesso === 'function') {
@@ -20062,58 +20103,6 @@ async function confirmarVagaImediataEAbriMapa(agendamentoId) {
     }
 }
 
-async function cancelarAgendamentoAposAprovacao(agendamentoId) {
-    // 1. MATA TODAS AS 3 VERIFICAÇÕES
-    limparTodosTimersMapa();
-
-    if (!confirm("Tem certeza que deseja cancelar? O valor será reembolsado.")) return;
-    
-    exibirAguarde("Cancelando...");
-    
-    // Para o efeito chiclete do mapa
-    pararChicleteDefinitivo();
-
-    try {
-        const agendamentoDoc = await db.collection("agendamentos").doc(agendamentoId).get();
-        if (!agendamentoDoc.exists) throw new Error("Agendamento não encontrado.");
-        
-        const { valor, barbeiroUid, clienteUid } = agendamentoDoc.data();
-        
-        await db.runTransaction(async t => {
-            const clienteRef = db.collection("usuarios").doc(clienteUid);
-            const barbeiroRef = db.collection("usuarios").doc(barbeiroUid);
-            const agendamentoRef = db.collection("agendamentos").doc(agendamentoId);
-            
-            t.update(clienteRef, { saldo: firebase.firestore.FieldValue.increment(valor) });
-            t.update(barbeiroRef, { saldo: firebase.firestore.FieldValue.increment(-(valor * (1 - TAXA))) });
-            
-            const adminSnap = await db.collection("usuarios").where("tipo", "==", "admin").limit(1).get();
-            if (!adminSnap.empty) {
-                t.update(db.collection("usuarios").doc(adminSnap.docs[0].id), { saldo: firebase.firestore.FieldValue.increment(-(valor * TAXA)) });
-            }
-            
-            t.update(agendamentoRef, { status: "cancelado" });
-        });
-
-        criarAviso(barbeiroUid, `❌ O cliente ${perfil.nome} cancelou a vaga imediata. O valor foi estornado.`);
-        notifyUser(barbeiroUid, "❌ Agendamento Cancelado", `${perfil.nome} cancelou a vaga imediata.`);
-        
-        fecharTodosOsModais();
-        exibirPopup("Agendamento cancelado e valor reembolsado com sucesso.");
-        
-        // Fecha o modal vermelho se ainda estiver aberto
-        const modalVaga = document.getElementById('modalVagaImediataAprovada');
-        if(modalVaga) {
-            modalVaga.classList.remove('show');
-            modalVaga.style.display = 'none';
-        }
-
-    } catch (e) {
-        fecharTodosOsModais();
-        exibirPopup("Erro ao cancelar agendamento: " + e.message);
-    }
-}
-
 function abrirHistoricoCliente() {
   abrirModal('modalHistoricoCliente');
   const painelHistorico = document.getElementById("painelHistorico");
@@ -20407,7 +20396,6 @@ function abrirModalVip() {
                     <h4 style="margin-top:0; color: #d4af37;">Seus Benefícios Ativos:</h4>
                     <ul style="list-style: none; padding: 0; margin: 0;">
                         <li style="margin-bottom: 8px;">💰 <strong>10% de Cashback</strong> em todos os serviços.</li>
-                        <li style="margin-bottom: 8px;">🤖 <strong>Visagista IA</strong>: Consultoria de estilo ilimitada.</li>
                         <li style="margin-bottom: 8px;">🏆 <strong>Dobro de Pontos</strong> de fidelidade.</li>
                         <li style="margin-bottom: 8px;">💬 <strong>Ícone de Coroa</strong> e destaque no chat.</li>
                         <li style="margin-bottom: 8px;">🎰 <strong>4 Giros Diários</strong> na Roleta!</li> 
@@ -20433,7 +20421,6 @@ function abrirModalVip() {
                     <h4 style="color: #fff;">Vantagens Exclusivas:</h4>
                     <ul style="list-style: none; padding: 0; color: #ddd;">
                         <li style="margin-bottom: 8px;">💰 <strong>10% de Cashback</strong>: Receba moedas de volta!</li>
-                        <li style="margin-bottom: 8px;">🤖 <strong>Visagista IA</strong>: Seu Consultor de Estilo 24h.</li>
                         <li style="margin-bottom: 8px;">🏆 <strong>Pontos em Dobro</strong>: Suba no ranking 2x mais rápido.</li>
                         <li style="margin-bottom: 8px;">👑 <strong>Destaque VIP</strong> no chat global e perfil.</li>
                         <li style="margin-bottom: 8px;">🎰 <strong>4 Giros</strong> na Roleta Diária (o dobro do normal).</li> 
@@ -27221,6 +27208,93 @@ function executarBuscaNoBanco(textoOriginal, container) {
       });
 }
 
+// =========================================================================
+// 🗜️ COMPRESSOR DE IMAGENS (SALVADOR DE BOLETOS DO GOOGLE)
+// =========================================================================
+async function comprimirImagem(file, maxWidth = 800, maxHeight = 800, quality = 0.6) {
+    // Se não for imagem (ex: vídeo ou gif), não mexe e devolve o original
+    if (!file.type.startsWith('image/') || file.type === 'image/gif') return file;
+
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = event => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                // Redimensiona mantendo a proporção
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height = Math.round(height *= maxWidth / width);
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width = Math.round(width *= maxHeight / height);
+                        height = maxHeight;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Transforma no novo arquivo levinho (JPEG)
+                canvas.toBlob(blob => {
+                    resolve(new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
+                        type: 'image/jpeg',
+                        lastModified: Date.now()
+                    }));
+                }, 'image/jpeg', quality);
+            };
+        };
+    });
+}
+
+/**
+ * Faz upload de um arquivo para o Firebase Storage (AGORA COMPRIMIDO).
+ * @param {File} file O arquivo a ser enviado.
+ * @param {string} path O caminho no Storage (ex: 'logos/userId.jpg').
+ * @param {function} [onProgress] Callback para progresso (opcional).
+ * @returns {Promise<string>} A URL de download do arquivo.
+ */
+async function uploadImage(file, path, onProgress) {
+    // 🔥 A MÁGICA: Espreme a imagem antes do upload!
+    const fileComprimido = await comprimirImagem(file);
+
+    return new Promise((resolve, reject) => {
+        const storageRef = storage.ref(path);
+        // Usa o arquivo comprimido em vez do original
+        const uploadTask = storageRef.put(fileComprimido);
+
+        uploadTask.on('state_changed',
+            (snapshot) => {
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                console.log('Upload está ' + progress + '% concluído');
+                if (onProgress) {
+                    onProgress(progress); // Chama o callback de progresso
+                }
+            },
+            (error) => {
+                console.error("Erro no upload: ", error);
+                reject(error);
+            },
+            () => {
+                // Upload concluído com sucesso, pega a URL de download
+                uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                    console.log('Arquivo disponível em', downloadURL);
+                    resolve(downloadURL); // Retorna a URL
+                }).catch(reject);
+            }
+        );
+    });
+}
+
 async function carregarEquipeComPagamentos() {
     const container = document.getElementById('listaEquipeProprietario');
     if(!container) return; 
@@ -28632,7 +28706,7 @@ window.selecionarProfissionalTicket = function(uid, elemento) {
     }
 };
 
-// 3. O CÉREBRO DA MATEMÁTICA E DO BANCO DE DADOS
+// 3. O CÉREBRO DA MATEMÁTICA E DO BANCO DE DADOS (AGORA COM VENDAS E PRODUTOS INCLUSOS)
 window.calcularEAtualizarTicketMedio = async function() {
     const tipoFiltro = document.getElementById('filtroTipoTicketMedio').value; 
     const dataInicioStr = document.getElementById('finDataInicio').value; 
@@ -28669,7 +28743,7 @@ window.calcularEAtualizarTicketMedio = async function() {
                 if (isNaN(comissaoProfissional) || comissaoProfissional === 0) comissaoProfissional = 50;
             }
 
-            // 2. Busca direto nos AGENDAMENTOS (A Fonte Perfeita)
+            // 2. Busca direto nos AGENDAMENTOS (Cortes e Serviços)
             const snapAgendamentos = await db.collection('agendamentos')
                 .where('barbeiroUid', '==', uidSelecionado)
                 .where('dataConclusao', '>=', firebase.firestore.Timestamp.fromDate(start))
@@ -28678,7 +28752,7 @@ window.calcularEAtualizarTicketMedio = async function() {
 
             snapAgendamentos.forEach(doc => {
                 const ag = doc.data();
-                const statusValidos = ['concluido', 'avaliado', 'Concluido', 'Concluído'];
+                const statusValidos = ['concluido', 'avaliado', 'Concluido', 'Concluído', 'pago'];
                 if (!statusValidos.includes(ag.status)) return;
 
                 const valBruto = parseFloat(ag.valorFinalPago || ag.valor || ag.valorOriginal || 0);
@@ -28695,10 +28769,10 @@ window.calcularEAtualizarTicketMedio = async function() {
                 }
 
                 totalSoma += minhaComissao;
-                totalAgendamentos++;
+                totalAgendamentos++; // Conta o corte para o ticket médio
             });
 
-            // 3. Busca saídas manuais e pagamentos para achar o "Saldo a Receber"
+            // 3. Busca saídas, pagamentos E VENDAS (O Segredo do Ticket Médio Real)
             const snapExtrato = await db.collection('extrato_financeiro')
                 .where('donoUid', '==', auth.currentUser.uid)
                 .where('usuarioUid', '==', uidSelecionado)
@@ -28706,13 +28780,28 @@ window.calcularEAtualizarTicketMedio = async function() {
 
             snapExtrato.forEach(doc => {
                 const ext = doc.data();
-                if (ext.agendamentoId) return; 
+                if (ext.agendamentoId) return; // Pula para não duplicar serviço
+                
+                let dataRegistro = ext.dataEvento ? ext.dataEvento.toMillis() : (ext.ts ? ext.ts.toMillis() : 0);
+                
+                // Se estiver dentro da data filtrada
+                if (dataRegistro >= start.getTime() && dataRegistro <= end.getTime()) {
+                    
+                    // Saídas: Soma o que o cara já recebeu/adiantou
+                    if (ext.tipo === 'saida_manual' || ext.tipo === 'despesa_comissao' || ext.tipo === 'saida') {
+                        totalJaRecebidoNoPeriodo += (parseFloat(ext.valor) || 0);
+                    }
+                    
+                    // 🔥 CORREÇÃO DO TICKET MÉDIO: Soma as VENDAS de produtos que ele fez!
+                    else if (ext.tipo === 'venda_produto' || ext.tipo === 'venda' || ext.tipo === 'entrada_manual' || ext.tipo === 'produto') {
+                        const valorBrutoVenda = parseFloat(ext.valor) || 0;
+                        let minhaComissaoVenda = parseFloat(ext.valorLiquidoProfissional || 0);
+                        
+                        // Se não tiver comissão registrada na venda, calcula na hora
+                        if (minhaComissaoVenda === 0) minhaComissaoVenda = (valorBrutoVenda * comissaoProfissional) / 100;
 
-                if (ext.tipo === 'saida_manual' || ext.tipo === 'despesa_comissao') {
-                    const valorPago = parseFloat(ext.valor) || 0;
-                    let dataRegistro = ext.dataEvento ? ext.dataEvento.toMillis() : (ext.ts ? ext.ts.toMillis() : 0);
-                    if (dataRegistro >= start.getTime() && dataRegistro <= end.getTime()) {
-                        totalJaRecebidoNoPeriodo += valorPago;
+                        totalSoma += minhaComissaoVenda;
+                        totalAgendamentos++; // Conta a Venda como +1 atendimento no Ticket Médio!
                     }
                 }
             });
@@ -28733,7 +28822,7 @@ window.calcularEAtualizarTicketMedio = async function() {
                 if (dataRegistro < start.getTime() || dataRegistro > end.getTime()) return; 
 
                 const tipo = data.tipo || "";
-                const isDespesa = tipo.includes('despesa') || tipo.includes('saida') || data.valor < 0;
+                const isDespesa = tipo.includes('despesa') || tipo.includes('saida') || parseFloat(data.valor) < 0;
 
                 if (!isDespesa) {
                     if (uidSelecionado !== 'todos' && uidDesteRegistro !== uidSelecionado) return; 
@@ -28748,7 +28837,8 @@ window.calcularEAtualizarTicketMedio = async function() {
                         totalSoma += parseFloat(data.valor || 0);
                     }
 
-                    if (tipo.includes('servico') || tipo.includes('venda') || tipo.includes('receita')) {
+                    // 🔥 GARANTIA DE SOMA DE VENDAS NO TICKET GERAL
+                    if (tipo.includes('servico') || tipo.includes('venda') || tipo.includes('receita') || tipo.includes('produto') || tipo.includes('entrada')) {
                         totalAgendamentos++;
                     }
                 }
@@ -28774,7 +28864,7 @@ window.calcularEAtualizarTicketMedio = async function() {
         }
 
         // ==========================================================
-        // EXIBIÇÃO NO PAINEL
+        // EXIBIÇÃO NO PAINEL E CÁLCULO FINAL DO TICKET MÉDIO REAL
         // ==========================================================
         let ticketMedio = 0;
         if (totalAgendamentos > 0) {
@@ -28790,11 +28880,11 @@ window.calcularEAtualizarTicketMedio = async function() {
             // 🌟 O NOVO RAIO-X ESPELHADO DO GESTÃO DE MEMBROS
             document.getElementById('infoTicketMedio').innerHTML = `
                 <div style="display:inline-block; background:#222; padding:8px 12px; border-radius:8px; margin-top:5px; border:1px solid #444; text-align:left;">
-                    <span style="color:#aaa;">Comissão Produzida:</span> <b style="color:#2ecc71;">R$ ${totalSoma.toFixed(2).replace('.', ',')}</b> <br>
+                    <span style="color:#aaa;">Soma de Serviços e Vendas:</span> <b style="color:#2ecc71;">R$ ${totalSoma.toFixed(2).replace('.', ',')}</b> <br>
                     <span style="color:#aaa;">Já Pago/Adiantado:</span> <b style="color:#e74c3c;">R$ ${totalJaRecebidoNoPeriodo.toFixed(2).replace('.', ',')}</b> <br>
                     <span style="color:#aaa;">Saldo a Receber:</span> <b style="color:#f39c12; font-size:14px;">R$ ${saldoReal.toFixed(2).replace('.', ',')}</b> <br>
                     <hr style="border:0; border-top:1px dashed #444; margin:5px 0;">
-                    <span style="color:#aaa;">Dividido por:</span> <b style="color:#fff;">${totalAgendamentos}</b> <span style="color:#aaa;">agendamentos</span>
+                    <span style="color:#aaa;">Dividido por:</span> <b style="color:#fff;">${totalAgendamentos}</b> <span style="color:#aaa;">transações</span>
                 </div>
             `;
         } else {
@@ -28802,7 +28892,7 @@ window.calcularEAtualizarTicketMedio = async function() {
             document.getElementById('infoTicketMedio').innerHTML = `
                 <div style="display:inline-block; background:#222; padding:8px 12px; border-radius:8px; margin-top:5px; border:1px solid #444;">
                     <span style="color:#aaa;">Soma Gerada:</span> <b style="color:#2ecc71;">R$ ${totalSoma.toFixed(2).replace('.', ',')}</b> <br>
-                    <span style="color:#aaa;">Dividido por:</span> <b style="color:#fff;">${totalAgendamentos}</b> <span style="color:#aaa;">agendamentos/vendas</span>
+                    <span style="color:#aaa;">Dividido por:</span> <b style="color:#fff;">${totalAgendamentos}</b> <span style="color:#aaa;">transações (cortes + vendas)</span>
                 </div>
             `;
         }
@@ -30795,23 +30885,18 @@ function recusarAgendamento(agendamentoId, clienteUid) {
 }
 
 async function cancelarAgendamentoManualmente(agendamentoId, clienteUid, valor) {
-    // 1. Confirmação inicial
-    if (!confirm("Cancelar este agendamento? O dinheiro será reembolsado e sua reputação será afetada.")) return;
+    // 1. Confirmação inicial (Texto corrigido)
+    if (!confirm("Cancelar este agendamento? Sua reputação será afetada em -10 pontos.")) return;
 
     // ADIÇÃO: Para o efeito chiclete do mapa imediatamente
     if (typeof encerrarRastreamentoTotal === 'function') encerrarRastreamentoTotal();
 
     exibirAguarde("Cancelando...");
 
-    // Base de Taxas
-    const TAXA_ADMIN = 0.10; // Taxa de 10%
-
     try {
         await db.runTransaction(async t => {
             const agendamentoRef = db.collection("agendamentos").doc(agendamentoId);
 
-            // --- 1. FASE DE LEITURAS ---
-            
             // Lê o agendamento
             const agendamentoDoc = await t.get(agendamentoRef);
             if (!agendamentoDoc.exists) throw new Error("Agendamento não encontrado.");
@@ -30829,33 +30914,15 @@ async function cancelarAgendamentoManualmente(agendamentoId, clienteUid, valor) 
             if (!barbeiroDoc.exists) throw new Error("Profissional não encontrado.");
             const barbeiroData = barbeiroDoc.data();
 
-            // --- 2. FASE DE CÁLCULOS ---
-            const valorTaxaAdmin = valor * TAXA_ADMIN;
-
-            // --- 3. FASE DE ESCRITAS ---
-
-            // A. Reembolsa o Cliente (BLINDAGEM AQUI)
-            // Verificamos se NÃO é manual (pelo prefixo 'manual_') e se o UID existe
-            const ehClienteManual = !clienteUid || clienteUid === 'manual' || clienteUid.startsWith('manual_');
-            
-            if (!ehClienteManual) {
-                const clienteRef = db.collection("usuarios").doc(clienteUid);
-                // Opcional: Você pode ler o cliente antes se quiser garantir que o doc existe, 
-                // mas se ele chegou aqui com UID real, o update deve funcionar.
-                t.update(clienteRef, {
-                    saldo: firebase.firestore.FieldValue.increment(valor)
-                });
-            }
-
-            // B. Penaliza o Barbeiro
+            // A. Penaliza o Barbeiro (Mantido)
             t.update(barbeiroRef, {
                 reputacao: firebase.firestore.FieldValue.increment(-10)
             });
 
-            // C. Atualiza status do Agendamento
+            // B. Atualiza status do Agendamento
             t.update(agendamentoRef, { status: "cancelado" });
 
-            // D. Libera o horário na agenda
+            // C. Libera o horário na agenda
             const horario = agData.horario;
             if (barbeiroData && barbeiroData.usaAgendaManual && horario && horario !== 'imediato') {
                 const campoHorario = `agenda.${horario}`;
@@ -30868,48 +30935,34 @@ async function cancelarAgendamentoManualmente(agendamentoId, clienteUid, valor) 
                 t.update(barbeiroRef, { vagaImediata: true });
             }
 
-            // E. Estorno de taxas Admin
-            const adminRef = db.collection("config").doc("financeiro");
-            t.set(adminRef, {
-                arrecadadoTaxas: firebase.firestore.FieldValue.increment(-valorTaxaAdmin)
-            }, { merge: true });
-
-            // F. Lançamento no Extrato Financeiro (Histórico)
+            // D. Lançamento no Extrato Financeiro (Histórico sem valor financeiro)
             const extratoRef = db.collection("extrato_financeiro").doc();
             t.set(extratoRef, {
                 donoUid: agData.donoUid || agData.barbeiroUid,
                 usuarioUid: agData.barbeiroUid,
-                clienteUid: clienteUid, // Salva o ID manual no histórico para conferência
+                clienteUid: clienteUid,
                 tipo: "cancelamento_servico",
                 descricao: `Cancelamento: ${agData.servico} (Reputação -10)`,
-                valor: 0,
+                valor: 0, // ZERADO PARA NÃO BUGAR GRÁFICOS
                 dataEvento: firebase.firestore.Timestamp.now(),
                 ts: firebase.firestore.FieldValue.serverTimestamp()
             });
         });
 
         // --- APÓS A TRANSAÇÃO (SUCESSO) ---
-
-        // Notifica o cliente via Push (Apenas se for cliente real do App)
         const ehClienteManualPos = !clienteUid || clienteUid === 'manual' || clienteUid.startsWith('manual_');
         if (!ehClienteManualPos && typeof notifyUser === 'function') {
-            notifyUser(clienteUid, "🔄 Agendamento Cancelado", `O profissional cancelou seu horário. O valor de R$ ${valor.toFixed(2)} foi estornado.`);
+            notifyUser(clienteUid, "🔄 Agendamento Cancelado", `O profissional cancelou seu horário.`);
         }
 
         fecharTodosOsModais();
-        
-        // Mensagem customizada dependendo do tipo de cliente
-        if (ehClienteManualPos) {
-            exibirPopup("Agendamento de balcão cancelado. Ninguém foi reembolsado pois não houve pagamento via app.");
-        } else {
-            exibirPopup("Agendamento cancelado e valor reembolsado. Sua reputação diminuiu.");
-        }
+        exibirPopup("Agendamento cancelado com sucesso. Sua reputação diminuiu em -10 pontos.");
 
         // Recarrega para atualizar a agenda visualmente
         setTimeout(() => location.reload(), 1500);
 
     } catch (e) {
-        fecharAguarde(null, true); // Fecha o "Cancelando..."
+        fecharAguarde(null, true);
         console.error("Erro detalhado no cancelamento:", e);
         exibirPopup("Erro ao cancelar: " + (e.message || e));
     }
@@ -36724,19 +36777,28 @@ function renderizarFotosEspacoAtuais() {
     const contador = document.getElementById('fotosEspacoContador');
     if(!container) return;
     
-    const fotos = perfil.fotosEspaco || [];
-    // Filtra visualmente as que foram marcadas para excluir
-    const ativas = fotos.filter(url => !imagensEspacoMarcadasParaExcluir.includes(url));
+    // 🚨 A BLINDAGEM: Tenta puxar a variável. Se o perfil não existir, cria lista vazia.
+    let fotosBrutas = [];
+    if (typeof perfil !== 'undefined' && perfil) {
+        fotosBrutas = perfil.fotosEspaco || perfil.fotos_espaco || [];
+    }
+    
+    // 🚨 O CONSERTO DO ERRO: Força os dados a virarem uma lista (Array).
+    // Se já for lista, mantém. Se for um texto solto, coloca dentro de uma lista [].
+    let fotos = Array.isArray(fotosBrutas) ? fotosBrutas : [fotosBrutas];
+    
+    // Agora o filter vai funcionar sempre!
+    const ativas = fotos.filter(url => typeof url === 'string' && !imagensEspacoMarcadasParaExcluir.includes(url));
     
     if (contador) contador.textContent = ativas.length;
     container.innerHTML = '';
     
-    if (fotos.length === 0) {
+    if (ativas.length === 0) {
         container.innerHTML = '<p style="color:#666; font-style:italic; font-size:12px;">Nenhuma foto adicionada ainda.</p>';
         return;
     }
 
-    fotos.forEach(url => {
+    ativas.forEach(url => {
         const isDeleted = imagensEspacoMarcadasParaExcluir.includes(url);
         
         const div = document.createElement('div');
@@ -36747,7 +36809,7 @@ function renderizarFotosEspacoAtuais() {
         div.innerHTML = `
             <img src="${url}" style="width:100%; height:100%; object-fit:cover; border-radius:5px; opacity:${isDeleted ? 0.4 : 1}; border:${isDeleted ? '2px solid red' : '1px solid #555'};">
             <div onclick="marcarFotoEspacoParaExclusao('${url}')" style="position:absolute; top:-5px; right:-5px; background:rgba(0,0,0,0.8); color:#fff; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:10px;">
-                ${isDeleted ? '↩️' : '❌'}
+                ${isDeleted ? '↩' : '❌'}
             </div>
         `;
         container.appendChild(div);
@@ -36800,7 +36862,7 @@ function verificarEstadoBotaoSalvarEspaco() {
     btn.disabled = !(temNovas || temExclusao);
 }
 
-// 6. Salva tudo no Firebase (Upload e Update)
+// 6. Salva tudo no Firebase (AGORA COM COMPRESSÃO E ECONOMIA DE DADOS)
 async function salvarAlteracoesFotosEspaco() {
     const btn = document.getElementById('btnSalvarFotosEspaco');
     const progress = document.getElementById('fotosEspacoUploadProgress');
@@ -36814,20 +36876,23 @@ async function salvarAlteracoesFotosEspaco() {
     try {
         let urlsFinais = perfil.fotosEspaco || [];
         
-        // A. Remove as que foram marcadas para excluir
+        // A. Remove as que foram marcadas para excluir do banco (NÃO apaga do Storage neste código, apenas do perfil)
         urlsFinais = urlsFinais.filter(u => !imagensEspacoMarcadasParaExcluir.includes(u));
 
-        // B. Faz upload das novas
+        // B. Faz upload das novas (COM COMPRESSÃO MÁXIMA)
         if (input.files.length > 0) {
-            const totalBytes = Array.from(input.files).reduce((acc, f) => acc + f.size, 0);
             
             const uploads = Array.from(input.files).map(async (file, idx) => {
-                const ref = storage.ref(`fotos_espaco/${userId}/${Date.now()}_${idx}`);
-                const task = ref.put(file);
+                // 🔥 A MÁGICA: Espreme a foto do espaço (recepção, cadeiras, fachada)
+                const fileComprimido = await window.comprimirImagem(file);
                 
-                // Monitoramento simples de progresso (opcional)
+                const ref = storage.ref(`fotos_espaco/${userId}/${Date.now()}_${idx}`);
+                
+                // Envia o arquivo levinho
+                const task = ref.put(fileComprimido);
+                
+                // Monitoramento simples de progresso
                 task.on('state_changed', snap => {
-                    // Lógica simplificada de progresso visual
                     progress.value = (snap.bytesTransferred / snap.totalBytes) * 100;
                 });
                 
@@ -36847,12 +36912,21 @@ async function salvarAlteracoesFotosEspaco() {
         // D. Atualiza o perfil localmente
         perfil.fotosEspaco = urlsFinais;
         
-        fecharModalAtual();
-        exibirPopup("Sucesso", "Fotos do espaço atualizadas!");
+        // Limpa a fila de exclusões visuais
+        imagensEspacoMarcadasParaExcluir = [];
+        
+        if (typeof fecharModalAtual === 'function') fecharModalAtual();
+        if (typeof exibirPopup === 'function') exibirPopup("Sucesso", "Fotos do espaço atualizadas!");
+
+        // Reseta os campos HTML para a próxima vez
+        input.value = '';
+        document.getElementById('fotosEspacoPreviews').innerHTML = '';
+        progress.style.display = 'none';
+        btn.textContent = "Salvar Alterações";
 
     } catch (e) {
         console.error(e);
-        exibirPopup("Erro", "Falha ao salvar: " + e.message);
+        if (typeof exibirPopup === 'function') exibirPopup("Erro", "Falha ao salvar: " + e.message);
         btn.disabled = false;
         btn.textContent = "Salvar Alterações";
         progress.style.display = 'none';
@@ -37413,36 +37487,7 @@ function renderizarPainelClientePadrao() {
             <button onclick="abrirModalCupomIndicacao()" style="width:100%; margin-bottom: 15px; background: linear-gradient(45deg, #2ecc71, #27ae60); color: #000; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 14px; border: none; box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3); display: flex; justify-content: center; align-items: center; gap: 8px;">
                 🎟️ MEU CUPOM DE INDICAÇÃO
             </button>
-        `;
-
-        // --- NOVO: BOTÃO IA VISAGISTA (EM ALTA) ---
-        let htmlBotaoIA = `
-            <div style="padding: 0 0 15px 0;">
-                <div onclick="abrirChatVisagista()" 
-                     style="
-                        background: linear-gradient(90deg, #111, #222);
-                        border: 1px solid #d4af37;
-                        border-radius: 12px;
-                        padding: 15px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: space-between;
-                        cursor: pointer;
-                        box-shadow: 0 4px 10px rgba(212, 175, 55, 0.1);
-                     ">
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <div style="background:#d4af37; color:#000; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:bold;">
-                            AI
-                        </div>
-                        <div>
-                            <h4 style="margin:0; color:#fff; font-size:15px;">Consultar Visagista <span style="background:#d4af37; color:#000; font-size:9px; padding:2px 5px; border-radius:4px; margin-left:5px;">VIP</span></h4>
-                            <p style="margin:0; color:#aaa; font-size:11px;">Descubra o melhor corte para seu rosto</p>
-                        </div>
-                    </div>
-                    <div style="color:#d4af37; font-size:18px;">➤</div>
-                </div>
-            </div>
-        `;
+        `;        
 
         let htmlAtividades = `
             <button class="super-btn" onclick="toggleSubMenu('menu_cli_atividades', this)">📝 Minhas Atividades</button>
@@ -37471,7 +37516,7 @@ function renderizarPainelClientePadrao() {
             </div>`;
             
         // AQUI ESTÁ A INJEÇÃO CORRETA: O botão de cupom entra primeiro!
-        contentDiv.innerHTML = htmlBotaoCupom + htmlBotaoIA + htmlAtividades + htmlClube;
+        contentDiv.innerHTML = htmlBotaoCupom + htmlAtividades + htmlClube;
         
         // Mapa 3D Button Logic
         const containerMapa = document.getElementById('mapaBtnContainerCliente');
@@ -38917,7 +38962,7 @@ async function salvarAlteracoesPortfolio() {
     progressBar.value = 0;
 
     const uploadPromises = [];
-    const newImageUrls = []; // Vamos guardar as novas URLs aqui
+    const newImageUrls = []; 
     let totalBytesUpload = 0;
     const uploadTasksInfo = [];
 
@@ -38925,28 +38970,40 @@ async function salvarAlteracoesPortfolio() {
         totalBytesUpload = Array.from(files).reduce((acc, file) => acc + file.size, 0);
         Array.from(files).forEach((file, index) => {
             const filePath = `portfolio/${userId}/${Date.now()}_${index}_${file.name}`;
-            const uploadPromise = new Promise((resolve, reject) => {
-                const storageRef = storage.ref(filePath);
-                const uploadTask = storageRef.put(file);
-                const taskInfo = { task: uploadTask, bytesTransferred: 0 };
-                uploadTasksInfo.push(taskInfo);
+            
+            // 🔥 ADICIONADO ASYNC AQUI PARA A COMPRESSÃO FUNCIONAR
+            const uploadPromise = new Promise(async (resolve, reject) => {
+                try {
+                    // 🔥 A MÁGICA: COMPRIME A IMAGEM ANTES DO UPLOAD
+                    const fileComprimido = await window.comprimirImagem(file);
+                    
+                    const storageRef = storage.ref(filePath);
+                    
+                    // 🔥 USA O ARQUIVO COMPRIMIDO E LEVINHO
+                    const uploadTask = storageRef.put(fileComprimido);
+                    
+                    const taskInfo = { task: uploadTask, bytesTransferred: 0 };
+                    uploadTasksInfo.push(taskInfo);
 
-                uploadTask.on('state_changed',
-                    (snapshot) => {
-                        taskInfo.bytesTransferred = snapshot.bytesTransferred;
-                        let totalBytesTransferidosAcumulados = uploadTasksInfo.reduce((acc, info) => acc + info.bytesTransferred, 0);
-                        const progress = totalBytesUpload > 0 ? (totalBytesTransferidosAcumulados / totalBytesUpload) * 100 : 0;
-                        progressBar.value = progress;
-                    },
-                    (error) => reject(error),
-                    async () => {
-                        try {
-                            const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
-                            newImageUrls.push(downloadURL); // Guarda URL
-                            resolve();
-                        } catch(urlError) { reject(urlError); }
-                    }
-                );
+                    uploadTask.on('state_changed',
+                        (snapshot) => {
+                            taskInfo.bytesTransferred = snapshot.bytesTransferred;
+                            let totalBytesTransferidosAcumulados = uploadTasksInfo.reduce((acc, info) => acc + info.bytesTransferred, 0);
+                            const progress = totalBytesUpload > 0 ? (totalBytesTransferidosAcumulados / totalBytesUpload) * 100 : 0;
+                            progressBar.value = progress;
+                        },
+                        (error) => reject(error),
+                        async () => {
+                            try {
+                                const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                                newImageUrls.push(downloadURL); 
+                                resolve();
+                            } catch(urlError) { reject(urlError); }
+                        }
+                    );
+                } catch (compressionError) {
+                    reject(compressionError);
+                }
             });
             uploadPromises.push(uploadPromise);
         });
@@ -41292,41 +41349,6 @@ async function abrirModalAdminCidade(id, s) {
   // --- MODIFICATION END ---
 
   abrirModal('modalAdminDetalhesCidade');
-}
-
-/**
- * Faz upload de um arquivo para o Firebase Storage.
- * @param {File} file O arquivo a ser enviado.
- * @param {string} path O caminho no Storage (ex: 'logos/userId.jpg').
- * @param {function} [onProgress] Callback para progresso (opcional).
- * @returns {Promise<string>} A URL de download do arquivo.
- */
-function uploadImage(file, path, onProgress) {
-    return new Promise((resolve, reject) => {
-        const storageRef = storage.ref(path);
-        const uploadTask = storageRef.put(file);
-
-        uploadTask.on('state_changed',
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                console.log('Upload está ' + progress + '% concluído');
-                if (onProgress) {
-                    onProgress(progress); // Chama o callback de progresso
-                }
-            },
-            (error) => {
-                console.error("Erro no upload: ", error);
-                reject(error);
-            },
-            () => {
-                // Upload concluído com sucesso, pega a URL de download
-                uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-                    console.log('Arquivo disponível em', downloadURL);
-                    resolve(downloadURL); // Retorna a URL
-                }).catch(reject);
-            }
-        );
-    });
 }
 
 async function aprovarAlteracaoCidade() {
@@ -44380,28 +44402,40 @@ async function salvarProdutoVendedor() {
         Array.from(files).forEach((file, index) => {
             const productIdForPath = produtoEmEdicaoId || `new_${auth.currentUser.uid}_${Date.now()}`;
             const filePath = `products/${auth.currentUser.uid}/${productIdForPath}/${Date.now()}_${index}_${file.name}`;
-            const uploadPromise = new Promise((resolve, reject) => {
-                const storageRef = storage.ref(filePath);
-                const uploadTask = storageRef.put(file);
-                const taskInfo = { task: uploadTask, bytesTransferred: 0 };
-                uploadTasksInfo.push(taskInfo);
+            
+            // 🔥 ADICIONADO O "async" AQUI NA PROMISE
+            const uploadPromise = new Promise(async (resolve, reject) => {
+                try {
+                    // 🔥 A MÁGICA: Comprime a imagem do produto antes de subir!
+                    const fileComprimido = await window.comprimirImagem(file);
 
-                uploadTask.on('state_changed',
-                    (snapshot) => {
-                        taskInfo.bytesTransferred = snapshot.bytesTransferred;
-                        let totalBytesTransferidosAcumulados = uploadTasksInfo.reduce((acc, info) => acc + info.bytesTransferred, 0);
-                        const progress = totalBytesUpload > 0 ? (totalBytesTransferidosAcumulados / totalBytesUpload) * 100 : 0;
-                        progressBar.value = progress;
-                    },
-                    (error) => reject(error),
-                    async () => {
-                        try {
-                            const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
-                            newImageUrls.push(downloadURL); 
-                            resolve();
-                        } catch(urlError) { reject(urlError); }
-                    }
-                );
+                    const storageRef = storage.ref(filePath);
+                    
+                    // 🔥 USA O ARQUIVO COMPRIMIDO
+                    const uploadTask = storageRef.put(fileComprimido);
+                    
+                    const taskInfo = { task: uploadTask, bytesTransferred: 0 };
+                    uploadTasksInfo.push(taskInfo);
+
+                    uploadTask.on('state_changed',
+                        (snapshot) => {
+                            taskInfo.bytesTransferred = snapshot.bytesTransferred;
+                            let totalBytesTransferidosAcumulados = uploadTasksInfo.reduce((acc, info) => acc + info.bytesTransferred, 0);
+                            const progress = totalBytesUpload > 0 ? (totalBytesTransferidosAcumulados / totalBytesUpload) * 100 : 0;
+                            progressBar.value = progress;
+                        },
+                        (error) => reject(error),
+                        async () => {
+                            try {
+                                const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                                newImageUrls.push(downloadURL); 
+                                resolve();
+                            } catch(urlError) { reject(urlError); }
+                        }
+                    );
+                } catch (compressionError) {
+                    reject(compressionError);
+                }
             });
             uploadPromises.push(uploadPromise);
         });
@@ -44433,8 +44467,6 @@ async function salvarProdutoVendedor() {
             nomeLojaDisplay = perfil.nomeBarbearia;
         }
 
-        // --- CORREÇÃO DO ERRO AQUI ---
-        // Criamos o objeto SEM o campo desconto primeiro
         const productData = {
             nome,
             preco,
@@ -44451,15 +44483,10 @@ async function salvarProdutoVendedor() {
 
         // LÓGICA INTELIGENTE PARA O DESCONTO
         if (desconto !== null) {
-            // Se tem valor, adiciona no objeto
             productData.desconto = desconto;
         } else if (produtoEmEdicaoId) {
-            // Se NÃO tem valor E estamos EDITANDO, mandamos o comando para APAGAR o campo
             productData.desconto = firebase.firestore.FieldValue.delete();
         }
-        // Se for NOVO PRODUTO e NÃO tem desconto, simplesmente não fazemos nada.
-        // O campo não será enviado, o que é o correto.
-        // -----------------------------
 
         if (produtoEmEdicaoId) {
             await db.collection('loja_produtos').doc(produtoEmEdicaoId).update(productData);
@@ -49322,37 +49349,58 @@ function limparTodosTimersMapa() {
 }
 
 async function cancelarAgendamentoAposAprovacao(agendamentoId) {
-    limparTodosTimersMapa();
-    if (!confirm("Cancelar vaga imediata? O valor será estornado.")) return;
+    // 1. Mata os timers do mapa
+    if (typeof limparTodosTimersMapa === 'function') limparTodosTimersMapa();
+
+    // Texto limpo, sem prometer reembolso
+    if (!confirm("Tem certeza que deseja cancelar esta vaga imediata?")) return;
     
     exibirAguarde("Cancelando...");
-    try {
-        const doc = await db.collection("agendamentos").doc(agendamentoId).get();
-        const dados = doc.data();
-        const taxa = 0.10; // 10%
+    
+    // 2. Para o efeito chiclete do mapa (veio da sua versão 1)
+    if (typeof pararChicleteDefinitivo === 'function') pararChicleteDefinitivo();
 
-        await db.runTransaction(async t => {
-            const cliRef = db.collection("usuarios").doc(dados.clienteUid);
-            const barbRef = db.collection("usuarios").doc(dados.barbeiroUid);
-            const agRef = db.collection("agendamentos").doc(agendamentoId);
-            
-            // Devolve dinheiro pro cliente
-            t.update(cliRef, { saldo: firebase.firestore.FieldValue.increment(dados.valor) });
-            // Tira do barbeiro
-            t.update(barbRef, { saldo: firebase.firestore.FieldValue.increment(-(dados.valor * (1 - taxa))) });
-            
-            t.update(agRef, { status: "cancelado" });
+    try {
+        const agendamentoDoc = await db.collection("agendamentos").doc(agendamentoId).get();
+        if (!agendamentoDoc.exists) throw new Error("Agendamento não encontrado.");
+        
+        const dados = agendamentoDoc.data();
+        const barbeiroUid = dados.barbeiroUid;
+        
+        // 3. O FIM DO VAZAMENTO: Atualiza apenas o status, sem tocar em saldo!
+        await db.collection("agendamentos").doc(agendamentoId).update({ 
+            status: "cancelado" 
         });
 
-        if(typeof criarAviso === 'function') criarAviso(dados.barbeiroUid, `❌ Cliente cancelou a vaga.`);
+        // 4. Notifica o profissional
+        const nomeCliente = (typeof perfil !== 'undefined' && perfil.nome) ? perfil.nome : "O cliente";
+        
+        if (typeof criarAviso === 'function') {
+            criarAviso(barbeiroUid, `❌ ${nomeCliente} cancelou a vaga imediata.`);
+        }
+        if (typeof notifyUser === 'function') {
+            notifyUser(barbeiroUid, "❌ Agendamento Cancelado", `${nomeCliente} cancelou a vaga imediata.`);
+        }
+        
+        // 5. Limpa a tela e dá o aviso de sucesso pro cliente
         fecharTodosOsModais();
-        exibirPopup("Cancelado", "Valor reembolsado.");
-        fecharModalPeloId('modalVagaImediataAprovada');
+        exibirPopup("Cancelado", "A vaga imediata foi cancelada com sucesso.");
+        
+        // Fecha o modal vermelho de rastreio se ele ainda estiver na tela
+        const modalVaga = document.getElementById('modalVagaImediataAprovada');
+        if (modalVaga) {
+            modalVaga.classList.remove('show');
+            modalVaga.style.display = 'none';
+        }
+        if (typeof fecharModalPeloId === 'function') {
+            fecharModalPeloId('modalVagaImediataAprovada');
+        }
+
     } catch (e) {
+        fecharTodosOsModais();
         exibirPopup("Erro ao cancelar: " + e.message);
     }
 }
-
 
 function iniciarEscutaVagaImediataProfissional(uidLogado) {
     console.log("📡 RADAR LIGADO PARA O ID: " + uidLogado);
@@ -49921,14 +49969,14 @@ function adicionarUsoManual(id, qtdeAtual) {
 }
 
 window.renovarAssinatura = async function(idAssinatura, nomeCliente, valorPlano, barbeiroUidAntigo) {
-    // 1. Remove popup antigo se houver
+    // 1. Limpa popup antigo se houver na tela para evitar clones
     const oldModal = document.getElementById('modalRenovarAssinatura');
     if (oldModal) oldModal.remove();
 
     if(typeof exibirAguarde === 'function') exibirAguarde("Carregando equipe...");
 
     try {
-        // 2. Descobre quem é o dono do salão para puxar a equipe
+        // 2. Descobre quem é o dono do salão para listar a equipe correta
         let uidDono = auth.currentUser.uid;
         if (window.perfil && window.perfil.tipo === 'secretaria') {
             uidDono = window.perfil.pertenceABarbearia.uid;
@@ -49938,10 +49986,10 @@ window.renovarAssinatura = async function(idAssinatura, nomeCliente, valorPlano,
         const dadosDono = donoDoc.exists ? donoDoc.data() : {};
         const equipe = dadosDono.equipe || [];
 
-        // 3. Monta a lista do Select (Coloca o Dono primeiro)
+        // 3. Monta a lista do Select (Coloca o Dono/Salão em primeiro lugar)
         let optionsHtml = `<option value="${uidDono}" ${barbeiroUidAntigo === uidDono ? 'selected' : ''}>👑 ${dadosDono.nome || 'Proprietário'}</option>`;
 
-        // Puxa os membros da equipe
+        // Percorre e adiciona os membros da equipe no menu de seleção
         for (let membro of equipe) {
             const uidMembro = typeof membro === 'string' ? membro : membro.uid;
             if (uidMembro !== uidDono) {
@@ -49955,31 +50003,52 @@ window.renovarAssinatura = async function(idAssinatura, nomeCliente, valorPlano,
 
         if(typeof fecharTodosOsModais === 'function') fecharTodosOsModais(); // Fecha o aguarde
 
-        // 4. Cria o Modal Visual
+        // 📅 CÁLCULO DAS DATAS PADRÃO DO NOVO CICLO (Sugestão automática de 30 dias)
+        const hoje = new Date();
+        const hojeStr = hoje.toISOString().split('T')[0];
+        const trintaDias = new Date();
+        trintaDias.setDate(trintaDias.getDate() + 30);
+        const trintaDiasStr = trintaDias.toISOString().split('T')[0];
+
+        // 4. Cria o Modal com inputs interativos de valor e datas
         const modal = document.createElement('div');
         modal.id = 'modalRenovarAssinatura';
         modal.className = 'modal show';
-        modal.style.cssText = "z-index: 22000; display: flex;";
-
+        modal.style.cssText = "z-index: 22000; display: flex; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8);";
         modal.innerHTML = `
-            <div class="modal-content" style="border: 2px solid #f39c12; max-width: 350px; text-align: left;">
-                <h3 style="color: #f39c12; margin-top:0; text-align: center;">🔄 Renovar Assinatura</h3>
+            <div class="modal-content" style="border: 2px solid #f39c12; width: 90%; max-width: 380px; text-align: left; background: #1a1a1a; color: #fff; padding: 25px; border-radius: 16px; box-sizing: border-box; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+                <h3 style="color: #f39c12; margin-top:0; text-align: center; font-family: 'Orbitron', sans-serif;">🔄 Renovar Assinatura</h3>
                 
-                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                    <p style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Cliente: <b>${nomeCliente}</b></p>
-                    <p style="margin: 0; color: #aaa; font-size: 14px;">Valor a cobrar: <b style="color: #2ecc71;">R$ ${parseFloat(valorPlano).toFixed(2)}</b></p>
+                <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #333;">
+                     <p style="margin: 0; color: #fff; font-size: 14px;">Cliente: <b style="color:var(--cor-destaque);">${nomeCliente}</b></p>
                 </div>
 
-                <div class="form-group-despesa" style="margin-bottom: 20px;">
+                <div class="form-group-despesa" style="margin-bottom: 15px;">
+                    <label style="color: #f39c12; font-weight: bold; font-size: 12px;">💰 Valor Cobrado (R$):</label>
+                    <input type="number" id="renovacaoValorInput" value="${parseFloat(valorPlano).toFixed(2)}" step="0.01" style="width: 100%; padding: 12px; border-radius: 8px; background: #222; color: #fff; border: 1px solid #444; margin-top: 5px; box-sizing: border-box; outline: none;">
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <div style="flex:1">
+                        <label style="color: #f39c12; font-weight: bold; font-size: 12px;">📅 Data Início:</label>
+                        <input type="date" id="renovacaoDataInicio" value="${hojeStr}" style="width: 100%; padding: 12px; border-radius: 8px; background: #222; color: #fff; border: 1px solid #444; margin-top: 5px; box-sizing: border-box; outline: none; font-size: 12px;">
+                    </div>
+                    <div style="flex:1">
+                        <label style="color: #f39c12; font-weight: bold; font-size: 12px;">📅 Data Vencimento:</label>
+                        <input type="date" id="renovacaoDataFim" value="${trintaDiasStr}" style="width: 100%; padding: 12px; border-radius: 8px; background: #222; color: #fff; border: 1px solid #444; margin-top: 5px; box-sizing: border-box; outline: none; font-size: 12px;">
+                    </div>
+                </div>
+
+                <div class="form-group-despesa" style="margin-bottom: 22px;">
                     <label style="color: #f39c12; font-weight: bold; font-size: 12px;">👤 Quem vai receber a comissão?</label>
-                    <select id="renovacaoProfissionalSelect" class="form-select-despesa" style="width: 100%; padding: 12px; border-radius: 8px; background: #222; color: #fff; border: 1px solid #444; margin-top: 5px;">
+                    <select id="renovacaoProfissionalSelect" class="form-select-despesa" style="width: 100%; padding: 12px; border-radius: 8px; background: #222; color: #fff; border: 1px solid #444; margin-top: 5px; box-sizing: border-box; outline: none;">
                         ${optionsHtml}
                     </select>
                 </div>
 
                 <div style="display:flex; gap:10px;">
-                    <button onclick="document.getElementById('modalRenovarAssinatura').remove()" style="flex:1; background:#333; color:#fff; border:none; padding:12px; border-radius:8px; cursor: pointer;">Cancelar</button>
-                    <button onclick="confirmarRenovacaoPlano('${idAssinatura}', ${valorPlano}, '${nomeCliente}')" style="flex:1; background:#f39c12; color:#000; font-weight:bold; border:none; padding:12px; border-radius:8px; cursor: pointer;">Confirmar Pagamento</button>
+                    <button onclick="document.getElementById('modalRenovarAssinatura').remove()" style="flex:1; background:#333; color:#fff; border:1px solid #444; padding:12px; border-radius:8px; cursor: pointer; font-weight:bold;">Cancelar</button>
+                    <button onclick="confirmarRenovacaoPlano('${idAssinatura}', '${nomeCliente}')" style="flex:1; background:#f39c12; color:#000; font-weight:bold; border:none; padding:12px; border-radius:8px; cursor: pointer;">Confirmar</button>
                 </div>
             </div>
         `;
@@ -49992,17 +50061,25 @@ window.renovarAssinatura = async function(idAssinatura, nomeCliente, valorPlano,
     }
 };
 
-window.confirmarRenovacaoPlano = async function(idAssinatura, valorPlano, nomeCliente) {
+window.confirmarRenovacaoPlano = async function(idAssinatura, nomeCliente) {
     const select = document.getElementById('renovacaoProfissionalSelect');
     const uidProfissionalEscolhido = select.value;
     const nomeProfissional = select.options[select.selectedIndex].text.replace(/👑 |✂️ /g, '');
 
+    // Captura os valores digitados/escolhidos manualmente no modal
+    const valorPlano = parseFloat(document.getElementById('renovacaoValorInput').value);
+    const dataInicioStr = document.getElementById('renovacaoDataInicio').value;
+    const dataFimStr = document.getElementById('renovacaoDataFim').value;
+
+    // Linha de Defesa: Valida se tudo foi preenchido corretamente
     if (!uidProfissionalEscolhido) return alert("Selecione quem vai receber a comissão.");
+    if (isNaN(valorPlano) || valorPlano <= 0) return alert("Insira um valor de cobrança válido.");
+    if (!dataInicioStr || !dataFimStr) return alert("Por favor, preencha as datas de início e vencimento.");
 
     if(typeof exibirAguarde === 'function') exibirAguarde("Lançando comissão e renovando...");
 
     try {
-        // 1. Puxa os dados do profissional para saber a porcentagem dele
+        // 1. Busca os dados do profissional para calcular a divisão correta de comissão
         const profDoc = await db.collection('usuarios').doc(uidProfissionalEscolhido).get();
         const profDados = profDoc.exists ? profDoc.data() : {};
         
@@ -50014,48 +50091,49 @@ window.confirmarRenovacaoPlano = async function(idAssinatura, valorPlano, nomeCl
 
         const batch = db.batch();
 
-        // 2. Atualiza a assinatura (+30 dias) e zera o contador de uso
+        // 2. Atualiza o documento da assinatura com o preço e prazos modificados manualmente
         const assRef = db.collection('assinaturas').doc(idAssinatura);
-        const hoje = new Date();
-        const dataInicioStr = hoje.toISOString().split('T')[0];
-        hoje.setDate(hoje.getDate() + 30); // Renova por 30 dias
-        const dataFimStr = hoje.toISOString().split('T')[0];
-
         batch.update(assRef, {
             dataInicio: dataInicioStr,
             dataFim: dataFimStr,
-            qtdeUsada: 0, // Zera para o novo mês
-            barbeiroUid: uidProfissionalEscolhido, // Atualiza para o novo dono da assinatura
+            qtdeUsada: 0, // Reseta os usos para o novo ciclo comercial
+            valorPlano: valorPlano,
+            barbeiroUid: uidProfissionalEscolhido,
             barbeiroNome: nomeProfissional
         });
 
-        // 3. REGISTRA A ENTRADA FINANCEIRA COM COMISSÃO (Mágica aqui!)
+        // 3. Registra a Entrada Financeira amarrada às métricas corretas do profissional escolhido
         const extratoRef = db.collection('extrato_financeiro').doc();
         batch.set(extratoRef, {
             extratoIdNoBanco: extratoRef.id,
-            agendamentoId: `renovacao_${idAssinatura}_${Date.now()}`, // ID único
+            agendamentoId: `renovacao_${idAssinatura}_${Date.now()}`,
             donoUid: uidDonoReal, 
             usuarioUid: uidProfissionalEscolhido, 
             clienteUid: 'assinatura',
             tipo: 'receita_servico', 
-            categoria: 'venda', // Cai direto na categoria VENDAS no filtro
+            categoria: 'venda', // Direciona para o gráfico de Vendas
             descricao: `Renovação de Assinatura: ${nomeCliente} (Por: ${nomeProfissional})`,
             valor: valorPlano, 
             comissaoRetida: comissaoRetidaCasa, 
             valorLiquidoProfissional: valorLiquidoProfissional, 
-            metodos: { dinheiro: valorPlano }, // Joga no dinheiro como padrão
+            metodos: { dinheiro: valorPlano },
+            dataEvent: firebase.firestore.Timestamp.now(), // Compatibilidade com data nativa JS
             dataEvento: firebase.firestore.Timestamp.now(),
             ts: firebase.firestore.FieldValue.serverTimestamp()
         });
-
+        
         await batch.commit();
 
+        // 4. Limpa a tela e dá o feedback visual
         document.getElementById('modalRenovarAssinatura').remove();
         if(typeof fecharTodosOsModais === 'function') fecharTodosOsModais();
-        if(typeof exibirPopup === 'function') exibirPopup("Sucesso!", `Assinatura de ${nomeCliente} renovada! A comissão foi para ${nomeProfissional}.`);
-        else alert("Renovada com sucesso!");
+        if(typeof exibirPopup === 'function') {
+            exibirPopup("Sucesso!", `Assinatura de ${nomeCliente} renovada! A comissão foi lançada para ${nomeProfissional}.`, "sucesso");
+        } else {
+            alert("Renovada com sucesso!");
+        }
 
-        // Atualiza a lista por trás
+        // 5. Sincroniza as listas do app em tempo real
         if (typeof listarAssinaturasAtivas === 'function') listarAssinaturasAtivas();
         if (typeof sincronizarPainelDeGestao === 'function') sincronizarPainelDeGestao();
 
@@ -51325,6 +51403,47 @@ window.confirmarAgendamento = async function() {
         const docRef = await db.collection('agendamentos').add(agendamentoPayload);
         window.agendamentoGarantidoId = docRef.id;
 
+        // ==========================================================
+        // 🚀 GATILHO DA MENSAGEM IMEDIATA DE WHATSAPP (BACKEND)
+        // ==========================================================
+        try {
+            const dataEscolhida = dataFinal || "Hoje";
+            const telefoneCliente = perfil.telefone || "";
+            const horarioTexto = horario === 'imediato' ? 'uma Vaga Imediata' : `o horário das ${horario}`;
+            
+            console.log("Enviando para o Zap:", {
+                telefone: telefoneCliente, 
+                clienteNome: perfil.nome, 
+                barbeiroNome: barbeiroNome
+            });
+
+            fetch('https://navalhabackend.onrender.com/api/confirmar-agendamento', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    telefone: telefoneCliente, 
+                    clienteNome: perfil.nome || "Cliente", 
+                    barbeiroNome: barbeiroNome, 
+                    data: dataEscolhida, 
+                    horario: horarioTexto, 
+                    servico: servico.nome 
+                })
+            }).then(resposta => {
+                if (!resposta.ok) {
+                    console.error("O Servidor recusou a mensagem. Código:", resposta.status);
+                    resposta.text().then(texto => console.error("Motivo:", texto));
+                } else {
+                    console.log("✅ Mensagem disparada com sucesso pelo backend!");
+                }
+            }).catch(erroRede => {
+                console.error("Erro de rede ao tentar contactar o Render:", erroRede);
+            });
+
+        } catch(e) { 
+            console.error("Erro fatal no código do Zap:", e); 
+        }
+        // ==========================================================
+
         if(teveDescontoFidelidade && typeof tocarSom === 'function') tocarSom('sucesso');
 
         // 🔥 O PULO DO GATO VISUAL: Some com a barra de botões mágicos IMEDIATAMENTE!
@@ -52510,241 +52629,6 @@ function abrirGaleriaSobreposta(uid, tipo) {
 
     }, 50);
 }
-
-// --- 1. PROMPTS (IA DOUTORADA vs IA ESTAGIÁRIA SUTIL) ---
-
-const PROMPT_VIP = `
-    Você é um VISAGISTA PROFISSIONAL renomado (Nível Expert).
-    MISSÃO: Analisar geometria facial, proporção áurea e sugerir cortes/barbas com profundidade.
-    TOM: Exclusivo, técnico e confiante.
-    REGRAS: Dê consultoria completa, fale sobre ângulos, produtos e estilos. Faça o cliente se sentir único.
-`;
-
-const PROMPT_FREE = `
-    Você é um Consultor de Estilo (Nível Básico).
-    MISSÃO: Dar uma dica útil, porém introdutória, e despertar o desejo pelo VIP sutilmente.
-    
-    ROTEIRO DE RESPOSTA (Siga estritamente):
-    1. ACOLHIMENTO: Responda a pergunta do usuário com uma dica válida e correta (mostre que você entende), mas mantenha a resposta curta (máximo 2 frases).
-    2. O GATILHO DA LIMITAÇÃO: Logo após a dica, use um tom de "pena/lamento". Diga algo como: "Eu queria muito analisar a geometria profunda do seu maxilar para te dar a sugestão perfeita..."
-    3. A SOLUÇÃO VIP: Complete dizendo que na versão VIP você tem liberdade total para criar o projeto visual dele, além dos benefícios (como os descontos).
-    
-    EXEMPLO DE TOM:
-    "Para rosto redondo, laterais baixas ajudam. Eu adoraria calcular o ângulo exato para afinar seu rosto, mas meu acesso atual é limitado. No VIP, consigo fazer essa análise completa e você ainda ganha descontos..."
-    
-    IMPORTANTE: Não seja um vendedor chato. Seja um consultor que quer ajudar mais, mas é impedido pelo sistema.
-`;
-
-// 1. Função desativada - modelo fixo para evitar erro 403
-async function carregarModelosGoogle() {
-    // Função desativada - usamos modelo fixo "gemini-1.5-flash"
-    console.log("🔒 Usando modelo fixo gemini-1.5-flash (busca de modelos desativada)");
-    return;
-}
-
-window.abrirChatVisagista = function() {
-    try {
-        console.log("Iniciando Visagista ABSOLUTO...");
-        window.modeloVisagistaAtual = "gemini-1.5-flash";
-        
-        if (typeof fecharTodosOsModais === 'function') fecharTodosOsModais();
-        
-        const p = (typeof perfil !== 'undefined' && perfil) ? perfil : {};
-        const tipoUser = p.tipo || 'cliente';
-        const ehProfissional = ['barbeiro', 'manicure_pedicure', 'designer_cilios', 'admin'].includes(tipoUser);
-        const ehVip = (typeof isVipAtivo === 'function') ? isVipAtivo(p) : false;
-        const acessoTotal = ehProfissional || ehVip;
-
-        window.historicoChatVisagista = [];
-        window.conteudoHistorico = []; 
-        
-        const pVip = typeof PROMPT_VIP !== 'undefined' ? PROMPT_VIP : "Atue como um visagista especialista de elite.";
-        const pFree = typeof PROMPT_FREE !== 'undefined' ? PROMPT_FREE : "Atue como um consultor de estilo básico.";
-        const promptSistema = acessoTotal ? pVip : pFree;
-        
-        const mensagemInicial = acessoTotal 
-            ? "Olá, Mestre! 🍷 Sou seu Visagista VIP. Como está seu visual hoje?"
-            : "Olá! Sou o seu Visagista Virtual. Me diga qual o formato do seu rosto e irei te dar algumas dicas! 💈";
-
-        window.historicoChatVisagista.push({ role: "user", parts: [{ text: promptSistema + " Aja conforme suas instruções." }] });
-        window.historicoChatVisagista.push({ role: "model", parts: [{ text: mensagemInicial }] });
-
-        const header = document.getElementById('headerVisagistaIA');
-        const icone = document.getElementById('iconeVisagistaIA');
-        const titulo = document.getElementById('tituloVisagistaIA');
-        const sub = document.getElementById('subtituloVisagistaIA');
-        const btnVipContainer = document.getElementById('btnContainerVipIA');
-
-        if (header && icone && titulo && sub && btnVipContainer) {
-            if (acessoTotal) {
-                header.style.background = "linear-gradient(45deg, #1a1a1a, #000)";
-                header.style.borderBottom = "1px solid #d4af37";
-                icone.style.background = "#d4af37"; icone.innerHTML = "💎";
-                titulo.innerHTML = "Visagista VIP";
-                sub.innerText = "Consultoria Ilimitada";
-                btnVipContainer.innerHTML = "";
-            } else {
-                header.style.background = "linear-gradient(45deg, #2c3e50, #000)";
-                header.style.borderBottom = "1px solid #7f8c8d";
-                icone.style.background = "#95a5a6"; icone.innerHTML = "🤖";
-                titulo.innerHTML = "Assistente Básico";
-                sub.innerText = "Dicas iniciais";
-                btnVipContainer.innerHTML = `<button onclick="abrirModalVip(); document.getElementById('modalVisagistaAbsoluto').style.display='none'" style="background:#d4af37; color:#000; border:none; border-radius:4px; font-size:10px; font-weight:bold; padding:5px 10px; cursor:pointer;">SEJA VIP 💎</button>`;
-            }
-        }
-
-        const chatBody = document.getElementById('chatVisagistaBody');
-        if(chatBody) {
-            const corBorda = acessoTotal ? '#d4af37' : '#95a5a6';
-            const txtFormatado = (typeof formatarRespostaIA === 'function') ? formatarRespostaIA(mensagemInicial) : mensagemInicial;
-            chatBody.innerHTML = `
-                <div style="background: #222; padding: 12px 15px; border-radius: 12px 12px 12px 0; max-width: 85%; align-self: flex-start; border-left: 3px solid ${corBorda}; color: #fff; font-size: 14px;">
-                    ${txtFormatado}
-                </div>
-            `;
-        }
-
-        // --- A MÁGICA ACONTECE AQUI ---
-        const modalEl = document.getElementById('modalVisagistaAbsoluto');
-        if (modalEl) {
-            // 1. ARRACA O MODAL DE QUALQUER DIV ESCONDIDA E COLOCA NA RAIZ DO SITE
-            document.body.appendChild(modalEl); 
-            
-            // 2. FORÇA A EXIBIÇÃO
-            modalEl.style.display = 'flex';
-            modalEl.classList.add('show');
-            modalEl.style.opacity = '1';
-            modalEl.style.visibility = 'visible';
-            
-            setTimeout(() => {
-                const inputVisagista = document.getElementById('inputVisagista');
-                if(inputVisagista) inputVisagista.focus();
-            }, 300);
-            
-            console.log("Modal na raiz do site e visível!");
-        } else {
-            alert("O HTML do modalVisagistaAbsoluto não foi encontrado no arquivo.");
-        }
-
-    } catch(erro) {
-        console.error("Erro crítico:", erro);
-    }
-}
-
-function formatarRespostaIA(texto) {
-    if (!texto) return "";
-
-    let html = texto;
-
-    // 1. Títulos (## Título)
-    html = html.replace(/^### (.*$)/gim, '<h3 style="color:#d4af37; margin:10px 0 5px 0; font-size:16px;">$1</h3>');
-    html = html.replace(/^## (.*$)/gim, '<h2 style="color:#d4af37; margin:15px 0 10px 0; font-size:18px;">$1</h2>');
-
-    // 2. Negrito (**texto**) - Transforma em Dourado ou Branco forte
-    html = html.replace(/\*\*(.*?)\*\*/gim, '<strong style="color:#fff; font-weight:700;">$1</strong>');
-
-    // 3. Itálico (*texto*)
-    html = html.replace(/\*(.*?)\*/gim, '<em>$1</em>');
-
-    // 4. Listas com bolinhas (* item ou - item)
-    // Transforma em linhas organizadas
-    html = html.replace(/^\s*[\-\*]\s+(.*)$/gim, '<div style="display:flex; align-items:flex-start; margin-bottom:4px;"><span style="color:#d4af37; margin-right:8px;">•</span><span>$1</span></div>');
-
-    // 5. Quebras de linha (se não for HTML já tratado)
-    html = html.replace(/\n/g, '<br>');
-
-    return html;
-}
-
-// ======================================================
-// 🚀 FUNÇÃO DE ENVIO ATUALIZADA
-// ======================================================
-async function enviarMensagemVisagista() {
-    const input = document.getElementById('inputVisagista');
-    const texto = input.value.trim();
-    if (!texto) return;
-
-    // Verifica se carregou modelos
-    if (modelosDisponiveis.length === 0) {
-        document.getElementById('chatVisagistaBody').innerHTML += `<div class="ia-typing">🔄 Conectando aos servidores da IA... aguarde...</div>`;
-        await carregarModelosGoogle();
-    }
-
-    const chatBody = document.getElementById('chatVisagistaBody');
-
-    // Mostra msg do usuário
-    chatBody.innerHTML += `<div class="user-message">${texto}</div>`;
-    input.value = "";
-    chatBody.scrollTop = chatBody.scrollHeight;
-
-    // Loading
-    const loadingId = "typing_" + Date.now();
-    chatBody.innerHTML += `<div id="${loadingId}" class="ia-typing">Visagista IA está analisando...</div>`;
-    chatBody.scrollTop = chatBody.scrollHeight;
-
-    historicoChatVisagista.push({ role: "user", parts: [{ text: texto }] });
-
-    try {
-        // CHAMA A IA (A mesma função que já está funcionando)
-        const respostaIA = await chamarGeminiComContingencia(historicoChatVisagista);
-        
-        // Remove loading
-        const loadingElem = document.getElementById(loadingId);
-        if (loadingElem) loadingElem.remove();
-        
-        // --- AQUI ESTÁ A MÁGICA DA FORMATAÇÃO ---
-        const textoFormatado = formatarRespostaIA(respostaIA);
-
-        chatBody.innerHTML += `<div class="ia-message">${textoFormatado}</div>`;
-        
-        historicoChatVisagista.push({ role: "model", parts: [{ text: respostaIA }] });
-
-    } catch (erro) {
-        console.error(erro);
-        const loadingElem = document.getElementById(loadingId);
-        if (loadingElem) loadingElem.innerHTML = `<span style="color:red">Erro: ${erro.message}. Tente novamente.</span>`;
-    }
-    chatBody.scrollTop = chatBody.scrollHeight;
-}
-
-async function chamarGeminiComContingencia(conteudoHistorico) {
-    try {
-        console.log("[IA] Solicitando resposta ao servidor seguro (Render)...");
-        
-        // Link real do seu backend
-        const URL_SERVIDOR = 'https://navalhabackend.onrender.com/api/chat-visagista'; 
-        
-        const response = await fetch(URL_SERVIDOR, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                conteudoHistorico: conteudoHistorico,
-                modeloAtual: window.modeloVisagistaAtual 
-            })
-        });
-
-        const data = await response.json();
-
-        if (data.sucesso) {
-            console.log(`✅ Servidor respondeu usando o modelo: ${data.modeloAceito}`);
-            window.modeloVisagistaAtual = data.modeloAceito; // Salva para a próxima mensagem ser mais rápida
-            return data.texto;
-        } else {
-            throw new Error(data.erro || "Falha no servidor.");
-        }
-
-    } catch (erro) {
-        console.error("❌ Erro de conexão com o seu backend:", erro);
-        throw erro;
-    }
-}
-
-// Substitua todo aquele bloco final por este:
-document.addEventListener('keypress', function (e) {
-    if (e.target && e.target.id === 'inputVisagista' && e.key === 'Enter') {
-        enviarMensagemVisagista();
-    }
-});
 
 </script>
 <!-- ====================================================== -->
