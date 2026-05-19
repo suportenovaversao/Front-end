@@ -1,15 +1,15 @@
 {
   "name": "King Agenda",
   "short_name": "King Agenda",
-  "start_url": "/?source=pwa",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#0c0c0c",
   "theme_color": "#d4af37",
-  "description": "Agenda Profissional para Salões e Barbearias. Encontre VAGAS IMEDIATAS e Navegue com Nosso Mapa 3D!",
+  "description": "Agenda Profissional para Salões e Barbearias. Encontre VAGAS IMEDIATAS e Navegue com Nosso Mapa 3D!",
   "lang": "pt-BR",
   "dir": "ltr",
   "scope": "/",
-  "id": "/?source=pwa",
+  "id": "/",
   "orientation": "portrait",
   "categories": [
     "beauty",
