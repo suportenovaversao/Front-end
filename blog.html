@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog - King Agenda | O Futuro das Barbearias</title>
+    <meta name="description" content="Acompanhe as novidades, atualizações e dicas do King Agenda, o melhor aplicativo de agendamento e gestão para barbearias e salões.">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cor-destaque: #d4af37; 
+            --bg-dark: #0c0c0c;
+            --card-bg: #1a1a1a;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-dark);
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background: linear-gradient(180deg, #000, var(--bg-dark));
+            padding: 40px 20px;
+            text-align: center;
+            border-bottom: 2px solid var(--cor-destaque);
+        }
+        h1 { color: var(--cor-destaque); margin: 0; font-size: 32px; text-transform: uppercase; }
+        
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        
+        /* Estilos dos Posts Públicos */
+        .post-card {
+            background: var(--card-bg);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            transition: 0.3s;
+            position: relative;
+        }
+        .post-card:hover { border-color: var(--cor-destaque); }
+        .post-date { font-size: 12px; color: #888; margin-bottom: 10px; display: block; }
+        .post-title { font-size: 24px; color: #fff; margin: 0 0 15px 0; }
+        .post-content { color: #ccc; line-height: 1.6; font-size: 15px; }
+        .post-tags { margin-top: 15px; font-size: 11px; color: var(--cor-destaque); font-weight: bold; }
+
+        /* Painel Admin e Login */
+        #adminPanel, #loginPanel {
+            display: none;
+            background: #111;
+            padding: 25px;
+            border-radius: 14px;
+            border: 1px solid #333;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+        }
+        #adminPanel { border-color: var(--cor-destaque); }
+        
+        .admin-input {
+            width: 100%; padding: 14px; margin-bottom: 15px;
+            background: #050505; border: 1px solid #444; color: #fff;
+            border-radius: 8px; font-family: 'Poppins', sans-serif;
+            box-sizing: border-box; font-size: 14px;
+        }
+        .admin-input:focus { border-color: var(--cor-destaque); outline: none; }
+        
+        .admin-btn {
+            background: var(--cor-destaque); color: #000;
+            padding: 14px 25px; border: none; border-radius: 8px;
+            font-weight: bold; cursor: pointer; text-transform: uppercase;
+            width: 100%; font-size: 14px; letter-spacing: 0.5px; margin-bottom: 10px;
+        }
+        .btn-secondary { background: #333; color: #fff; border: 1px solid #555; }
+        .btn-danger { background: #e74c3c; color: #fff; }
+        
+        .logout-link {
+            color: #ff4444; font-size: 12px; cursor: pointer; 
+            text-decoration: underline; display: inline-block; margin-top: 10px;
+        }
+
+        /* Botões de Ação no Post (Só para o Admin) */
+        .admin-post-actions {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .action-btn {
+            background: #333; border: 1px solid #555; color: #fff;
+            border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer;
+        }
+        .action-btn.edit { color: #f39c12; }
+        .action-btn.delete { color: #e74c3c; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 onclick="toggleLoginBlock()" style="cursor:pointer;">👑 King Agenda Blog</h1>
+        <p style="color: #aaa; font-size: 14px;">Novidades, Atualizações e Dicas para Profissionais da Beleza</p>
+    </header>
+
+    <div class="container">
+        
+        <div id="loginPanel">
+            <h3 style="color: var(--cor-destaque); margin-top:0; text-align: center;">🔐 Acesso Restrito</h3>
+            <input type="email" id="loginEmail" class="admin-input" placeholder="Seu e-mail de Admin">
+            <input type="password" id="loginPassword" class="admin-input" placeholder="Sua senha">
+            <button class="admin-btn" onclick="fazerLoginAdmin()">Acessar Painel</button>
+        </div>
+        
+        <div id="adminPanel">
+            <h3 style="color: var(--cor-destaque); margin-top:0;">✍️ Novo Post (Admin)</h3>
+            <input type="hidden" id="editPostId"> <input type="text" id="postTitle" class="admin-input" placeholder="Título do Post">
+            <textarea id="postContent" class="admin-input" rows="6" placeholder="Conteúdo do post... (Use <b>negrito</b> ou <br> para pular linha)"></textarea>
+            <input type="text" id="postTags" class="admin-input" placeholder="Tags (ex: atualização, barbearia)">
+            
+            <button id="btnSalvarPost" class="admin-btn" onclick="salvarPost()">Publicar Post 🚀</button>
+            <button id="btnCancelarEdicao" class="admin-btn btn-secondary" style="display:none;" onclick="cancelarEdicao()">Cancelar Edição</button>
+            
+            <hr style="border-color: #333; margin: 20px 0;">
+            <button id="btnImportarEmMassa" class="admin-btn btn-secondary" onclick="importarArtigosIniciais()">📥 Importar 20 Artigos Iniciais</button>
+            
+            <br>
+            <span class="logout-link" onclick="fazerLogoutAdmin()">🔴 Desconectar</span>
+        </div>
+
+        <div id="postsContainer">
+            <div style="text-align: center; color: #aaa;">Carregando artigos...</div>
+        </div>
+
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<script>
+        const firebaseConfig = {
+  apiKey: "AIzaSyDBt7NcU5rP-hsrBZ07ne_HbiMCHRyVcnY",
+  authDomain: "navalha-de-ouro-v11.firebaseapp.com",
+  projectId: "navalha-de-ouro-v11",
+  storageBucket: "navalha-de-ouro-v11.firebasestorage.app",
+  messagingSenderId: "434474263075",
+  appId: "1:434474263075:web:163893d68a1b5dbe74c796"
+};
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // Variável de controlo para saber se o utilizador atual é Admin
+        let isAdminLogado = false;
+
+        // =======================================================
+        // 1. MONITOR DE SESSÃO E PERMISSÕES
+        // =======================================================
+        auth.onAuthStateChanged(async (user) => {
+            const panelAdmin = document.getElementById('adminPanel');
+            const panelLogin = document.getElementById('loginPanel');
+
+            if (user) {
+                try {
+                    const doc = await db.collection('usuarios').doc(user.uid).get();
+                    if (doc.exists && doc.data().tipo === 'admin') {
+                        isAdminLogado = true;
+                        panelAdmin.style.display = 'block';
+                        panelLogin.style.display = 'none';
+                    } else {
+                        isAdminLogado = false;
+                        panelAdmin.style.display = 'none';
+                        panelLogin.style.display = 'none';
+                    }
+                } catch (err) { console.error("Erro ao verificar privilégios:", err); }
+            } else {
+                isAdminLogado = false;
+                panelAdmin.style.display = 'none';
+                panelLogin.style.display = 'none';
+            }
+            carregarPosts(); // Recarrega para mostrar ou esconder os botões de editar/apagar
+        });
+
+        function toggleLoginBlock() {
+            if (!auth.currentUser) {
+                const p = document.getElementById('loginPanel');
+                p.style.display = p.style.display === 'block' ? 'none' : 'block';
+            }
+        }
+
+        async function fazerLoginAdmin() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const pass = document.getElementById('loginPassword').value;
+            if(!email || !pass) return alert("Preenche todos os campos.");
+            try { await auth.signInWithEmailAndPassword(email, pass); } 
+            catch(e) { alert("Falha na autenticação: " + e.message); }
+        }
+
+        async function fazerLogoutAdmin() {
+            if(confirm("Desejas terminar a sessão de administrador?")) {
+                await auth.signOut();
+                location.reload();
+            }
+        }
+
+        // =======================================================
+        // 2. CARREGAR E EXIBIR OS POSTS
+        // =======================================================
+        function carregarPosts() {
+            db.collection('blog_posts').orderBy('dataCriacao', 'desc').onSnapshot(snap => {
+                const container = document.getElementById('postsContainer');
+                if (snap.empty) {
+                    container.innerHTML = "<p style='text-align:center; opacity:0.5;'>Nenhum artigo publicado ainda.</p>";
+                    return;
+                }
+                
+                let html = "";
+                snap.forEach(doc => {
+                    const post = doc.data();
+                    const id = doc.id;
+                    const dataFormatada = post.dataCriacao ? post.dataCriacao.toDate().toLocaleDateString('pt-BR') : 'Recentemente';
+                    
+                    // Botões de Ação só aparecem para o Admin
+                    let acoesAdmin = "";
+                    if (isAdminLogado) {
+                        acoesAdmin = `
+                            <div class="admin-post-actions">
+                                <button class="action-btn edit" onclick="prepararEdicao('${id}', \`${post.titulo.replace(/`/g, "'")}\`, \`${post.conteudo.replace(/`/g, "'")}\`, '${post.tags || ''}')">✏️ Editar</button>
+                                <button class="action-btn delete" onclick="apagarPost('${id}')">🗑️ Apagar</button>
+                            </div>
+                        `;
+                    }
+
+                    html += `
+                        <article class="post-card">
+                            ${acoesAdmin}
+                            <span class="post-date">📅 ${dataFormatada}</span>
+                            <h2 class="post-title">${post.titulo}</h2>
+                            <div class="post-content">${post.conteudo.replace(/\n/g, '<br>')}</div>
+                            <div class="post-tags">🏷️ Tags: ${post.tags || 'Geral'}</div>
+                        </article>
+                    `;
+                });
+                container.innerHTML = html;
+            });
+        }
+
+        // =======================================================
+        // 3. CRIAR, EDITAR E APAGAR POSTS
+        // =======================================================
+        async function salvarPost() {
+            const idEdit = document.getElementById('editPostId').value;
+            const title = document.getElementById('postTitle').value;
+            const content = document.getElementById('postContent').value;
+            const tags = document.getElementById('postTags').value;
+
+            if(!title || !content) return alert("Preenche o título e o conteúdo!");
+
+            document.getElementById('btnSalvarPost').innerText = "A guardar...";
+
+            try {
+                if (idEdit) {
+                    // MODO EDIÇÃO
+                    await db.collection('blog_posts').doc(idEdit).update({
+                        titulo: title, conteudo: content, tags: tags
+                    });
+                    alert("Post atualizado com sucesso!");
+                    cancelarEdicao();
+                } else {
+                    // NOVO POST
+                    await db.collection('blog_posts').add({
+                        titulo: title, conteudo: content, tags: tags,
+                        dataCriacao: firebase.firestore.FieldValue.serverTimestamp(),
+                        autorUid: auth.currentUser.uid
+                    });
+                    alert("Post publicado com sucesso!");
+                    cancelarEdicao(); // Limpa os campos
+                }
+            } catch(e) {
+                alert("Erro ao publicar: " + e.message);
+                document.getElementById('btnSalvarPost').innerText = "Publicar Post 🚀";
+            }
+        }
+
+        function prepararEdicao(id, titulo, conteudo, tags) {
+            document.getElementById('editPostId').value = id;
+            document.getElementById('postTitle').value = titulo;
+            document.getElementById('postContent').value = conteudo;
+            document.getElementById('postTags').value = tags;
+            
+            document.getElementById('btnSalvarPost').innerText = "💾 Guardar Alterações";
+            document.getElementById('btnCancelarEdicao').style.display = 'inline-block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelarEdicao() {
+            document.getElementById('editPostId').value = '';
+            document.getElementById('postTitle').value = '';
+            document.getElementById('postContent').value = '';
+            document.getElementById('postTags').value = '';
+            
+            document.getElementById('btnSalvarPost').innerText = "Publicar Post 🚀";
+            document.getElementById('btnCancelarEdicao').style.display = 'none';
+        }
+
+        async function apagarPost(id) {
+            if(confirm("Tens a certeza absoluta que queres apagar este post?")) {
+                try {
+                    await db.collection('blog_posts').doc(id).delete();
+                } catch(e) { alert("Erro ao apagar: " + e.message); }
+            }
+        }
+
+        // =======================================================
+        // LOTE 3 DE IMPORTAÇÃO FINAL (POSTS 61 AO 100)
+        // =======================================================
+        const postsProntos = [
+            { t: "Como o King Agenda funciona sem precisar da App Store", c: "Graças à tecnologia PWA (Progressive Web App), os utilizadores não precisam de ir às lojas de aplicações tradicionais. Podem instalar o King Agenda diretamente pelo navegador do telemóvel. Isto poupa espaço e garante atualizações instantâneas sem downloads pesados.", g: "pwa, tecnologia, inovação" },
+            { t: "Entendendo a diferença entre WebAPK e TWA", c: "Para oferecer uma experiência 100% nativa em telemóveis Android, utilizamos o sistema TWA (Trusted Web Activity) combinado com validação Digital Asset Links. Isso significa que o nosso PWA corre sem a barra de endereços do Chrome, sentindo-se exatamente como uma app oficial da Play Store.", g: "webapk, twa, experiência nativa" },
+            { t: "Segurança Máxima com Firebase Firestore", c: "Os teus dados de agenda e financeiros estão num cofre. O King Agenda utiliza a infraestrutura de nuvem do Firebase (Google), com regras de segurança estritas. Um utilizador só consegue aceder e modificar os dados que lhe pertencem, eliminando o risco de invasões.", g: "segurança, banco de dados, firebase" },
+            { t: "Animações GSAP: O segredo do design fluido", c: "A beleza do King Agenda não é por acaso. Implementamos a biblioteca GSAP para criar transições espetaculares nas Vitrines em Gaveta. Quando clicas num perfil, a suavidade da abertura cria uma experiência visual 'premium' que nenhum sistema comum consegue igualar.", g: "gsap, ui ux, design" },
+            { t: "Performance: Por que o nosso Mapa 3D não bloqueia o telemóvel", c: "Renderizar mapas pode ser pesado, mas o nosso código possui uma função automática de limpeza de 'Timers' e rastreamento (limparTodosTimersMapa). Mal a vaga imediata é fechada, o sistema interrompe o efeito 'chiclete' do GPS, poupando a bateria e a memória do smartphone.", g: "performance, mapa 3d, otimização" },
+            { t: "Rastreio GPS em tempo real cliente-barbeiro", c: "Para a 'Vaga Imediata', não basta agendar. O King Agenda possui rastreio contínuo: mal o pedido é aprovado, a localização de ambos é partilhada até que o serviço comece, garantindo que o profissional saiba a quantos minutos o cliente está de chegar.", g: "gps, rastreio em tempo real" },
+            { t: "Segurança financeira: Blindagem de código", c: "Todas as operações que envolvem saldo e reputação no King Agenda utilizam 'Transactions' no banco de dados. Isso garante que, se a internet cair a meio de um pagamento, a operação inteira é cancelada, evitando débitos indevidos ou duplicações.", g: "estabilidade, segurança de dados" },
+            { t: "Modo Convidado (Guest): Deixa o cliente explorar", c: "Forçar o registo imediato espanta utilizadores. O King Agenda permite a navegação como 'Visitante'. O cliente pode ver o mapa, as barbearias e os preços. Apenas quando decide favoritar ou agendar é que a plataforma pede de forma amigável que crie uma conta.", g: "modo convidado, ux" },
+            { t: "Arquitetura Standalone contra 'Choque de Domínios'", c: "Para que o King Agenda funcione sem as aborrecidas barras de navegador no topo do ecrã, configurámos os Asset Links diretamente no domínio principal. Isto certifica que o aplicativo e o site são do mesmo proprietário, validando a segurança para a Google.", g: "arquitetura, standalone, pwa" },
+            { t: "Personalização: A Psicologia do Dourado e Modo Escuro", c: "O nosso design 'Dark Theme' (Modo Escuro) poupa a bateria dos ecrãs OLED e reduz o cansaço visual dos profissionais que olham para o ecrã o dia todo. Os toques em Dourado (#d4af37) transmitem prestígio, exclusividade e luxo aos salões da nossa rede.", g: "modo escuro, design de interface" },
+            { t: "Integração Automática PIX no Aplicativo", c: "Gerar um QR Code de PIX à mão é coisa do passado. O King Agenda gera códigos PIX dinâmicos diretamente no ecrã com validade de 10 minutos. O cliente lê o código e o valor exato cai na conta correta, com o sistema a confirmar a transação.", g: "pix, automação bancária" },
+            { t: "A diferença entre Avisos de Ecrã e Pop-ups", c: "Uma boa aplicação não interrompe o utilizador a toda a hora. O King Agenda utiliza 'Alertas Toast' discretos para pequenos avisos e reserva os 'Modais' vermelhos apenas para confirmações críticas, como o cancelamento de uma marcação. Isto melhora o fluxo de trabalho.", g: "ux writing, notificações" },
+            { t: "Algoritmo por trás dos 'Horários de Almoço'", c: "O bloqueio de horários na agenda programada envolve matemática complexa (timeToMin). O King Agenda consegue calcular se um corte de 45 minutos entra em conflito com o intervalo de almoço do profissional, impedindo sobreposições desastrosas de forma automática.", g: "agenda inteligente, algoritmo" },
+            { t: "Fallback de Imagens: Ninguém fica sem foto", c: "Problemas na rede podem fazer com que a foto de perfil não carregue. O King Agenda possui um mecanismo de proteção em que, se a foto falhar, um ícone elegante é imediatamente inserido no lugar, garantindo que a vitrine da barbearia nunca parece 'partida'.", g: "tratamento de erros, ux" },
+            { t: "Ordenação de Busca: Distância e Qualidade em primeiro", c: "Como o sistema escolhe quem aparece primeiro? O nosso algoritmo prioriza primeiro quem é 'Favorito', depois os profissionais com 'Boost' (Foguete) ou Radar SOS ativo e, finalmente, faz a triagem pela proximidade quilométrica exata do utilizador.", g: "algoritmo de busca, ranqueamento" },
+            { t: "Sincronização Real-Time com Snapshots", c: "Se um cliente marcar um horário no telemóvel dele, o ecrã do barbeiro atualiza no mesmo segundo, sem precisar de recarregar a página. A tecnologia de escuta ativa do Firebase Firestore mantém toda a rede em perfeita sincronia.", g: "real-time, firebase snapshots" },
+            { t: "Prevenção de toques duplos em transações", c: "Clientes apressados podem clicar duas vezes no botão de agendar e pagar a dobrar. O King Agenda bloqueia e altera o botão para 'Processando...' logo ao primeiro toque, blindando o sistema contra erros humanos e falhas de pagamento.", g: "segurança de botões, ux" },
+            { t: "Gestão Visual de Profissionais Inativos", c: "Um barbeiro entrou de férias? No painel, ele simplesmente muda o estado ou zera a agenda. O King Agenda deteta automaticamente e exibe a etiqueta vermelha '🔴 Indisponível', impedindo frustrações dos utilizadores na procura.", g: "gestão de inativos, limpeza visual" },
+            { t: "A união do Banco de Dados, Auth e Storage", c: "A velocidade do nosso app vem da arquitetura sólida: O Auth gere as passwords com criptografia militar, o Firestore guarda os horários e o Storage hospeda as fotos em alta resolução. Tudo a funcionar debaixo do mesmo teto tecnológico.", g: "infraestrutura, nuvem" },
+            
+            { t: "Por que os homens não querem esperar na barbearia", c: "O conceito da sala de espera cheia de revistas ficou para trás. O homem moderno exige previsibilidade. Com o King Agenda, ele chega no horário exato e senta-se na cadeira. A comodidade tornou-se o fator de decisão número um para escolher um barbeiro.", g: "comportamento, comodidade" },
+            { t: "A ascensão dos salões unissex e completos", c: "A tendência é resolver tudo num só lugar. O King Agenda compreendeu isso ao adaptar a plataforma para incluir serviços de unhas, pestanas e cabelo feminino, permitindo que casais ou famílias frequentem a mesma rede de profissionais com o mesmo app.", g: "tendências, serviços combinados" },
+            { t: "A importância do tempo de resposta num agendamento", c: "Um pedido de marcação não respondido em 5 minutos é um cliente perdido para a concorrência. A notificação sonora e o botão rápido de aceitação do King Agenda garantem que o profissional agarra o cliente antes que ele feche o telemóvel.", g: "tempo de resposta, conversão" },
+            { t: "Transparência de preços aumenta a confiança", c: "Não há nada pior do que perguntar o preço por mensagem e o profissional demorar a responder. A vitrine aberta com tabela de serviços e preços claros tira o atrito da decisão de compra e encoraja o utilizador a reservar mais vezes.", g: "confiança, tabela de preços" },
+            { t: "A venda de cosméticos com Retirada no Balcão", c: "O cliente já vai ao seu espaço cortar o cabelo; porque não aproveitar para vender uma pomada ou loção? A secção Loja do King Agenda permite compras online com a conveniência da entrega no balcão, uma tática fantástica de cross-selling.", g: "produtos físicos, cross-selling" },
+            { t: "O fator Hiperlocal: Negócios num raio de 5km", c: "A não ser que o barbeiro seja uma estrela, o cliente procura serviços perto de casa. A ordenação geolocalizada do King Agenda foca em negócios hiperlocais, fortalecendo a economia do bairro e a fidelização de proximidade.", g: "negócios locais, hiperlocal" },
+            { t: "O fim das chamadas telefónicas para marcar", c: "Atender chamadas com o secador ligado ou uma lâmina na mão é perigoso e ineficiente. As novas gerações (Millennials e Gen Z) têm fobia de fazer chamadas telefónicas; oferecer um app como o King Agenda é a única forma de garantir este público.", g: "geração z, inovação" },
+            { t: "Gamificação: Retenção do público jovem", c: "Pintar o cabelo ou lançar desafios. A gamificação não é apenas para videojogos. Ter balões de chat coloridos, King Points e rankings faz com que usar o King Agenda seja uma experiência divertida, o que garante a retenção do utilizador.", g: "gamificação, engajamento jovem" },
+            { t: "Neurociência no Design: O ícone do Raio", c: "As cores quentes (vermelho, dourado) e ícones de perigo (⚡) despertam instintos de ação no cérebro humano. A interface da Vaga Imediata não é apenas bonita, é estudada para acelerar a decisão do cliente antes que outro tome a vez.", g: "neurociência, decisão de compra" },
+            { t: "A Regra do -10: Protegendo o Mercado", c: "Se um profissional cancela de forma irresponsável, destrói a confiança no mercado. A punição rigorosa do King Agenda (-10 de reputação por cancelamentos injustificados) separa os amadores dos empresários de sucesso e protege a integridade da plataforma.", g: "ética profissional, mercado de beleza" },
+            { t: "A valorização do Profissional Independente", c: "Sem capital para alugar uma loja, muitos trabalham em casa ou alugam cadeiras. O King Agenda dá a estes talentos independentes a mesma presença digital e sofisticação que as maiores redes de barbearia do país possuem.", g: "profissionais autônomos, empreendedorismo" },
+            { t: "Métricas transformam barbeiros em empresários", c: "Um barbeiro corta cabelo; um empresário analisa dados. O acesso ao fluxo de caixa, percentagens de cancelamento e gráficos de despesas muda completamente a forma como o dono do salão gere o negócio, fomentando a expansão.", g: "mentalidade empreendedora, métricas" },
+            { t: "O impacto do Feedback Imediato no Salão", c: "Receber 5 estrelas anima a equipa, receber 3 estrelas acende um alerta. O sistema de avaliações do app é uma ferramenta silenciosa de controlo de qualidade, permitindo que o gestor atue rápido se um barbeiro específico estiver a falhar no atendimento.", g: "feedback de clientes, melhoria contínua" },
+            { t: "O fim do fiado: Intermediação tecnológica", c: "A Carteira Digital acaba com o constrangimento de cobrar aos amigos. A tecnologia impessoal do aplicativo obriga à transferência correta dos fundos ou ao pagamento oficial, acabando de vez com as dívidas (fiado) na barbearia.", g: "saúde financeira, inadimplência" },
+            { t: "O Status VIP como símbolo de prestígio", c: "Clientes adoram ostentar. Quando um utilizador subscreve ou compra o badge VIP no King Agenda, o nome dele ganha destaque e brilho no chat e nos agendamentos. A venda de 'Status' é uma das formas mais eficientes de monetizar plataformas online.", g: "status digital, clientes vip" },
+            { t: "Psicologia do Consumidor e a Exclusividade", c: "Com o Efeito Chiclete, o cliente sente que o app o conhece perfeitamente. Abrir a aplicação e ver imediatamente o seu barbeiro favorito transmite uma sensação de tratamento VIP e exclusividade, elevando o valor da marca do salão.", g: "exclusividade, psicologia do consumidor" },
+            { t: "Agendamentos noturnos: Vender enquanto dorme", c: "A maioria das pessoas lembra-se de cortar o cabelo quando se deita. Uma agenda de papel não serve depois das 20h. O King Agenda trabalha 24 horas por dia, permitindo que o profissional acorde já com a semana toda fechada e faturada.", g: "agenda 24h, vendas noturnas" },
+            { t: "A revolução sem papel na Barbearia do Futuro", c: "Diga adeus a canetas sem tinta e a listas rasgadas. A gestão na nuvem garante que, mesmo que o telemóvel caia à água ou a loja tenha um incidente, os dados dos clientes e do caixa estarão salvos de forma encriptada para sempre.", g: "futuro das barbearias, transformação digital" },
+            { t: "Privacidade: Fidelizando o cliente Premium", c: "Clientes VIP e figuras públicas precisam de discrição. O King Agenda garante o total anonimato dos dados sensíveis e das localizações até que a aprovação do serviço seja mútua, cumprindo com as regras mais modernas de proteção de dados.", g: "privacidade, cliente premium" },
+            { t: "King Agenda: O novo padrão no mercado Brasileiro", c: "Com funcionalidades que unem Fintech, Geolocalização, Gestão Empresarial e Gamificação, o King Agenda elevou a fasquia. Qualquer barbearia que não adote tecnologia deste nível acabará por ficar para trás num mercado cada vez mais digital e exigente.", g: "liderança de mercado, king agenda, padrão de qualidade" }
+        ];
+
+        async function importarArtigosIniciais() {
+            if(!confirm("Isto vai importar 20 artigos otimizados para o Google. Queres continuar?")) return;
+            
+            const btn = document.getElementById('btnImportarEmMassa');
+            btn.innerText = "A importar (Aguarde)...";
+            btn.disabled = true;
+
+            try {
+                const batch = db.batch();
+                postsProntos.forEach(p => {
+                    const novoDocRef = db.collection('blog_posts').doc();
+                    batch.set(novoDocRef, {
+                        titulo: p.t,
+                        conteudo: p.c,
+                        tags: p.g,
+                        dataCriacao: firebase.firestore.FieldValue.serverTimestamp(),
+                        autorUid: auth.currentUser.uid
+                    });
+                });
+                await batch.commit();
+                alert("SUCESSO! 20 artigos injetados perfeitamente.");
+                btn.style.display = 'none'; // Esconde o botão para não clicar duas vezes
+            } catch(e) {
+                alert("Erro na importação: " + e.message);
+                btn.innerText = "📥 Importar 20 Artigos Iniciais";
+                btn.disabled = false;
+            }
+        }
+
+        window.onload = carregarPosts;
+    </script>
+</body>
+</html>

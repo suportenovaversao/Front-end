@@ -13300,20 +13300,16 @@ window.carregarBarbeirosPrincipal = async function(containerId, isGuest = false)
     const lista = document.getElementById(containerId);
     if (!lista) return; 
 
+    // 🛡️ VERIFICAÇÃO: O chiclete só serve para Clientes ou Visitantes
+    const ehClienteOuVisitante = isGuest || (typeof perfil !== 'undefined' && perfil && perfil.tipo === 'cliente');
+
     // 🍬 1. INÍCIO DO CHICLETE (Memória do Cliente)
-    // Se tiver chiclete salvo e ainda NÃO tiver sido carregado nesta sessão...
     const chicleteUid = localStorage.getItem('chicleteBarbeiroUid');
-    if (chicleteUid && !window.chicleteJaAbertoNestaSessao) {
-        
-        window.chicleteJaAbertoNestaSessao = true; // Marca que já abriu hoje
-        
-        // Abre o perfil do profissional automaticamente por cima de tudo
+    if (chicleteUid && !window.chicleteJaAbertoNestaSessao && ehClienteOuVisitante) {
+        window.chicleteJaAbertoNestaSessao = true; 
         if (typeof abrirBarbeiroPerfil === 'function') {
             abrirBarbeiroPerfil(chicleteUid, isGuest);
         }
-        
-        // NÃO damos 'return' aqui! O código continua para montar a lista completa de barbeiros 
-        // no fundo da tela (escondida atrás do modal), para quando ele fechar o perfil!
     }
 
     // 2. BARRA DE BUSCA
@@ -13454,15 +13450,17 @@ window.carregarBarbeirosPrincipal = async function(containerId, isGuest = false)
         let htmlBuffer = "";
 
         gruposMap.forEach((equipe, nomeBarbearia) => {
-            // ID limpo para controlar a gaveta
             const idSanitizado = nomeBarbearia.replace(/[^a-zA-Z0-9]/g, '') + Math.floor(Math.random()*1000);
             
-            // 📸 DEFINIÇÃO DA FOTO DA BARBEARIA COM FALLBACK PARA O ICONE LOCAL
+            // 🔥 CORREÇÃO: PRIORIDADE MÁXIMA PARA A LOGO DA BARBEARIA 🔥
             let fotoLoja = 'icone.png'; 
             const dono = equipe.find(b => b.isProprietario);
-            if(dono && dono.fotoPerfil) fotoLoja = dono.fotoPerfil;
-            else if (equipe[0] && equipe[0].logo_url) fotoLoja = equipe[0].logo_url;
-            else if (equipe[0] && equipe[0].fotoPerfil) fotoLoja = equipe[0].fotoPerfil;
+            
+            if (dono) {
+                fotoLoja = dono.logo_url || dono.logo || dono.fotoPerfil || 'icone.png';
+            } else if (equipe.length > 0) {
+                fotoLoja = equipe[0].logo_url || equipe[0].logo || equipe[0].fotoPerfil || 'icone.png';
+            }
 
             // 📍 INTELIGÊNCIA DA BARBEARIA (Distância, Estrelas e Vaga)
             let minDistance = Infinity;
@@ -13541,7 +13539,7 @@ window.carregarBarbeirosPrincipal = async function(containerId, isGuest = false)
                 if (qtdEstrelas < 0) qtdEstrelas = 0;
                 const reputacaoEstrelas = '⭐'.repeat(qtdEstrelas);
                 
-                // 📸 FALLBACK DA FOTO DO PROFISSIONAL PARA O ICONE.PNG
+                // 📸 FALLBACK DA FOTO DO PROFISSIONAL (AQUI CONTINUA O ROSTO DELE)
                 const fotoRosto = b.fotoPerfil || b.logo_url || 'icone.png';
 
                 let logoBadgeHtml = '';
@@ -13622,10 +13620,10 @@ window.carregarBarbeirosPrincipal = async function(containerId, isGuest = false)
                 }
 
                 const especialidadesHtml = typeof gerarHtmlEspecialidades === 'function' ? gerarHtmlEspecialidades(b.especialidades) : '';
+                const scriptChiclete = ehClienteOuVisitante ? `localStorage.setItem('chicleteBarbeiroUid', '${b.uid}');` : '';
 
-                // AQUI SALVA O CHICLETE NO CLIQUE E ABRE A AGENDA
                 htmlBuffer += `
-                  <div class="card barbeiro-card ${classeBoost} ${classeSOS}" onclick="localStorage.setItem('chicleteBarbeiroUid', '${b.uid}'); if(typeof abrirBarbeiroPerfil==='function') abrirBarbeiroPerfil('${b.uid}', ${isGuest})" style="position:relative; background: #222; margin:0; border: 1px solid #333;">
+                  <div class="card barbeiro-card ${classeBoost} ${classeSOS}" onclick="${scriptChiclete} if(typeof abrirBarbeiroPerfil==='function') abrirBarbeiroPerfil('${b.uid}', ${isGuest})" style="position:relative; background: #222; margin:0; border: 1px solid #333;">
                       ${iconeBoost}
                       ${badgeSOS}
                       ${badgePromoFixa}
@@ -28340,9 +28338,6 @@ window.mudarDataPeloBotao = function(tipo) {
 };
 
 
-// =========================================================
-// A SUA FUNÇÃO ATUALIZADA
-// =========================================================
 async function abrirModalFinanceiroProprietario() {
     abrirModal('modalFinanceiroProprietario');
     const modalContent = document.querySelector('#modalFinanceiroProprietario .modal-content');
@@ -28398,7 +28393,7 @@ async function abrirModalFinanceiroProprietario() {
 
         <div style="flex-shrink: 0; padding: 15px; border-bottom: 1px solid #333; background:#111; text-align:center; z-index: 2;">
             <h3 style="margin:0; color:var(--cor-destaque);">📊 Gestão Completa</h3>
-            <p style="font-size:12px; color:#aaa; margin:0;">Controle de Caixa</p>
+            <p style="font-size:12px; color:#aaa; margin:0;">Controle de Caixa e Clientes</p>
         </div>
 
         <div id="gestaoBodyScroll" style="flex-grow: 1; overflow-y: auto; padding: 15px; min-height: 0; position: relative;">
@@ -28523,14 +28518,20 @@ async function abrirModalFinanceiroProprietario() {
                 <div style="position: relative; height: 160px; width: 100%; margin-top: 15px;">
                     <canvas id="graficoTicketMedio"></canvas>
                 </div>
-
             </div>
+
+            <h4 style="font-size:12px; color:#888; margin-bottom:5px; text-transform:uppercase;">🏆 Top Clientes (Maior Gasto)</h4>
+            <div id="rankingClientesContainer" style="background: #1a1a1a; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #333; max-height: 400px; overflow-y: auto;">
+                <p style="color:#aaa; font-size:11px; text-align:center;">Calculando melhores clientes...</p>
+            </div>
+
             <div style="margin-bottom: 25px;">
                 <button onclick="document.getElementById('modalFinanceiroProprietario').style.display='none'; abrirHistoricoBarbeiro();" 
                     style="width: 100%; background: #222; border: 1px solid #444; color: #fff; padding: 15px; border-radius: 8px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
                     📜 ABRIR HISTÓRICO COMPLETO
                 </button>
             </div>
+            
             <div style="margin-bottom: 15px;">
                 <h4 style="font-size:14px; margin-bottom:10px; border-left:3px solid var(--cor-destaque); padding-left:10px;">Movimentações Recentes</h4>
                 
@@ -28571,23 +28572,21 @@ async function abrirModalFinanceiroProprietario() {
 // Variáveis globais para o funcionamento do Ticket Médio
 let chartTicketMedioInstance = null;
 let uidProfissionalSelecionadoTicket = 'todos';
+window.listaUidsEquipeTicket = []; // Nova variável para guardar a equipe e buscar os nomes!
 
 async function iniciarModuloTicketMedio() {
     const carrossel = document.getElementById('carrosselProfissionaisTicket');
     if (!carrossel) return;
 
     const donoUid = auth.currentUser.uid;
-    // Feedback visual de carregamento igual ao metas
     carrossel.innerHTML = '<div style="padding:10px; color:#aaa; font-size:10px;">⏳ Buscando equipe...</div>';
 
     try {
         let uidsEquipe = new Set();
         
-        // 1. Busca dados do dono
         const donoDoc = await db.collection('usuarios').doc(donoUid).get();
         const donoData = donoDoc.data() || {};
         
-        // 2. Tenta ler o campo 'equipe' (Lógica de blindagem do seu código)
         if (donoData.equipe) {
             if (Array.isArray(donoData.equipe)) {
                 donoData.equipe.forEach(item => { 
@@ -28601,28 +28600,20 @@ async function iniciarModuloTicketMedio() {
             }
         }
         
-        // 3. Busca por donoUid (Segurança extra que tem no seu código)
         const snap = await db.collection('usuarios').where('donoUid', '==', donoUid).get();
         snap.forEach(doc => uidsEquipe.add(doc.id));
         
         uidsEquipe.delete(donoUid);
 
-        // 4. Monta a lista final para o Ticket Médio
-        // Adicionamos o "Todos" e o "Dono" primeiro
+        // Salva a lista de UIDs para usarmos no Caça-Nomes dos agendamentos
+        window.listaUidsEquipeTicket = Array.from(uidsEquipe);
+        window.listaUidsEquipeTicket.push(donoUid);
+
         let membros = [
-            {
-                id: 'todos',
-                nome: 'Todos',
-                foto: '🌟' // Ícone para todos
-            },
-            {
-                id: donoUid,
-                nome: 'Meu Caixa',
-                foto: donoData.fotoPerfil || donoData.logo_url || '👑'
-            }
+            { id: 'todos', nome: 'Todos', foto: '🌟' },
+            { id: donoUid, nome: 'Meu Caixa', foto: donoData.fotoPerfil || donoData.logo_url || '👑' }
         ];
 
-        // Busca dados dos membros em paralelo (Igual ao metas)
         if (uidsEquipe.size > 0) {
             const promessas = Array.from(uidsEquipe).map(uid => db.collection('usuarios').doc(uid).get());
             const docs = await Promise.all(promessas);
@@ -28634,19 +28625,16 @@ async function iniciarModuloTicketMedio() {
                         membros.push({
                             id: doc.id,
                             nome: u.nome ? u.nome.split(' ')[0] : 'Profissional',
-                            foto: u.fotoPerfil || '' // Usa fotoPerfil como no seu código
+                            foto: u.fotoPerfil || ''
                         });
                     }
                 }
             });
         }
 
-        // 5. Renderiza os itens no padrão do Ticket Médio
         let html = '';
         membros.forEach(m => {
             const isTodos = m.id === 'todos';
-            
-            // Lógica de exibição da imagem ou ícone
             let visualMedia = "";
             if (m.foto && m.foto.length > 10) {
                 visualMedia = `<img src="${m.foto}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; background:#222;">`;
@@ -28668,8 +28656,6 @@ async function iniciarModuloTicketMedio() {
         });
 
         carrossel.innerHTML = html;
-
-        // Inicia o cálculo
         if(typeof calcularEAtualizarTicketMedio === 'function') calcularEAtualizarTicketMedio();
 
     } catch (e) {
@@ -28678,11 +28664,9 @@ async function iniciarModuloTicketMedio() {
     }
 }
 
-// 2. FUNÇÃO QUE CUIDA DO CLIQUE NOS AVATARES
 window.selecionarProfissionalTicket = function(uid, elemento) {
     window.uidProfissionalSelecionadoTicket = uid;
 
-    // 1. Reseta todos os itens (estilo igual ao seu selecionarMembroMeta)
     document.querySelectorAll('.avatar-ticket-item').forEach(el => {
         el.style.opacity = '0.5';
         el.style.transform = 'scale(1)';
@@ -28691,7 +28675,6 @@ window.selecionarProfissionalTicket = function(uid, elemento) {
         el.querySelector('span').style.fontWeight = 'normal';
     });
 
-    // 2. Destaca o selecionado
     if(elemento) {
         elemento.style.opacity = '1';
         elemento.style.transform = 'scale(1.05)';
@@ -28700,13 +28683,14 @@ window.selecionarProfissionalTicket = function(uid, elemento) {
         elemento.querySelector('span').style.fontWeight = 'bold';
     }
 
-    // 3. Recalcula os valores
     if(typeof calcularEAtualizarTicketMedio === 'function') {
         calcularEAtualizarTicketMedio();
     }
 };
 
-// 3. O CÉREBRO DA MATEMÁTICA E DO BANCO DE DADOS (AGORA COM VENDAS E PRODUTOS INCLUSOS)
+// ========================================================
+// 🚀 O CÉREBRO DEFINITIVO: CÁLCULO E CAÇA-NOMES
+// ========================================================
 window.calcularEAtualizarTicketMedio = async function() {
     const tipoFiltro = document.getElementById('filtroTipoTicketMedio').value; 
     const dataInicioStr = document.getElementById('finDataInicio').value; 
@@ -28715,7 +28699,6 @@ window.calcularEAtualizarTicketMedio = async function() {
 
     if (!dataInicioStr || !dataFimStr) return;
 
-    // Garante que pegue desde o primeiro segundo até o último do dia
     const start = new Date(dataInicioStr + "T00:00:00");
     const end = new Date(dataFimStr + "T23:59:59");
 
@@ -28726,150 +28709,166 @@ window.calcularEAtualizarTicketMedio = async function() {
         let totalAgendamentos = 0;
         let totalJaRecebidoNoPeriodo = 0;
         let isComissaoEspelhada = false;
+        
+        let rankingClientes = {}; 
 
-        // ========================================================
-        // 🚀 O MOTOR PERFEITO (ESPECIAL PARA COMISSÃO DO PROFISSIONAL)
-        // Lendo idêntico ao painel 'abrirGestaoMembroV2'
-        // ========================================================
-        if (uidSelecionado !== 'todos' && tipoFiltro === 'comissao') {
-            isComissaoEspelhada = true;
-
-            // 1. Busca a % do profissional
+        let comissaoProfissional = 50;
+        if (uidSelecionado !== 'todos') {
             const docUser = await db.collection('usuarios').doc(uidSelecionado).get();
-            let comissaoProfissional = 50;
             if (docUser.exists) {
                 const dadosUser = docUser.data();
                 comissaoProfissional = parseFloat(dadosUser.comissao || dadosUser.taxaComissao || 0);
                 if (isNaN(comissaoProfissional) || comissaoProfissional === 0) comissaoProfissional = 50;
             }
+        }
 
-            // 2. Busca direto nos AGENDAMENTOS (Cortes e Serviços)
-            const snapAgendamentos = await db.collection('agendamentos')
-                .where('barbeiroUid', '==', uidSelecionado)
+        // ========================================================
+        // 1. BUSCA DIRETAMENTE NOS AGENDAMENTOS (Para ter o Nome Correto!)
+        // ========================================================
+        const uidsParaAgendamento = uidSelecionado === 'todos' ? (window.listaUidsEquipeTicket || [auth.currentUser.uid]) : [uidSelecionado];
+        
+        const promessasAg = uidsParaAgendamento.map(uid => {
+            return db.collection('agendamentos')
+                .where('barbeiroUid', '==', uid)
                 .where('dataConclusao', '>=', firebase.firestore.Timestamp.fromDate(start))
                 .where('dataConclusao', '<=', firebase.firestore.Timestamp.fromDate(end))
                 .get();
+        });
 
-            snapAgendamentos.forEach(doc => {
+        const snapsAg = await Promise.all(promessasAg);
+
+        snapsAg.forEach(snap => {
+            snap.forEach(doc => {
                 const ag = doc.data();
                 const statusValidos = ['concluido', 'avaliado', 'Concluido', 'Concluído', 'pago'];
                 if (!statusValidos.includes(ag.status)) return;
 
                 const valBruto = parseFloat(ag.valorFinalPago || ag.valor || ag.valorOriginal || 0);
-                let minhaComissao = 0;
+                if (valBruto <= 0) return; // 🛑 IGNORA PLANOS/ZEROS!
 
-                // Regra de comissão exata do seu app
-                if (ag.comissaoCalculada !== undefined && ag.comissaoCalculada !== null) {
-                    minhaComissao = parseFloat(ag.comissaoCalculada);
-                } else if (ag.financeiro && ag.financeiro.comissao) {
-                    minhaComissao = parseFloat(ag.financeiro.comissao);
-                } else {
-                    const percentualUsar = parseFloat(ag.percentualComissao || comissaoProfissional);
-                    minhaComissao = (valBruto * percentualUsar) / 100;
+                // 🕵️ CAÇA-NOMES IMPLACÁVEL (Prioridade 1: clienteNome)
+                let cNome = ag.clienteNome || ag.nomeCliente || ag.cliente || ag.nome || '';
+                if (!cNome && ag.usuario && ag.usuario.nome) cNome = ag.usuario.nome;
+                if (typeof cNome !== 'string' || cNome.trim() === '') cNome = 'Cliente Sem Nome';
+                
+                let cId = ag.clienteUid || ag.telefone || cNome;
+
+                // Salva no Ranking de Clientes (Sempre pelo valor que o cliente pagou)
+                if(!rankingClientes[cId]) rankingClientes[cId] = { nome: cNome, gastoBruto: 0, visitas: 0, foto: ag.clienteFoto || ag.foto || '👤' };
+                rankingClientes[cId].gastoBruto += valBruto;
+                rankingClientes[cId].visitas++;
+
+                // SOMA NO FINANCEIRO (Apenas se for individual, pois o "Todos" usa o extrato)
+                if (uidSelecionado !== 'todos') {
+                    let minhaComissao = 0;
+                    if (ag.comissaoCalculada !== undefined && ag.comissaoCalculada !== null) {
+                        minhaComissao = parseFloat(ag.comissaoCalculada);
+                    } else if (ag.financeiro && ag.financeiro.comissao) {
+                        minhaComissao = parseFloat(ag.financeiro.comissao);
+                    } else {
+                        const percentualUsar = parseFloat(ag.percentualComissao || comissaoProfissional);
+                        minhaComissao = (valBruto * percentualUsar) / 100;
+                    }
+                    
+                    if (tipoFiltro === 'comissao') totalSoma += minhaComissao;
+                    else totalSoma += valBruto;
+                    
+                    totalAgendamentos++;
                 }
-
-                totalSoma += minhaComissao;
-                totalAgendamentos++; // Conta o corte para o ticket médio
             });
+        });
 
-            // 3. Busca saídas, pagamentos E VENDAS (O Segredo do Ticket Médio Real)
-            const snapExtrato = await db.collection('extrato_financeiro')
+        // ========================================================
+        // 2. BUSCA EXTRATO FINANCEIRO (Saídas e Vendas)
+        // ========================================================
+        let snapExtrato;
+        if (uidSelecionado !== 'todos') {
+            isComissaoEspelhada = (tipoFiltro === 'comissao');
+            snapExtrato = await db.collection('extrato_financeiro')
                 .where('donoUid', '==', auth.currentUser.uid)
                 .where('usuarioUid', '==', uidSelecionado)
                 .get();
-
-            snapExtrato.forEach(doc => {
-                const ext = doc.data();
-                if (ext.agendamentoId) return; // Pula para não duplicar serviço
-                
-                let dataRegistro = ext.dataEvento ? ext.dataEvento.toMillis() : (ext.ts ? ext.ts.toMillis() : 0);
-                
-                // Se estiver dentro da data filtrada
-                if (dataRegistro >= start.getTime() && dataRegistro <= end.getTime()) {
-                    
-                    // Saídas: Soma o que o cara já recebeu/adiantou
-                    if (ext.tipo === 'saida_manual' || ext.tipo === 'despesa_comissao' || ext.tipo === 'saida') {
-                        totalJaRecebidoNoPeriodo += (parseFloat(ext.valor) || 0);
-                    }
-                    
-                    // 🔥 CORREÇÃO DO TICKET MÉDIO: Soma as VENDAS de produtos que ele fez!
-                    else if (ext.tipo === 'venda_produto' || ext.tipo === 'venda' || ext.tipo === 'entrada_manual' || ext.tipo === 'produto') {
-                        const valorBrutoVenda = parseFloat(ext.valor) || 0;
-                        let minhaComissaoVenda = parseFloat(ext.valorLiquidoProfissional || 0);
-                        
-                        // Se não tiver comissão registrada na venda, calcula na hora
-                        if (minhaComissaoVenda === 0) minhaComissaoVenda = (valorBrutoVenda * comissaoProfissional) / 100;
-
-                        totalSoma += minhaComissaoVenda;
-                        totalAgendamentos++; // Conta a Venda como +1 atendimento no Ticket Médio!
-                    }
-                }
-            });
-
         } else {
-            // ========================================================
-            // LÓGICA PADRÃO (Para o "Todos", Dono ou Filtro de Valor Total)
-            // ========================================================
-            const snapshot = await db.collection('extrato_financeiro')
+            snapExtrato = await db.collection('extrato_financeiro')
                 .where('donoUid', '==', auth.currentUser.uid)
                 .get();
+        }
 
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                const uidDesteRegistro = data.usuarioUid || data.donoUid;
+        snapExtrato.forEach(doc => {
+            const ext = doc.data();
+            let dataRegistro = ext.dataEvento ? ext.dataEvento.toMillis() : (ext.ts ? ext.ts.toMillis() : 0);
+            if (dataRegistro < start.getTime() || dataRegistro > end.getTime()) return; 
 
-                let dataRegistro = data.dataEvento ? data.dataEvento.toMillis() : (data.ts ? data.ts.toMillis() : 0);
-                if (dataRegistro < start.getTime() || dataRegistro > end.getTime()) return; 
+            const tipo = ext.tipo || "";
+            const isDespesa = tipo.includes('despesa') || tipo.includes('saida') || parseFloat(ext.valor) < 0;
+            const valorBrutoExt = parseFloat(ext.valor || 0);
 
-                const tipo = data.tipo || "";
-                const isDespesa = tipo.includes('despesa') || tipo.includes('saida') || parseFloat(data.valor) < 0;
+            if (uidSelecionado !== 'todos') {
+                if (ext.agendamentoId) return; // Serviço já foi no bloco acima
+                
+                if (isDespesa) {
+                    totalJaRecebidoNoPeriodo += Math.abs(valorBrutoExt);
+                } else if (valorBrutoExt > 0 && (tipo.includes('venda') || tipo.includes('produto') || tipo.includes('entrada'))) {
+                    let minhaComissaoVenda = parseFloat(ext.valorLiquidoProfissional || 0);
+                    if (minhaComissaoVenda === 0) minhaComissaoVenda = (valorBrutoExt * comissaoProfissional) / 100;
 
-                if (!isDespesa) {
-                    if (uidSelecionado !== 'todos' && uidDesteRegistro !== uidSelecionado) return; 
+                    if (tipoFiltro === 'comissao') totalSoma += minhaComissaoVenda;
+                    else totalSoma += valorBrutoExt;
+                    
+                    totalAgendamentos++; 
 
+                    let cNome = ext.clienteNome || ext.nomeCliente || ext.cliente || ext.nome || 'Cliente (Balcão)';
+                    let cId = ext.clienteUid || ext.telefone || cNome;
+                    if(!rankingClientes[cId]) rankingClientes[cId] = { nome: cNome, gastoBruto: 0, visitas: 0, foto: '🛍️' };
+                    rankingClientes[cId].gastoBruto += valorBrutoExt;
+                    rankingClientes[cId].visitas++;
+                }
+            } else {
+                if (!isDespesa && valorBrutoExt > 0) {
                     if (tipoFiltro === 'comissao') {
-                        let valorLiq = data.valorLiquidoProfissional || 0;
-                        if (uidDesteRegistro === auth.currentUser.uid && (!data.valorLiquidoProfissional || data.valorLiquidoProfissional == 0)) {
-                            valorLiq = data.valor || 0; 
+                        let valorLiq = ext.valorLiquidoProfissional || 0;
+                        const uidDesteRegistro = ext.usuarioUid || ext.donoUid;
+                        if (uidDesteRegistro === auth.currentUser.uid && (!ext.valorLiquidoProfissional || ext.valorLiquidoProfissional == 0)) {
+                            valorLiq = valorBrutoExt; 
                         }
                         totalSoma += parseFloat(valorLiq);
                     } else {
-                        totalSoma += parseFloat(data.valor || 0);
+                        totalSoma += valorBrutoExt;
                     }
 
-                    // 🔥 GARANTIA DE SOMA DE VENDAS NO TICKET GERAL
                     if (tipo.includes('servico') || tipo.includes('venda') || tipo.includes('receita') || tipo.includes('produto') || tipo.includes('entrada')) {
                         totalAgendamentos++;
+                        
+                        // Evita duplicar serviços no Ranking, adiciona apenas Vendas!
+                        if (!ext.agendamentoId && (tipo.includes('venda') || tipo.includes('produto'))) {
+                            let cNome = ext.clienteNome || ext.nomeCliente || ext.cliente || ext.nome || 'Cliente (Balcão)';
+                            let cId = ext.clienteUid || ext.telefone || cNome;
+                            if(!rankingClientes[cId]) rankingClientes[cId] = { nome: cNome, gastoBruto: 0, visitas: 0, foto: '🛍️' };
+                            rankingClientes[cId].gastoBruto += valorBrutoExt;
+                            rankingClientes[cId].visitas++;
+                        }
                     }
                 }
-            });
-        }
+            }
+        });
 
-        // ========================================================
-        // O CLONE DO "TODOS" (Garante a igualdade do Topo da Tela)
-        // ========================================================
+        // CLONE TOTAL (Evita diferença visual)
         if (uidSelecionado === 'todos' && tipoFiltro === 'total') {
             const spanEntradas = document.getElementById('resumoEntradas');
             if (spanEntradas) {
                 const textoEntradas = spanEntradas.innerText;
                 let valorLimpo = textoEntradas.replace(/[^\d.,-]/g, '');
-                if (valorLimpo.includes(',')) {
-                    valorLimpo = valorLimpo.replace(/\./g, '').replace(',', '.');
-                }
+                if (valorLimpo.includes(',')) valorLimpo = valorLimpo.replace(/\./g, '').replace(',', '.');
                 const valorExatoCima = parseFloat(valorLimpo);
-                if (!isNaN(valorExatoCima) && valorExatoCima > 0) {
-                    totalSoma = valorExatoCima;
-                }
+                if (!isNaN(valorExatoCima) && valorExatoCima > 0) totalSoma = valorExatoCima;
             }
         }
 
         // ==========================================================
-        // EXIBIÇÃO NO PAINEL E CÁLCULO FINAL DO TICKET MÉDIO REAL
+        // EXIBIÇÃO FINAL
         // ==========================================================
         let ticketMedio = 0;
-        if (totalAgendamentos > 0) {
-            ticketMedio = totalSoma / totalAgendamentos;
-        }
+        if (totalAgendamentos > 0) ticketMedio = totalSoma / totalAgendamentos;
 
         document.getElementById('valorTicketMedioDisplay').innerHTML = `R$ ${ticketMedio.toFixed(2).replace('.', ',')}`;
         
@@ -28877,33 +28876,33 @@ window.calcularEAtualizarTicketMedio = async function() {
             let saldoReal = totalSoma - totalJaRecebidoNoPeriodo;
             if (saldoReal > -0.5 && saldoReal < 0.5) saldoReal = 0;
 
-            // 🌟 O NOVO RAIO-X ESPELHADO DO GESTÃO DE MEMBROS
             document.getElementById('infoTicketMedio').innerHTML = `
                 <div style="display:inline-block; background:#222; padding:8px 12px; border-radius:8px; margin-top:5px; border:1px solid #444; text-align:left;">
                     <span style="color:#aaa;">Soma de Serviços e Vendas:</span> <b style="color:#2ecc71;">R$ ${totalSoma.toFixed(2).replace('.', ',')}</b> <br>
                     <span style="color:#aaa;">Já Pago/Adiantado:</span> <b style="color:#e74c3c;">R$ ${totalJaRecebidoNoPeriodo.toFixed(2).replace('.', ',')}</b> <br>
                     <span style="color:#aaa;">Saldo a Receber:</span> <b style="color:#f39c12; font-size:14px;">R$ ${saldoReal.toFixed(2).replace('.', ',')}</b> <br>
                     <hr style="border:0; border-top:1px dashed #444; margin:5px 0;">
-                    <span style="color:#aaa;">Dividido por:</span> <b style="color:#fff;">${totalAgendamentos}</b> <span style="color:#aaa;">transações</span>
+                    <span style="color:#aaa;">Dividido por:</span> <b style="color:#fff;">${totalAgendamentos}</b> <span style="color:#aaa;">atendimentos (pagantes)</span>
                 </div>
             `;
         } else {
-            // Raio-X Padrão
             document.getElementById('infoTicketMedio').innerHTML = `
                 <div style="display:inline-block; background:#222; padding:8px 12px; border-radius:8px; margin-top:5px; border:1px solid #444;">
                     <span style="color:#aaa;">Soma Gerada:</span> <b style="color:#2ecc71;">R$ ${totalSoma.toFixed(2).replace('.', ',')}</b> <br>
-                    <span style="color:#aaa;">Dividido por:</span> <b style="color:#fff;">${totalAgendamentos}</b> <span style="color:#aaa;">transações (cortes + vendas)</span>
+                    <span style="color:#aaa;">Dividido por:</span> <b style="color:#fff;">${totalAgendamentos}</b> <span style="color:#aaa;">transações pagas</span>
                 </div>
             `;
         }
 
-        if (typeof renderizarGraficoTicketMedio === 'function') {
-            renderizarGraficoTicketMedio(totalSoma, totalAgendamentos, ticketMedio);
-        }
+        if (typeof renderizarGraficoTicketMedio === 'function') renderizarGraficoTicketMedio(totalSoma, totalAgendamentos, ticketMedio);
+
+        // SALVA GLOBALMENTE E RENDERIZA SÓ O BOTÃO
+        window.rankingClientesCache = rankingClientes;
+        renderizarBotaoTopClientes();
 
     } catch (error) {
-        console.error("Erro ao calcular Ticket Médio:", error);
-        document.getElementById('valorTicketMedioDisplay').innerHTML = "<span style='color:red; font-size:14px;'>Erro ao calcular.</span>";
+        console.error("Erro ao calcular Ticket:", error);
+        document.getElementById('valorTicketMedioDisplay').innerHTML = "<span style='color:red;'>Erro ao calcular.</span>";
     }
 }
 
@@ -28913,12 +28912,10 @@ function renderizarGraficoTicketMedio(totalSoma, totalAgendamentos, ticketMedio)
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
-    // Se já existia um gráfico antigo, apaga para desenhar o novo
     if (chartTicketMedioInstance) {
         chartTicketMedioInstance.destroy();
     }
 
-    // Só desenha se tiver dados
     if (totalAgendamentos === 0) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         return;
@@ -28940,7 +28937,7 @@ function renderizarGraficoTicketMedio(totalSoma, totalAgendamentos, ticketMedio)
                 {
                     label: 'Ticket Médio (R$)',
                     data: [ticketMedio],
-                    backgroundColor: 'rgba(46, 204, 113, 0.8)', // Verde
+                    backgroundColor: 'rgba(46, 204, 113, 0.8)',
                     borderColor: 'rgba(46, 204, 113, 1)',
                     borderWidth: 1,
                     borderRadius: 4
@@ -28951,30 +28948,168 @@ function renderizarGraficoTicketMedio(totalSoma, totalAgendamentos, ticketMedio)
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    labels: { color: '#ccc', font: { size: 11 } }
-                },
+                legend: { labels: { color: '#ccc', font: { size: 11 } } },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
-                            return context.dataset.label + ': R$ ' + context.raw.toFixed(2).replace('.', ',');
-                        }
+                        label: function(context) { return context.dataset.label + ': R$ ' + context.raw.toFixed(2).replace('.', ','); }
                     }
                 }
             },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                    ticks: { color: '#888', font: { size: 10 } }
-                },
-                x: {
-                    grid: { display: false },
-                    ticks: { color: '#888', font: { size: 10 } }
-                }
+                y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#888', font: { size: 10 } } },
+                x: { grid: { display: false }, ticks: { color: '#888', font: { size: 10 } } }
             }
         }
     });
+}
+
+// ========================================================
+// 🌟 RENDERIZA APENAS O BOTÃO NO PAINEL PRINCIPAL
+// ========================================================
+function renderizarBotaoTopClientes() {
+    const container = document.getElementById('rankingClientesContainer');
+    if(!container) return;
+
+    const arrayClientes = Object.values(window.rankingClientesCache || {}).filter(c => c.gastoBruto > 0);
+    
+    if (arrayClientes.length === 0) {
+        container.innerHTML = '<p style="color:#aaa; font-size:11px; text-align:center; margin:0;">Nenhum cliente gerou receita neste período.</p>';
+        return;
+    }
+
+    container.innerHTML = `
+        <button onclick="abrirModalTop100Clientes()" style="width: 100%; background: linear-gradient(45deg, #d4af37, #f1c40f); color: #000; border: none; padding: 14px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4); transition: transform 0.2s;">
+            🏆 Exibir Top 100 Clientes
+        </button>
+        <p style="font-size:11px; color:#aaa; margin-top:10px; margin-bottom:0; text-align:center;">Foram encontrados <b>${arrayClientes.length}</b> clientes ativos.</p>
+    `;
+}
+
+// ========================================================
+// 🌟 NOVO MODAL: LISTA GIGANTE DO TOP 100 (z-index 999999)
+// ========================================================
+window.abrirModalTop100Clientes = function() {
+    let modal = document.getElementById('modalTop100Clientes');
+    if(!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modalTop100Clientes';
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); backdrop-filter: blur(8px);
+            z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            padding: 20px; box-sizing: border-box; overflow-y: auto;
+        `;
+        document.body.appendChild(modal);
+    }
+
+    const arrayClientes = Object.values(window.rankingClientesCache || {}).filter(c => c.gastoBruto > 0);
+    arrayClientes.sort((a, b) => b.gastoBruto - a.gastoBruto);
+    
+    // Pega os 100 maiores
+    const top100 = arrayClientes.slice(0, 100);
+
+    let htmlLista = '<div style="display:flex; flex-direction:column; gap:12px;">';
+    
+    top100.forEach((c, index) => {
+        const medalha = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index+1}`;
+        const corDestaque = index === 0 ? '#f1c40f' : index === 1 ? '#bdc3c7' : index === 2 ? '#cd7f32' : '#555';
+        
+        let imgHtml = '';
+        if (c.foto && c.foto.length > 5 && c.foto !== '👤' && c.foto !== '🛍️') {
+            imgHtml = `<img src="${c.foto}" style="width:45px; height:45px; border-radius:50%; object-fit:cover; background:#333; border: 2px solid ${corDestaque};">`;
+        } else {
+            imgHtml = `<div style="width:45px; height:45px; border-radius:50%; background:#222; display:flex; align-items:center; justify-content:center; font-size:20px; border: 2px solid ${corDestaque};">${c.foto}</div>`;
+        }
+
+        const ticketDesteCliente = c.gastoBruto / c.visitas;
+
+        htmlLista += `
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#1a1a1a; padding:15px; border-radius:12px; border-left:4px solid ${corDestaque}; box-shadow: 0 4px 10px rgba(0,0,0,0.4); width: 100%; box-sizing: border-box;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-weight:bold; color:${corDestaque}; width:30px; text-align:center; font-size:16px;">${medalha}</span>
+                    ${imgHtml}
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="color:#fff; font-size:14px; font-weight:bold; text-transform: capitalize;">${c.nome.toLowerCase()}</span>
+                        <span style="color:#aaa; font-size:11px;">${c.visitas} atendimento(s)</span>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <span style="color:#2ecc71; font-weight:bold; font-size:16px;">R$ ${c.gastoBruto.toFixed(2).replace('.', ',')}</span>
+                    <br><span style="color:#888; font-size:10px;">Ticket: R$ ${ticketDesteCliente.toFixed(2).replace('.', ',')}</span>
+                </div>
+            </div>
+        `;
+    });
+    htmlLista += '</div>';
+
+    modal.innerHTML = `
+        <div style="width: 100%; max-width: 500px; padding-bottom: 80px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #111; padding: 15px 20px; border-radius: 12px; border: 1px solid #d4af37; position: sticky; top: 0; z-index: 10;">
+                <h3 style="color: var(--cor-destaque); margin: 0; font-size: 16px;">🏆 Top 100 Clientes</h3>
+                <button onclick="document.getElementById('modalTop100Clientes').remove()" style="background: #e74c3c; color: white; border: none; border-radius: 8px; padding: 8px 15px; font-weight: bold; cursor: pointer;">Voltar</button>
+            </div>
+            ${htmlLista}
+        </div>
+    `;
+};
+
+// 🌟🌟 NOVA FUNÇÃO: RENDERIZA O RANKING DOS CLIENTES VIP 🌟🌟
+function renderizarRankingClientes(rankingObj) {
+    const container = document.getElementById('rankingClientesContainer');
+    if(!container) return;
+
+    // Converte o objeto do banco de dados em uma lista real
+    const arrayClientes = Object.values(rankingObj);
+    
+    // Filtra pra não mostrar gente com valor zerado por garantia
+    const clientesValidos = arrayClientes.filter(c => c.gastoBruto > 0);
+    
+    // Ordena do Maior Gasto para o Menor
+    clientesValidos.sort((a, b) => b.gastoBruto - a.gastoBruto);
+
+    if (clientesValidos.length === 0) {
+        container.innerHTML = '<p style="color:#aaa; font-size:11px; text-align:center;">Nenhum cliente gerou receita neste período.</p>';
+        return;
+    }
+
+    let html = '<div style="display:flex; flex-direction:column; gap:10px;">';
+    
+    // Pega apenas o TOP 10 para não travar a tela
+    const top10 = clientesValidos.slice(0, 10);
+    
+    top10.forEach((c, index) => {
+        const medalha = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index+1}`;
+        const corDestaque = index === 0 ? '#f1c40f' : index === 1 ? '#bdc3c7' : index === 2 ? '#cd7f32' : '#888';
+        
+        let imgHtml = '';
+        if (c.foto && c.foto.length > 5) {
+            imgHtml = `<img src="${c.foto}" style="width:35px; height:35px; border-radius:50%; object-fit:cover; background:#333;">`;
+        } else {
+            imgHtml = `<div style="width:35px; height:35px; border-radius:50%; background:#333; display:flex; align-items:center; justify-content:center; font-size:16px;">${c.foto || '👤'}</div>`;
+        }
+
+        const ticketDesteCliente = c.gastoBruto / c.visitas;
+
+        html += `
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#222; padding:10px; border-radius:8px; border-left:3px solid ${corDestaque}; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-weight:bold; color:${corDestaque}; width:22px; text-align:center; font-size:16px;">${medalha}</span>
+                    ${imgHtml}
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="color:#fff; font-size:12px; font-weight:bold;">${c.nome}</span>
+                        <span style="color:#aaa; font-size:10px;">${c.visitas} visita(s)</span>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <span style="color:#2ecc71; font-weight:bold; font-size:14px;">R$ ${c.gastoBruto.toFixed(2).replace('.', ',')}</span>
+                    <br><span style="color:#888; font-size:9px;">Ticket médio: R$ ${ticketDesteCliente.toFixed(2).replace('.', ',')}</span>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
 }
 
 function renderizarSeletorDatasEquipe(uidProfissional) {
@@ -47794,134 +47929,134 @@ function gerarListaPremiosRoleta() {
 }
 
 function abrirModalPerfil() {
-    if (!perfil) return;
+    if (!perfil) return;
 
-    const nomeAtual = perfil.nome || "";
-    const fotoAtual = perfil.fotoPerfil || 'https://placehold.co/100';
-    
-    // 1. Gera e EMBARALHA a lista
-    let listaCrua = gerarListaPremiosRaw();
-    window.itensRoletaAtual = shuffleArray(listaCrua); // Salva na global embaralhado!
+    const nomeAtual = perfil.nome || "";
+    const fotoAtual = perfil.fotoPerfil || 'https://placehold.co/100';
+    
+    // 1. Gera e EMBARALHA a lista
+    let listaCrua = gerarListaPremiosRaw();
+    window.itensRoletaAtual = shuffleArray(listaCrua); // Salva na global embaralhado!
 
-    // 2. Cria o HTML da faixa visual
-    let faixaHtml = '';
-    // Repete 50 vezes para dar efeito infinito
-    for(let i=0; i<50; i++) {
-        window.itensRoletaAtual.forEach(item => {
-            let conteudo = '';
-            let classeExtra = '';
+    // 2. Cria o HTML da faixa visual
+    let faixaHtml = '';
+    // Repete 50 vezes para dar efeito infinito
+    for(let i=0; i<50; i++) {
+        window.itensRoletaAtual.forEach(item => {
+            let conteudo = '';
+            let classeExtra = '';
 
-            if (item.tipo === 'ponto') {
-                conteudo = `<span>${item.val}</span>`;
-                classeExtra = 'ponto';
-            } else if (item.tipo === 'caixa') {
-                conteudo = `<span>${item.val}</span>`;
-                classeExtra = 'caixa';
-            } else {
-                conteudo = item.imgHtml;
-                classeExtra = 'premio-top';
-            }
-            faixaHtml += `<div class="roleta-item ${classeExtra}">${conteudo}</div>`;
-        });
-    }
+            if (item.tipo === 'ponto') {
+                conteudo = `<span>${item.val}</span>`;
+                classeExtra = 'ponto';
+            } else if (item.tipo === 'caixa') {
+                conteudo = `<span>${item.val}</span>`;
+                classeExtra = 'caixa';
+            } else {
+                conteudo = item.imgHtml;
+                classeExtra = 'premio-top';
+            }
+            faixaHtml += `<div class="roleta-item ${classeExtra}">${conteudo}</div>`;
+        });
+    }
 
-    const premioCaixa = perfil.tipo === 'cliente' ? '💎 VIP (3 Dias)' : '🚀 Destaque Topo (24h)';
-    const infoTexto = `🎁 Caixa Surpresa: ${premioCaixa}`;
-    const infoPremios = `Sorteio entre ${window.itensRoletaAtual.length} itens embaralhados!`;
+    const premioCaixa = perfil.tipo === 'cliente' ? '💎 VIP (3 Dias)' : '🚀 Destaque Topo (24h)';
+    const infoTexto = `🎁 Caixa Surpresa: ${premioCaixa}`;
+    const infoPremios = `Sorteio entre ${window.itensRoletaAtual.length} itens embaralhados!`;
 
-    const modal = document.getElementById('modalMeuPerfil');
-    
-    // --- TRUQUE PARA OS POPUPS ABRIREM POR CIMA ---
-    // Definimos o z-index deste modal como 10000. 
-    // Os modais de checkin/resgate devem ter z-index maior (ex: 15000) no CSS.
-    modal.style.zIndex = '10000'; 
+    const modal = document.getElementById('modalMeuPerfil');
+    
+    // --- TRUQUE PARA OS POPUPS ABRIREM POR CIMA ---
+    // Definimos o z-index deste modal como 10000. 
+    // Os modais de checkin/resgate devem ter z-index maior (ex: 15000) no CSS.
+    modal.style.zIndex = '10000'; 
 
-    const content = modal.querySelector('.modal-content');
+    const content = modal.querySelector('.modal-content');
 
-    content.innerHTML = `
-        <h3>👤 Editar Perfil</h3>
-        
-        <div style="text-align: center; margin-bottom: 15px;">
-            <div style="position: relative; display: inline-block;">
-                <img id="perfilFotoPreview" src="${fotoAtual}" class="perfil-foto-grande" style="width: 100px; height: 100px; border-radius: 50%; border: 2px solid #333; object-fit: cover;">
-                <label for="perfilFotoInput" style="position: absolute; bottom: 0; right: 0; background: var(--cor-destaque); color: #000; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer;">📷</label>
-            </div>
-            <input type="file" id="perfilFotoInput" accept="image/*" style="display: none;" onchange="previewFotoPerfil()">
-        </div>
+    content.innerHTML = `
+        <h3>👤 Editar Perfil</h3>
+        
+        <div style="text-align: center; margin-bottom: 15px;">
+            <div style="position: relative; display: inline-block;">
+                <img id="perfilFotoPreview" src="${fotoAtual}" class="perfil-foto-grande" style="width: 100px; height: 100px; border-radius: 50%; border: 2px solid #333; object-fit: cover;">
+                <label for="perfilFotoInput" style="position: absolute; bottom: 0; right: 0; background: var(--cor-destaque); color: #000; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer;">📷</label>
+            </div>
+            <input type="file" id="perfilFotoInput" accept="image/*" style="display: none;" onchange="previewFotoPerfil()">
+        </div>
 
-        <label>Nome de Exibição:</label>
-        <input type="text" id="perfilNomeInput" value="${nomeAtual}" placeholder="Seu nome">
+        <label>Nome de Exibição:</label>
+        <input type="text" id="perfilNomeInput" value="${nomeAtual}" placeholder="Seu nome">
 
-        <div class="popup-section">
-            <h4>🎰 Roleta Diária</h4>
-            <div style="background: #222; padding: 8px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #444;">
-                <p id="roletaInfoPremios" style="font-size: 12px; color: #ffcc00; margin: 0 0 5px 0;">${infoTexto}</p>
-                <p style="font-size: 10px; color: #ccc; margin: 0; line-height: 1.3;">${infoPremios}</p>
-            </div>
-            
-            <div class="roleta-wrapper-externo" style="position: relative;">
-                 <div class="seta-externa topo"></div>
-                 <div id="roletaVisual" class="roleta-container" style="margin: 0;">
-                    <div class="roleta-faixa" id="roletaFaixa" style="transform: translateX(0px);">${faixaHtml}</div>
-                 </div>
-                 <div class="seta-externa baixo"></div>
-            </div>
-            <button id="btnGirarRoleta" onclick="girarRoleta()" style="width: 100%; font-weight: bold; font-size: 16px; margin-top:10px;">Carregando...</button>
-        </div>
+        <div class="popup-section">
+            <h4>🎰 Roleta Diária</h4>
+            <div style="background: #222; padding: 8px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #444;">
+                <p id="roletaInfoPremios" style="font-size: 12px; color: #ffcc00; margin: 0 0 5px 0;">${infoTexto}</p>
+                <p style="font-size: 10px; color: #ccc; margin: 0; line-height: 1.3;">${infoPremios}</p>
+            </div>
+            
+            <div class="roleta-wrapper-externo" style="position: relative;">
+                 <div class="seta-externa topo"></div>
+                 <div id="roletaVisual" class="roleta-container" style="margin: 0;">
+                    <div class="roleta-faixa" id="roletaFaixa" style="transform: translateX(0px);">${faixaHtml}</div>
+                 </div>
+                 <div class="seta-externa baixo"></div>
+            </div>
+            <button id="btnGirarRoleta" onclick="girarRoleta()" style="width: 100%; font-weight: bold; font-size: 16px; margin-top:10px;">Carregando...</button>
+        </div>
 
-        <div class="popup-section">
-            <h4>🖼️ Molduras de Perfil</h4>
-            <div id="listaMolduras" class="molduras-scroll-container"></div>
-        </div>
+        <div class="popup-section">
+            <h4>🖼️ Molduras de Perfil</h4>
+            <div id="listaMolduras" class="molduras-scroll-container"></div>
+        </div>
 
-        <div class="popup-section" style="border-top: 1px solid var(--cor-borda); padding-top: 15px;">
-            <h4>💬 Estilos de Chat</h4>
-            <div id="listaBaloes" class="molduras-scroll-container"></div>
-        </div>
-  
-        <div class="popup-section" style="border-top: 1px solid var(--cor-borda); padding-top: 15px;">
-            <h4 style="color: #2ecc71;">🎯 Missões de Hoje</h4>
-            <div id="containerMissoesDiarias" style="margin-top: 10px;">
-                <p style="font-size:12px; color:#aaa;">Carregando...</p>
-            </div>
-        </div>
+        <div class="popup-section" style="border-top: 1px solid var(--cor-borda); padding-top: 15px;">
+            <h4>💬 Estilos de Chat</h4>
+            <div id="listaBaloes" class="molduras-scroll-container"></div>
+        </div>
+  
+        <div class="popup-section" style="border-top: 1px solid var(--cor-borda); padding-top: 15px;">
+            <h4 style="color: #2ecc71;">🎯 Missões de Hoje</h4>
+            <div id="containerMissoesDiarias" style="margin-top: 10px;">
+                <p style="font-size:12px; color:#aaa;">Carregando...</p>
+            </div>
+        </div>
 
-        <div class="perfil-acoes-container">
-            <div class="btn-perfil-acao" onclick="verificarCheckInDiario(perfil)">
-                <div class="icone-perfil fogo">🔥</div>
-                <span>Check-in</span>
-            </div>
-            <div class="btn-perfil-acao" onclick="abrirPortaSecreta()">
-                <div class="icone-perfil presente">🎁</div>
-                <span>Resgatar</span>
-            </div>
-            <div class="btn-perfil-acao" onclick="abrirMapaPrioritario()">
-                <div class="icone-perfil mapa">🗺️</div>
-                <span>Rota Atual</span>
-            </div>
-        </div>
+        <div class="perfil-acoes-container">
+            <div class="btn-perfil-acao" onclick="verificarCheckInDiario(perfil)">
+                <div class="icone-perfil fogo">🔥</div>
+                <span>Check-in</span>
+            </div>
+            <div class="btn-perfil-acao" onclick="abrirPortaSecreta()">
+                <div class="icone-perfil presente">🎁</div>
+                <span>Resgatar</span>
+            </div>
+            <div class="btn-perfil-acao" onclick="window.location.href='/blog.html'">
+                <div class="icone-perfil blog">📖</div>
+                <span>Blog</span>
+            </div>
+        </div>
 
-        <div class="popup-section">
-            <h4>🏅 Exibir Conquistas (Máx 3)</h4>
-            <div id="listaSelecaoConquistas" class="scrollable-list" style="max-height: 120px;"></div>
-        </div>
+        <div class="popup-section">
+            <h4>🏅 Exibir Conquistas (Máx 3)</h4>
+            <div id="listaSelecaoConquistas" class="scrollable-list" style="max-height: 120px;"></div>
+        </div>
 
-        <div style="display: flex; gap: 10px; margin-top: 20px; border-top: 1px solid var(--cor-borda); padding-top: 15px;">
-            <button onclick="salvarNomePerfil()" style="flex: 1;">⬅️ Voltar</button>
-        </div>
-    `;
+        <div style="display: flex; gap: 10px; margin-top: 20px; border-top: 1px solid var(--cor-borda); padding-top: 15px;">
+            <button onclick="salvarNomePerfil()" style="flex: 1;">⬅️ Voltar</button>
+        </div>
+    `;
 
-    atualizarBotaoRoleta();
+    atualizarBotaoRoleta();
 
-    requestAnimationFrame(() => {
-        renderizarMolduras();
-        renderizarBaloes();
-        renderizarSelecaoConquistas();
-        if(typeof iniciarRelogiosPerfil === 'function') iniciarRelogiosPerfil();
-        if(typeof verificarMissoesDiarias === 'function') verificarMissoesDiarias();
-    });
+    requestAnimationFrame(() => {
+        renderizarMolduras();
+        renderizarBaloes();
+        renderizarSelecaoConquistas();
+        if(typeof iniciarRelogiosPerfil === 'function') iniciarRelogiosPerfil();
+        if(typeof verificarMissoesDiarias === 'function') verificarMissoesDiarias();
+    });
 
-    abrirModal('modalMeuPerfil');
+    abrirModal('modalMeuPerfil');
 }
 
 async function salvarConclusaoPlano() {
